@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Simple bash script to invoke the agent runner
+# Usage: ./agent <agent_name> <message> [--json]
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Change to the script directory
+cd "$SCRIPT_DIR"
+
+# Call the agent runner with all arguments
+python3 app/agent_runner.py "$@" 

@@ -1,0 +1,56 @@
+# AI Agent Framework Configuration
+# Based on Pydantic AI ModelSettings: https://ai.pydantic.dev/api/settings/
+
+# Default model settings
+model_settings:
+  # Model name - can be overridden per agent
+  model: "openai/gpt-4.1-mini"
+  
+  # Core generation parameters
+  temperature: 0.7          # 0.0 = deterministic, higher = more creative
+  max_tokens: 2048          # Maximum tokens to generate
+  
+  # Advanced sampling (use either temperature OR top_p, not both)
+  top_p: null               # Nucleus sampling, 0.1 = top 10% probability mass
+  
+  # Penalties to reduce repetition
+  presence_penalty: null    # Penalize tokens that appeared in text so far
+  frequency_penalty: null   # Penalize tokens based on frequency
+  
+  # Tool calling behavior
+  parallel_tool_calls: true # Allow multiple tool calls in one response
+  
+  # Deterministic behavior
+  seed: null                # Set for reproducible results
+  
+  # Stopping conditions
+  stop_sequences: null      # List of strings that stop generation
+  
+  # Request timeout
+  timeout: 30.0             # Timeout in seconds
+
+# Agent defaults
+agent_defaults:
+  retries: 1                # Default number of retries
+  output_retries: 1         # Max retries for output validation
+  end_strategy: "early"     # "early" or "exhaustive" for tool handling
+  
+# Usage limits to prevent infinite loops and control costs
+usage_limits:
+  # Maximum number of requests per agent run (prevents infinite loops)
+  request_limit: 50
+  
+  # Maximum tokens allowed in requests (null = no limit)
+  request_tokens_limit: null
+  
+  # Maximum tokens allowed in responses (null = no limit)
+  response_tokens_limit: null
+  
+  # Maximum total tokens (requests + responses) (null = no limit)
+  total_tokens_limit: null
+
+# Framework settings
+framework:
+  agents_dir: "agents"      # Directory containing agent markdown files
+  tools_dir: "tools"        # Directory containing tool Python scripts
+  defer_model_check: false # Check model availability immediately 
