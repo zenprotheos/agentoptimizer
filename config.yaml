@@ -38,7 +38,7 @@ agent_defaults:
 # Usage limits to prevent infinite loops and control costs
 usage_limits:
   # Maximum number of requests per agent run (prevents infinite loops)
-  request_limit: 50
+  request_limit: 15
   
   # Maximum tokens allowed in requests (null = no limit)
   request_tokens_limit: null
@@ -48,6 +48,35 @@ usage_limits:
   
   # Maximum total tokens (requests + responses) (null = no limit)
   total_tokens_limit: null
+
+# Logfire configuration
+logfire:
+  # Enable/disable Logfire logging
+  enabled: true
+  
+  # Service name for Logfire (appears in the dashboard)
+  service_name: "oneshot"
+  
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  log_level: "INFO"
+  
+  # Whether to log tool calls and their results
+  log_tool_calls: true
+  
+  # Whether to log token usage statistics
+  log_usage: true
+  
+  # Whether to log agent execution details
+  log_agent_execution: true
+  
+  # Whether to log individual LLM messages (can be verbose)
+  log_llm_messages: true
+  
+  # Whether to enable automatic Pydantic AI instrumentation
+  instrument_pydantic_ai: true
+  
+  # Whether to enable OpenAI instrumentation
+  instrument_openai: true
 
 # Framework settings
 framework:

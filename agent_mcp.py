@@ -11,12 +11,15 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # Import MCP functions from modular files
-from mcp_modules.agents import list_agents as list_agents_impl
-from mcp_modules.tools import list_tools as list_tools_impl
-from mcp_modules.docs import how_to_create_agent as how_to_create_agent_impl
+from app.mcp_modules.agents import list_agents as list_agents_impl
+from app.mcp_modules.tools import list_tools as list_tools_impl
+from app.mcp_modules.docs import how_to_create_agent as how_to_create_agent_impl
 
 # Create the MCP server
-mcp = FastMCP("Agent Team")
+mcp = FastMCP(
+    name="oneshot",
+    instructions="You are a helpful assistant that can call agents to help you with tasks. You can call agents by name with a message. You can also list all available agents and tools."
+)
 
 # Get project root
 project_root = Path(__file__).parent
@@ -63,7 +66,7 @@ def call_agent(agent_name: str, message: str, debug: bool = False) -> str:
     """
     try:
         # Build command with appropriate flags
-        cmd = [str(project_root / "agent"), agent_name, message]
+        cmd = ["bash", str(project_root / "agent"), agent_name, message]
         if debug:
             cmd.append("--debug")
         

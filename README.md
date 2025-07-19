@@ -12,6 +12,7 @@ A minimal but robust AI Agent framework using Pydantic AI and OpenRouter for you
 - **Clean output by default**: Returns clean markdown with usage statistics
 - **Debug mode**: Detailed tool call information available with `--debug` flag
 - **Structured responses**: JSON output with detailed execution metadata
+- **Logfire integration**: Built-in observability and monitoring with Logfire
 
 ## Quick Start
 
@@ -20,16 +21,19 @@ A minimal but robust AI Agent framework using Pydantic AI and OpenRouter for you
    pip install -r requirements.txt
    ```
 
-2. **Set up your OpenRouter API key**:
+2. **Set up your API keys**:
    
-   Either set it as an environment variable:
+   Either set them as environment variables:
    ```bash
-   export OPENROUTER_API_KEY="your-api-key-here"
+   export OPENROUTER_API_KEY="your-openrouter-api-key-here"
+   export LOGFIRE_WRITE_TOKEN="your-logfire-token-here"  # Optional: for Logfire logging
    ```
    
    Or create a `.env` file in the project root:
    ```
-   OPENROUTER_API_KEY=your-api-key-here
+   OPENROUTER_API_KEY=your-openrouter-api-key-here
+   LOGFIRE_WRITE_TOKEN=your-logfire-token-here  # Optional: for Logfire logging
+   ENVIRONMENT=development  # Optional: environment name for Logfire
    ```
 
 3. **Run an agent**:
@@ -71,6 +75,62 @@ You are a helpful assistant...
 
 Your system prompt goes here...
 ```
+
+## Logfire Integration
+
+The framework includes built-in [Logfire](https://logfire.pydantic.dev/) integration for comprehensive observability and monitoring of your AI agents.
+
+### Features
+
+- **Agent execution tracking**: Monitor when agents start, complete, or fail
+- **Tool call logging**: Track all tool calls with arguments and results
+- **Usage statistics**: Monitor token usage and request counts
+- **Error tracking**: Capture and analyze failures
+- **Performance monitoring**: Track execution times and resource usage
+
+### Setup
+
+1. **Get a Logfire account**: Sign up at [logfire.pydantic.dev](https://logfire.pydantic.dev/)
+2. **Get your write token**: From your Logfire dashboard
+3. **Set the environment variable**:
+   ```bash
+   export LOGFIRE_WRITE_TOKEN="your-logfire-token-here"
+   ```
+
+### Configuration
+
+Logfire settings can be configured in `config.yaml`:
+
+```yaml
+logfire:
+  # Enable/disable Logfire logging
+  enabled: true
+  
+  # Service name for Logfire (appears in the dashboard)
+  service_name: "ai-agent-framework"
+  
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  log_level: "INFO"
+  
+  # Whether to log tool calls and their results
+  log_tool_calls: true
+  
+  # Whether to log token usage statistics
+  log_usage: true
+  
+  # Whether to log agent execution details
+  log_agent_execution: true
+```
+
+### What Gets Logged
+
+- **Agent Starts**: When an agent begins execution
+- **Tool Calls**: Each tool call with arguments and result metadata
+- **Usage Statistics**: Token counts, request counts, execution success/failure
+- **Errors**: Detailed error information when agents fail
+- **Performance**: Execution timing and resource usage
+
+The framework automatically handles Logfire initialization and will gracefully disable logging if the token is not provided.
 
 ## Configuration
 

@@ -19,6 +19,7 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.messages import ModelMessage, ToolCallPart, ToolReturnPart
 from dotenv import load_dotenv
+import logfire
 
 # Load environment variables from .env file
 load_dotenv()
@@ -82,6 +83,7 @@ class AgentRunner:
         self.config = self._load_config()
         self.loaded_tools = {}
         self._load_tools()
+        self._setup_logfire()
     
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file"""
@@ -123,6 +125,45 @@ class AgentRunner:
                     
             except Exception as e:
                 print(f"Error loading tool {tool_file}: {e}")
+    
+    def _setup_logfire(self):
+        """Setup Logfire logging based on configuration"""
+        logfire_config = self.config.get('logfire', {})
+        
+        # Check if Logfire is enabled
+        if not logfire_config.get('enabled', True):
+            return
+        
+        # Check for LOGFIRE_WRITE_TOKEN environment variable
+        if not os.getenv('LOGFIRE_WRITE_TOKEN'):
+            print("Warning: LOGFIRE_WRITE_TOKEN not found in environment variables. Logfire logging disabled.")
+            return
+        
+        try:
+            # Configure Logfire with enhanced instrumentation
+            logfire.configure(
+                service_name=logfire_config.get('service_name', 'ai-agent-framework'),
+                service_version='1.0.0',
+                environment=os.getenv('ENVIRONMENT', 'development'),
+            )
+            
+            # Enable Pydantic AI instrumentation for automatic LLM call tracking
+            if logfire_config.get('instrument_pydantic_ai', True):
+                logfire.instrument_pydantic_ai()
+            
+            # Enable OpenAI instrumentation if available
+            if logfire_config.get('instrument_openai', True):
+                try:
+                    logfire.instrument_openai()
+                except Exception:
+                    pass  # OpenAI instrumentation might not be available
+            
+            # Set log level
+            log_level = logfire_config.get('log_level', 'INFO')
+            logfire.info(f"Logfire initialized with service name: {logfire_config.get('service_name', 'ai-agent-framework')}")
+            
+        except Exception as e:
+            print(f"Warning: Failed to initialize Logfire: {e}")
     
     def _parse_agent_config(self, agent_file: Path) -> AgentConfig:
         """Parse agent configuration from markdown file"""
@@ -318,9 +359,22 @@ class AgentRunner:
     
     async def run_agent_async(self, agent_name: str, message: str) -> AgentResponse:
         """Run an agent asynchronously - for use in async contexts like MCP servers"""
+        logfire_config = self.config.get('logfire', {})
+        
+        # Log agent execution start
+        if logfire_config.get('log_agent_execution', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+            logfire.info(
+                "Agent execution started",
+                agent_name=agent_name,
+                message_length=len(message),
+                message_preview=message[:100] + "..." if len(message) > 100 else message
+            )
+        
         # Load agent configuration
         agent_file = self.agents_dir / f"{agent_name}.md"
         if not agent_file.exists():
+            if logfire_config.get('log_agent_execution', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+                logfire.error("Agent not found", agent_name=agent_name, agent_file=str(agent_file))
             return AgentResponse(
                 output="",
                 usage=UsageInfo(requests=0),
@@ -390,11 +444,67 @@ class AgentRunner:
         )
         
         try:
-            # Run the agent asynchronously
-            result = await agent.run(message, usage_limits=usage_limits)
-            
-            # Extract tool calls and results from the result
-            tool_calls = self._extract_tool_calls(result.all_messages())
+            # Run the agent asynchronously with Logfire span tracking
+            with logfire.span(
+                "Agent execution", 
+                agent_name=agent_name, 
+                message_preview=message[:100] + "..." if len(message) > 100 else message,
+                model=config.model
+            ) as span:
+                result = await agent.run(message, usage_limits=usage_limits)
+                
+                # Extract tool calls and results from the result
+                tool_calls = self._extract_tool_calls(result.all_messages())
+                
+                # Add execution details to span
+                span.set_attributes({
+                    'requests': result.usage().requests,
+                    'request_tokens': result.usage().request_tokens,
+                    'response_tokens': result.usage().response_tokens,
+                    'total_tokens': result.usage().total_tokens,
+                    'tool_calls_count': len(tool_calls),
+                    'output_length': len(str(result.output))
+                })
+                
+                # Log detailed LLM messages if enabled
+                if logfire_config.get('log_llm_messages', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+                    # Log all messages in the conversation
+                    for i, msg in enumerate(result.all_messages()):
+                        if hasattr(msg, 'role') and hasattr(msg, 'content'):
+                            logfire.info(
+                                f"LLM message {i+1}",
+                                agent_name=agent_name,
+                                role=getattr(msg, 'role', 'unknown'),
+                                content_preview=str(msg.content)[:200] + "..." if len(str(msg.content)) > 200 else str(msg.content),
+                                content_length=len(str(msg.content))
+                            )
+                
+                # Log tool calls if enabled
+                if logfire_config.get('log_tool_calls', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+                    for tool_call in tool_calls:
+                        logfire.info(
+                            "Tool call executed",
+                            agent_name=agent_name,
+                            tool_name=tool_call.tool_name,
+                            call_id=tool_call.call_id,
+                            arguments=tool_call.arguments,
+                            result_preview=str(tool_call.result)[:200] + "..." if tool_call.result and len(str(tool_call.result)) > 200 else str(tool_call.result),
+                            result_length=len(str(tool_call.result)) if tool_call.result else 0
+                        )
+                
+                # Log usage statistics if enabled
+                if logfire_config.get('log_usage', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+                    logfire.info(
+                        "Agent execution completed",
+                        agent_name=agent_name,
+                        requests=result.usage().requests,
+                        request_tokens=result.usage().request_tokens,
+                        response_tokens=result.usage().response_tokens,
+                        total_tokens=result.usage().total_tokens,
+                        tool_calls_count=len(tool_calls),
+                        output_preview=str(result.output)[:200] + "..." if len(str(result.output)) > 200 else str(result.output),
+                        success=True
+                    )
             
             # Create AgentResponse object
             agent_response = AgentResponse(
@@ -412,6 +522,14 @@ class AgentRunner:
             )
             return agent_response
         except Exception as e:
+            # Log error
+            if logfire_config.get('log_agent_execution', True) and os.getenv('LOGFIRE_WRITE_TOKEN'):
+                logfire.error(
+                    "Agent execution failed",
+                    agent_name=agent_name,
+                    error=str(e),
+                    success=False
+                )
             return AgentResponse(
                 output="",
                 usage=UsageInfo(requests=0),

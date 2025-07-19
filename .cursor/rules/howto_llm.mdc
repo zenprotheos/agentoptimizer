@@ -1,7 +1,0 @@
----
-alwaysApply: true
----
-
-This framework is based on Pydantic AI. You must consult the docs by reading this url on the web https://ai.pydantic.dev/llms.txt whenever you develop a new feature.
-
-We use openrouter as the llm gateway. If you need info about that, you must read this web doc https://openrouter.ai/docs/llms.txt

@@ -186,7 +186,13 @@ Temporary Items
 .apdisk
 
 # Project specific
+
 mcp.json
 *.log
 test_output/
 temp/ 
+
+# Test files
+*test*.py
+*test*.md
+*test*/

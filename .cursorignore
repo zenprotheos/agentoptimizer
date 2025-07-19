@@ -1,0 +1,4 @@
+# We want to give cursor access to our .env file
+
+!.env
+!.env.local
