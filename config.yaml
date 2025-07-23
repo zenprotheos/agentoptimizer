@@ -1,6 +1,13 @@
 # AI Agent Framework Configuration
 # Based on Pydantic AI ModelSettings: https://ai.pydantic.dev/api/settings/
 
+# Template engine configuration
+template_engine:
+  name: jinja2
+  autoescape: false           # Keep false to preserve Markdown formatting
+  base_path: ./snippets       # Default directory for includes (relative paths)
+  enable_async: true          # Support async rendering
+
 # Default model settings
 model_settings:
   # Model name - can be overridden per agent
@@ -48,6 +55,15 @@ usage_limits:
   
   # Maximum total tokens (requests + responses) (null = no limit)
   total_tokens_limit: null
+
+# MCP Configuration paths
+mcp_config:
+  # Local project MCP config (higher priority)
+  local_config_path: ".cursor/mcp.json"
+  # Global system MCP config (lower priority) 
+  global_config_path: "~/.cursor/mcp.json"
+  # Whether to normalize server names to lowercase for matching
+  case_insensitive_matching: true
 
 # Logfire configuration
 logfire:

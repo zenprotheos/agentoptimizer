@@ -7,7 +7,7 @@
       "oneshot": {
         "command": "python3",
         "type": "stdio",
-        "args": ["/Users/PATH_TO_ONESHOT_REPO/agent_mcp.py"]
+        "args": ["/Users/PATH_TO_ONESHOT_REPO/oneshot/oneshot_mcp.py"]
       }
     }
 }

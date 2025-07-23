@@ -186,7 +186,7 @@ Temporary Items
 .apdisk
 
 # Project specific
-
+.specstory/
 mcp.json
 *.log
 test_output/
@@ -196,3 +196,4 @@ temp/
 *test*.py
 *test*.md
 *test*/
+

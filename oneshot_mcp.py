@@ -33,7 +33,7 @@ def list_agents() -> str:
     """
     return list_agents_impl(project_root)
 
-@mcp.tool()
+@mcp.prompt()
 def how_to_create_agents() -> str:
     """Returns comprehensive instructions and examples for creating new agents dynamically. This guide covers agent architecture, configuration requirements, tool selection, system prompt design, and best practices for agent creation.
     
@@ -86,4 +86,4 @@ def call_agent(agent_name: str, message: str, debug: bool = False) -> str:
         return f"ERROR: Failed to call agent {agent_name}: {e}"
 
 if __name__ == "__main__":
-    mcp.run() 
+    mcp.run()

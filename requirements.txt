@@ -1,8 +1,9 @@
-pydantic-ai[openai]>=0.0.13
-pydantic>=2.0.0
-requests>=2.25.0
-beautifulsoup4>=4.9.0
-PyYAML>=6.0
-python-dotenv>=0.19.0
-fastmcp>=0.2.0
-logfire>=2.0.0 
+pydantic-ai
+python-dotenv
+pyyaml
+logfire
+jinja2>=3.1,<4
+yt-dlp
+openai
+requests
+pathlib2

@@ -1,0 +1,222 @@
+[
+  {
+    "parts": [
+      {
+        "content": "# ABOUT YOU\n\nYou are a helpful assistant with a specialisation in using the web. Via a series of powerful tools, you can search the web, browse a page, scrape content, deploy files, etc\n\nYou work as part of my AI Agent team, a brilliant team of specialist agents whose activities are orchestrated by the Orchestrator Agent (ie the `user` messages).\n\n# ABOUT CB (Chris Boden)\n\nI am Chris Boden, the user in this conversation. Following a global career as a tech exec and startup guy focused on emerging technologies, I now work in public service for Noosa Shire Council in Noosa - a beautiful beachside town of 55k residents, in Queensland, Australia.\n\nMy job is to develop the tech/digital sector in the region by running the Peregian Digital Hub, a world-class environment for people building technology companies, located in Peregian Beach - a suburb of Noosa. The Hub is owned and operated by the Noosa Council and its purpose is to catalyse the development of a vibrant tech ecosystem in a place better known for tourism.\n\nThe Hub provides an inspiring working environment for tech entrepreneurs and remote workers, inspiring events for digital professionals and an extensive skills development program for digital talent. It hosts 120 members across 30 companies working on ambitious tech projects and each month it hosts hundreds of people at various meetups for the tech and digital sector.\n\nThe Hub has an AI Lab with cutting edge facilities from where it runs AI upskilling and professional development programs, to help the region make the most of the Age of AI.\n\nMy interests are AI, startups, venture capital, biotech, software, tech ecosystems, innovation. I love building software using AI coding assistance and creating image and video content using AI.\n\n\ud83d\udce7: chris.boden@noosa.qld.gov.au  \n\ud83d\udd17: https://www.peregianhub.com.au/  \n\ud83d\udcf1: 0421850424 \n\n## YOUR APPROACH\n\n<agent_loop>\nYou are operating in an agent loop, iteratively completing tasks through these steps:\n1. Analyze Events: Understand CB's needs and current state through the message stream, paying attention to instructions from the Orchestrator Agent, the provided content and the execution results of your tools.\n2. Plan: Carefully plan your moves by considering what needs to be done and what tools you have to achieve that\n3. Select Tools: Choose next tool call based on current state, task planning, provided content, and suitability of the available tools\n4. Wait for Execution: Selected tool action will be executed by sandbox environment with new outputs added to the message stream.\n5. Iterate: Choose only one tool call per iteration, patiently repeat above steps until task completion\n6. Submit Results: When finished the task, send deliverables to the Orchestrator Agent by providing file path/s to the file/s you generated, in your response.\n</agent_loop> \n\n# PROVIDED CONTENT:\n\nMore often than not, the Orchestrator Agent will provide you with specific content to use in your writing. For example, if you are asked to write an email invitation for an upcoming event, you will generally be provided with the details for that event. \n\nIf the Orchestrator Agent has asked you to write based on specific content or data, it will be included between the <provided_files> tags below. Make sure your writing accurately represents the provided content and that you do not make up information.\n\nIf you do not have sufficient information to complete the task as requested, message the Orchestrator Agent and ask for further information or clarification.\n\n<provided_files>\n\n<$provided_filepaths$>\n\n</provided_files> ",
+        "timestamp": "2025-07-23T13:53:19.148252Z",
+        "dynamic_ref": null,
+        "part_kind": "system-prompt"
+      },
+      {
+        "content": "Can you create a simple test file using the save function?",
+        "timestamp": "2025-07-23T13:53:19.148255Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "Could you please clarify which \"save\" function you are referring to? Is it a function in a specific programming language or framework? Additionally, please provide any particular requirements or context for the test file you want me to create.",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2259,
+      "response_tokens": 46,
+      "total_tokens": 2305,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 2176
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:53:20Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278800-h4NzleEdYCk6jqdikaRH"
+  },
+  {
+    "parts": [
+      {
+        "content": "Please use the ai.save() function from tool_helper to create a test file with some content",
+        "timestamp": "2025-07-23T13:53:32.498816Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "I don't currently have direct access to the ai.save() function from tool_helper. Could you please provide more details or the exact syntax you would like me to use for this function? Alternatively, if you can share how the function should be used, I can create a sample test file content for you.",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2330,
+      "response_tokens": 61,
+      "total_tokens": 2391,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 2176
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:53:33Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278813-BlvFJB0dbieAIWvqGy8Y"
+  },
+  {
+    "parts": [
+      {
+        "content": "Please use the file_creator tool to create a test file with some sample content about AI developments",
+        "timestamp": "2025-07-23T13:54:23.330848Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "file_creator",
+        "args": "{\"content\":\"AI Developments\\n\\nAI (Artificial Intelligence) is transforming various industries by enabling machines to learn from data and perform tasks that typically require human intelligence. Recent advancements include natural language processing, computer vision, and autonomous systems. These technologies are being applied in healthcare, finance, automotive, and many other sectors to improve efficiency, accuracy, and decision-making capabilities.\\n\\nKey Developments:\\n- Natural Language Processing (NLP): Enhances human-computer interaction.\\n- Computer Vision: Enables image and video analysis for various applications.\\n- Autonomous Systems: Supports self-driving cars and drones.\\n\\nThe future of AI holds promise for even greater innovations and societal impact.\",\"description\":\"Sample test file content about AI developments\",\"filename\":\"AI_Developments_Test_File.txt\"}",
+        "tool_call_id": "call_RRViMETelvBAOJmG1tP4jZLV",
+        "part_kind": "tool-call"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2526,
+      "response_tokens": 167,
+      "total_tokens": 2693,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:54:24Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278864-YHivZG637drzrZrgSEVH"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "file_creator",
+        "content": "\u2705 **File Created Successfully**\n\n**File Details:**\n- **Filepath:** `/Users/chrisboden/Dropbox/AI/oneshot/artifacts/6e127e67/AI_Developments_Test_File.txt`\n- **Run ID:** `6e127e67`\n- **Artifacts Directory:** `/Users/chrisboden/Dropbox/AI/oneshot/artifacts/6e127e67`\n- **Description:** Sample test file content about AI developments\n- **Tokens:** 128\n- **Created:** 2025-07-23T23:54:29.412453\n\n**Content Preview:**\n```\nAI Developments\n\nAI (Artificial Intelligence) is transforming various industries by enabling machines to learn from data and perform tasks that typically require human intelligence. Recent advancement...\n```\n\nThe file has been saved to the run-specific artifacts directory for easy organization and educational inspection.",
+        "tool_call_id": "call_RRViMETelvBAOJmG1tP4jZLV",
+        "metadata": null,
+        "timestamp": "2025-07-23T13:54:29.412656Z",
+        "part_kind": "tool-return"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "I have created a test file with sample content about AI developments. Let me know if you want me to share the file or need anything else.",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2883,
+      "response_tokens": 30,
+      "total_tokens": 2913,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 2688
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:54:29Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278869-FXHR1toylKSLhcr32NFW"
+  },
+  {
+    "parts": [
+      {
+        "content": "Please create another file using file_creator with content about the Peregian Digital Hub",
+        "timestamp": "2025-07-23T13:54:50.672205Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "file_creator",
+        "args": "{\"content\":\"Peregian Digital Hub\\n\\nThe Peregian Digital Hub is a world-class environment located in Peregian Beach, Noosa Shire, Queensland, Australia. It serves as a catalyst for developing the tech and digital sector in the region by providing a vibrant ecosystem for technology companies and remote workers.\\n\\nKey features of the Hub include:\\n- Inspiring co-working spaces for 120 members across 30 companies.\\n- Hosting meetups, events, and professional development programs focused on digital skills and AI.\\n- An AI Lab with cutting-edge facilities to support AI upskilling and innovation.\\n- A community that nurtures startups, tech entrepreneurs, and digital talent.\\n\\nThe Hub plays a vital role in transforming the region into a thriving tech ecosystem, complementing the coastal lifestyle and tourism economy.\",\"description\":\"Sample test file content about the Peregian Digital Hub\",\"filename\":\"Peregian_Digital_Hub_Test_File.txt\"}",
+        "tool_call_id": "call_hg6Lcc5oESTdl0P0rzbKpSC8",
+        "part_kind": "tool-call"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2936,
+      "response_tokens": 205,
+      "total_tokens": 3141,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:54:52Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278892-1023Ve1FjqJ1Bm5v4JM3"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "file_creator",
+        "content": "\u2705 **File Created Successfully**\n\n**File Details:**\n- **Filepath:** `/Users/chrisboden/Dropbox/AI/oneshot/artifacts/6e127e67/Peregian_Digital_Hub_Test_File.txt`\n- **Run ID:** `6e127e67`\n- **Artifacts Directory:** `/Users/chrisboden/Dropbox/AI/oneshot/artifacts/6e127e67`\n- **Description:** Sample test file content about the Peregian Digital Hub\n- **Tokens:** 157\n- **Created:** 2025-07-23T23:54:59.518313\n\n**Content Preview:**\n```\nPeregian Digital Hub\n\nThe Peregian Digital Hub is a world-class environment located in Peregian Beach, Noosa Shire, Queensland, Australia. It serves as a catalyst for developing the tech and digital s...\n```\n\nThe file has been saved to the run-specific artifacts directory for easy organization and educational inspection.",
+        "tool_call_id": "call_hg6Lcc5oESTdl0P0rzbKpSC8",
+        "metadata": null,
+        "timestamp": "2025-07-23T13:54:59.518454Z",
+        "part_kind": "tool-return"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "I have created another test file with content about the Peregian Digital Hub. Let me know if you would like me to do anything else!",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 3351,
+      "response_tokens": 30,
+      "total_tokens": 3381,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:55:00Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278900-BxBKYRwKwxnSebuSiRXu"
+  }
+]

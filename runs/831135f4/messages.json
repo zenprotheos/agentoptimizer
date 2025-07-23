@@ -1,0 +1,188 @@
+[
+  {
+    "parts": [
+      {
+        "content": "# ABOUT YOU\n\nYou are a helpful assistant with a specialisation in using the web. Via a series of powerful tools, you can search the web, browse a page, scrape content, deploy files, etc\n\nYou work as part of my AI Agent team, a brilliant team of specialist agents whose activities are orchestrated by the Orchestrator Agent (ie the `user` messages).\n\n# ABOUT CB (Chris Boden)\n\nI am Chris Boden, the user in this conversation. Following a global career as a tech exec and startup guy focused on emerging technologies, I now work in public service for Noosa Shire Council in Noosa - a beautiful beachside town of 55k residents, in Queensland, Australia.\n\nMy job is to develop the tech/digital sector in the region by running the Peregian Digital Hub, a world-class environment for people building technology companies, located in Peregian Beach - a suburb of Noosa. The Hub is owned and operated by the Noosa Council and its purpose is to catalyse the development of a vibrant tech ecosystem in a place better known for tourism.\n\nThe Hub provides an inspiring working environment for tech entrepreneurs and remote workers, inspiring events for digital professionals and an extensive skills development program for digital talent. It hosts 120 members across 30 companies working on ambitious tech projects and each month it hosts hundreds of people at various meetups for the tech and digital sector.\n\nThe Hub has an AI Lab with cutting edge facilities from where it runs AI upskilling and professional development programs, to help the region make the most of the Age of AI.\n\nMy interests are AI, startups, venture capital, biotech, software, tech ecosystems, innovation. I love building software using AI coding assistance and creating image and video content using AI.\n\n\ud83d\udce7: chris.boden@noosa.qld.gov.au  \n\ud83d\udd17: https://www.peregianhub.com.au/  \n\ud83d\udcf1: 0421850424 \n\n## YOUR APPROACH\n\n<agent_loop>\nYou are operating in an agent loop, iteratively completing tasks through these steps:\n1. Analyze Events: Understand CB's needs and current state through the message stream, paying attention to instructions from the Orchestrator Agent, the provided content and the execution results of your tools.\n2. Plan: Carefully plan your moves by considering what needs to be done and what tools you have to achieve that\n3. Select Tools: Choose next tool call based on current state, task planning, provided content, and suitability of the available tools\n4. Wait for Execution: Selected tool action will be executed by sandbox environment with new outputs added to the message stream.\n5. Iterate: Choose only one tool call per iteration, patiently repeat above steps until task completion\n6. Submit Results: When finished the task, send deliverables to the Orchestrator Agent by providing file path/s to the file/s you generated, in your response.\n</agent_loop> \n\n# PROVIDED CONTENT:\n\nMore often than not, the Orchestrator Agent will provide you with specific content to use in your writing. For example, if you are asked to write an email invitation for an upcoming event, you will generally be provided with the details for that event. \n\nIf the Orchestrator Agent has asked you to write based on specific content or data, it will be included between the <provided_files> tags below. Make sure your writing accurately represents the provided content and that you do not make up information.\n\nIf you do not have sufficient information to complete the task as requested, message the Orchestrator Agent and ask for further information or clarification.\n\n<provided_files>\n\n<$provided_filepaths$>\n\n</provided_files> ",
+        "timestamp": "2025-07-23T13:46:28.631568Z",
+        "dynamic_ref": null,
+        "part_kind": "system-prompt"
+      },
+      {
+        "content": "Hello! Can you tell me what you can help me with?",
+        "timestamp": "2025-07-23T13:46:28.631570Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "Hello! I can assist you with a wide range of tasks, including but not limited to:\n\n1. Answering questions and providing information on various topics.\n2. Helping with writing tasks such as emails, reports, articles, and content creation.\n3. Conducting web searches to find up-to-date information.\n4. Extracting and summarizing content from web pages.\n5. Managing emails, including finding contacts, creating draft emails, and replies.\n6. Assisting with Notion tasks like managing pages, databases, and content.\n7. Creating and managing files, documents, and spreadsheets.\n8. Providing coding help and technical explanations.\n9. Supporting your interests in AI, startups, venture capital, biotech, software, tech ecosystems, innovation, and more.\n10. Helping you leverage AI tools for building software, generating images, and creating video content.\n\nFeel free to ask for assistance with any specific task or question you have in mind!",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2260,
+      "response_tokens": 190,
+      "total_tokens": 2450,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:46:30Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278390-bablukl4bLMPyY1P4n1T"
+  },
+  {
+    "parts": [
+      {
+        "content": "Can you search for recent AI developments?",
+        "timestamp": "2025-07-23T13:47:19.819061Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "web_search",
+        "args": "{\"query\":\"recent AI developments\",\"num_results\":5}",
+        "tool_call_id": "call_Va4oZhQVwEtrULYpYZRds2IG",
+        "part_kind": "tool-call"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 2465,
+      "response_tokens": 21,
+      "total_tokens": 2486,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:47:22Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278442-uxp2rdhETESeGJ7vEnPL"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "web_search",
+        "content": "{\n  \"query\": \"recent AI developments\",\n  \"total_results\": 5,\n  \"results\": [\n    {\n      \"title\": \"Latest AI Breakthroughs and News: May, June, July 2025 | News\",\n      \"url\": \"https://www.crescendo.ai/news/latest-ai-news-and-updates\",\n      \"snippet\": \"The plan includes building an <strong>AI</strong> ... <strong>and</strong> <strong>development</strong> jobs, underscoring Apple&#x27;s commitment to advancing <strong>AI</strong> technologies. ... Summary: <strong>AI</strong> startup Humane announced it is discontinuing its <strong>AI</strong> Pin device and selling parts of its business to HP for $116 million. Existing <strong>AI</strong> Pins will function until February 28, 2025, after which cloud-dependent features will cease. Refunds are available for <strong>recent</strong> ...\",\n      \"published\": \"1 day ago\"\n    },\n    {\n      \"title\": \"AI News | Latest AI News, Analysis & Events\",\n      \"url\": \"https://www.artificialintelligence-news.com/\",\n      \"snippet\": \"<strong>AI</strong> News reports on the latest artificial intelligence news and insights. Explore industry trends from the frontline of <strong>AI</strong>.\",\n      \"published\": \"7 hours ago\"\n    },\n    {\n      \"title\": \"Artificial intelligence (AI) | The Guardian\",\n      \"url\": \"https://www.theguardian.com/technology/artificialintelligenceai\",\n      \"snippet\": \"Latest news, sport, business, comment, analysis and reviews from the Guardian, the world&#x27;s leading liberal voice\",\n      \"published\": \"14 hours ago\"\n    },\n    {\n      \"title\": \"Artificial intelligence | MIT News | Massachusetts Institute of Technology\",\n      \"url\": \"https://news.mit.edu/topic/artificial-intelligence2\",\n      \"snippet\": \"In MIT&#x27;s course 17.831 (Data and Politics), students are introduced to the power of analysis, visualization, and research-supported insight into political outcomes. ... <strong>Developed</strong> to analyze new semiconductors, the system could streamline the <strong>development</strong> of more powerful solar panels.\",\n      \"published\": \"1 day ago\"\n    },\n    {\n      \"title\": \"AI News & Artificial Intelligence | TechCrunch\",\n      \"url\": \"https://techcrunch.com/category/artificial-intelligence/\",\n      \"snippet\": \"Read the latest on artificial intelligence and machine learning tech, the companies that are building them, and the ethical issues <strong>AI</strong> raises today.\",\n      \"published\": \"1 day ago\"\n    }\n  ]\n}",
+        "tool_call_id": "call_Va4oZhQVwEtrULYpYZRds2IG",
+        "metadata": null,
+        "timestamp": "2025-07-23T13:47:25.357407Z",
+        "part_kind": "tool-return"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "Here are some recent sources with updates on AI developments:\n\n1. Crescendo.ai News - Latest AI breakthroughs and news, including industry moves like Humane discontinuing its AI Pin device. (Published 1 day ago) [Link](https://www.crescendo.ai/news/latest-ai-news-and-updates)\n\n2. Artificial Intelligence News - Regular updates and analysis on AI industry trends. (Published 7 hours ago) [Link](https://www.artificialintelligence-news.com/)\n\n3. The Guardian - Latest AI news and commentary from a major global news outlet. (Published 14 hours ago) [Link](https://www.theguardian.com/technology/artificialintelligenceai)\n\n4. MIT News - Insights from the Massachusetts Institute of Technology on AI research and applications. (Published 1 day ago) [Link](https://news.mit.edu/topic/artificial-intelligence2)\n\n5. TechCrunch - Articles on AI technology, companies, and ethical issues in AI today. (Published 1 day ago) [Link](https://techcrunch.com/category/artificial-intelligence/)\n\nWould you like me to summarize information from any specific source or provide more detailed insights on any particular topic?",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 3070,
+      "response_tokens": 240,
+      "total_tokens": 3310,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 2432
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:47:25Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278445-Fy843oBynf5EHHuYOsZH"
+  },
+  {
+    "parts": [
+      {
+        "content": "Thanks! Can you tell me more about the Humane AI Pin discontinuation you mentioned?",
+        "timestamp": "2025-07-23T13:48:03.087537Z",
+        "part_kind": "user-prompt"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "web_read_page",
+        "args": "{\"url\":\"https://www.crescendo.ai/news/latest-ai-news-and-updates\",\"max_length\":1000}",
+        "tool_call_id": "call_v5wISunUwLkiVAfXr8e7mzmd",
+        "part_kind": "tool-call"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 3334,
+      "response_tokens": 34,
+      "total_tokens": 3368,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 3200
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:48:04Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278484-yN9eFRWgC7ZBh66W6NyA"
+  },
+  {
+    "parts": [
+      {
+        "tool_name": "web_read_page",
+        "content": "{\n  \"url\": \"https://www.crescendo.ai/news/latest-ai-news-and-updates\",\n  \"title\": \"Latest AI Breakthroughs and News: May, June, July 2025 | News\",\n  \"description\": \"Wondering what\\u2019s happening in the AI world? Here are the latest AI breakthroughs and news that are shaping the world around us!\",\n  \"content\": \"Crescendo and Amazon deliver breakthrough in voice AI for customer service. \\u00a0Read press release.ProductOmnichannel AIHuman in the LoopInsights & ReportingApps & IntegrationsAgentic AIManaged ServiceDemoIndustriesRetail & EcommerceConnected DevicesFinancial ServicesHealth & WellnessSolutionsAI\\u00a0Live ChatAI\\u00a0Voice AgentsEmail AutomationVoice of the Customer (VoC)Complimentary ServicesAll FeaturesPricingResourcesBlogNewsCase StudiesAugmented AIDIY\\u00a0\\u00a0AICompanyCareersSchedule a demoJuly 22, 2025Latest AI Breakthroughs and News: May, June, July 2025&Medha MehtaWondering what\\u2019s happening in the AI world? Here are the latest AI breakthroughs and news that are shaping the world around us!Latest AI Breakthroughs, News, and UpdatesWondering what\\u2019s happening in the AI world? Here is the list of the latest AI breakthroughs and news you must be aware of. The field of artificial intelligence continues to evolve at an unprecedented pace, with breakthroughs and advancements reshaping industries, governmen...\",\n  \"links\": [\n    {\n      \"text\": \"Read press release.\",\n      \"url\": \"https://www.crescendo.ai/news/crescendo-amazon-nova-sonic-voice-ai-customer-service\"\n    },\n    {\n      \"text\": \"\",\n      \"url\": \"https://www.crescendo.ai/\"\n    },\n    {\n      \"text\": \"Omnichannel AI\",\n      \"url\": \"https://www.crescendo.ai/product/omnichannel-ai\"\n    },\n    {\n      \"text\": \"Human in the Loop\",\n      \"url\": \"https://www.crescendo.ai/product/human-in-the-loop\"\n    },\n    {\n      \"text\": \"Insights & Reporting\",\n      \"url\": \"https://www.crescendo.ai/product/insights-reporting\"\n    },\n    {\n      \"text\": \"Apps & Integrations\",\n      \"url\": \"https://www.crescendo.ai/product/apps-integrations\"\n    },\n    {\n      \"text\": \"Agentic AI\",\n      \"url\": \"https://www.crescendo.ai/product/agentic-ai\"\n    },\n    {\n      \"text\": \"Managed Service\",\n      \"url\": \"https://www.crescendo.ai/product/managed-service\"\n    },\n    {\n      \"text\": \"Demo\",\n      \"url\": \"https://www.crescendo.ai/demo\"\n    },\n    {\n      \"text\": \"Retail & Ecommerce\",\n      \"url\": \"https://www.crescendo.ai/ecommerce-ai-customer-service\"\n    }\n  ],\n  \"content_length\": 1003\n}",
+        "tool_call_id": "call_v5wISunUwLkiVAfXr8e7mzmd",
+        "metadata": null,
+        "timestamp": "2025-07-23T13:48:06.709125Z",
+        "part_kind": "tool-return"
+      }
+    ],
+    "instructions": null,
+    "kind": "request"
+  },
+  {
+    "parts": [
+      {
+        "content": "The page from Crescendo.ai mentions the discontinuation of the Humane AI Pin device as part of recent AI news. Humane, the AI startup behind the AI Pin, has announced that it is discontinuing the device. They are also selling parts of their business to HP for $116 million. Existing AI Pin devices will continue to function until February 28, 2025, after which cloud-dependent features will cease. Refunds are available for recent buyers of the device.\n\nIf you'd like, I can help find more detailed or specific information about the Humane AI Pin or any other related topics.",
+        "part_kind": "text"
+      }
+    ],
+    "usage": {
+      "requests": 1,
+      "request_tokens": 4021,
+      "response_tokens": 119,
+      "total_tokens": 4140,
+      "details": {
+        "reasoning_tokens": 0,
+        "cached_tokens": 0
+      }
+    },
+    "model_name": "openai/gpt-4.1-mini",
+    "timestamp": "2025-07-23T13:48:07Z",
+    "kind": "response",
+    "vendor_details": null,
+    "vendor_id": "gen-1753278487-HEsMhL70KsymwbSggSMm"
+  }
+]
