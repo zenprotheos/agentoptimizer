@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-"""
-Documentation-related MCP functions
-"""
-
-def how_to_create_agent() -> str:
-    """Returns comprehensive instructions and examples for creating new agents dynamically. This guide covers agent architecture, configuration requirements, tool selection, system prompt design, and best practices for agent creation.
-    
-    Returns:
-        str: Complete agent creation guide with examples and best practices
-    """
-    guide = """
 # Agent Creation Guide
 
 ## Agent File Structure
@@ -44,7 +32,6 @@ Describe how the agent should approach tasks...
 - Be concise and helpful
 - Use tools when appropriate
 - Follow best practices
-```
 
 ## Available Tools
 
@@ -159,13 +146,11 @@ You are a thorough research assistant...
 ---
 name: writing_agent
 description: "Helps with writing tasks and content creation"
-model: openai/gpt-4o
+model: openai/gpt-4o-mini
 temperature: 0.8
 max_tokens: 4096
 ---
 
 # ABOUT YOU
 You are a skilled writing assistant...
-```
-"""
-    return guide 
+``` 

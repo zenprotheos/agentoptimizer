@@ -2,4 +2,16 @@
 alwaysApply: true
 ---
 
-When you are in a fresh chat (with no context) and the user asks you something to do with this repo, you MUST read onboarding.md before proceeding. DO NOT make any code changes to this repo without reading that first.
+# INITIAL SETUP CHECK
+You should only be seeing this section if the oneshot repo is not set up properly yet. Once it is set up this gets deleted.
+
+Before we can do anything useful with this repo, we need to check if it is set up. You will know it is set up if you see the oneshot mcp server with its `call_agent` tool (mcp_oneshot_call_agent), in your tools, and the logfire mcp server with its `arbitrary_query` tool (mcp_logfire_arbitrary_query) in your tools.
+If you do not see those things then the repo is not properly set up. 
+
+You MUST read app/docs/how_to_setup.md and guide the user through setup, doing the tasks you can and helping the user through the manual steps. Once successfully setup, come back and remove this URGENT & IMPORTANT SETUP section of this onboarding document. That will ensure that you don't unnecessarily repeat the setup steps in future.
+
+CRITICAL: Ask yourself, is the oneshot system setup based on the guide above? If yes, YOU MUST delete this set_up_check section of this doc and then continue with your task.
+
+[Once setup is complete, delete the above section, including this line, from this doc]
+
+When you are in a fresh chat (with no context) and the user asks you something to do with this repo, you MUST read app/docs/onboarding.md before proceeding. DO NOT make any code changes to this repo without reading that first.

@@ -317,16 +317,16 @@ You can also test individual components manually:
 
 ```bash
 # Test basic agent functionality
-./agent test_agent "Hello, please test your functionality"
+./oneshot test_agent "Hello, please test your functionality"
 
 # Test tool calling
-./agent test_agent "Please call your test_tool to verify it works"
+./oneshot test_agent "Please call your test_tool to verify it works"
 
 # Test file processing
-./agent test_agent "I've provided you with a test file. Please confirm you can see its content." --files test_data/sample_file.txt
+./oneshot test_agent "I've provided you with a test file. Please confirm you can see its content." --files test_data/sample_file.txt
 
 # Test error handling (create a broken agent first)
-./agent broken_agent "This should fail with helpful error messages"
+./oneshot broken_agent "This should fail with helpful error messages"
 ```
 
 ### After Making Changes

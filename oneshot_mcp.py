@@ -13,7 +13,7 @@ from fastmcp import FastMCP
 # Import MCP functions from modular files
 from app.mcp_modules.agents import list_agents as list_agents_impl
 from app.mcp_modules.tools import list_tools as list_tools_impl
-from app.mcp_modules.docs import how_to_create_agent as how_to_create_agent_impl
+from app.mcp_modules.read_doc import read_doc, get_available_docs
 
 # Create the MCP server
 mcp = FastMCP(
@@ -33,14 +33,24 @@ def list_agents() -> str:
     """
     return list_agents_impl(project_root)
 
-@mcp.prompt()
-def how_to_create_agents() -> str:
-    """Returns comprehensive instructions and examples for creating new agents dynamically. This guide covers agent architecture, configuration requirements, tool selection, system prompt design, and best practices for agent creation.
+@mcp.tool()
+def read_instructions_for(guide_name: str) -> str:
+    """Use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
+    
+    Args:
+        guide_name: Name of the guide to read. Available guides:
+            - "how_to_create_agents": Instructions for creating new agents
+            - "how_to_make_tools": Instructions for creating new tools  
+            - "how_oneshot_works": Technical details of how the system works
     
     Returns:
-        str: Complete agent creation guide with examples and best practices
+        str: Contents of the requested documentation guide
     """
-    return how_to_create_agent_impl()
+    try:
+        return read_doc(guide_name, project_root)
+    except Exception as e:
+        available_docs = get_available_docs(project_root)
+        return f"Error reading guide '{guide_name}': {str(e)}\n\nAvailable guides: {', '.join(available_docs)}"
 
 @mcp.tool()
 def list_tools() -> str:

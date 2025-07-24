@@ -1,6 +1,16 @@
+## URGENT & IMPORTANT SET UP
+
+Before you can do anything useful with this repo, you need to set it up. You will know it is set up if you see the oneshot mcp server with its `call_agent` tool (mcp_oneshot_call_agent), in your tools, and the logfire mcp server with its `arbitrary_query` tool (mcp_logfire_arbitrary_query) in your tools.
+
+If you do not see those things then the repo is not properly set up. You MUST read app/docs/how_to_setup.md and guide the user through setup, doing the tasks you can and helping the user through the manual steps. Once successfully setup, come back and remove this URGENT & IMPORTANT SETUP section of this onboarding document. That will ensure that you don't unnecessarily repeat the setup steps in future.
+
+CRITICAL: Ask yourself, is the oneshot system setup based on the guide above? If yes, delete this section and then continue with your task.
+
+
+
 # Oneshot Agent System - Coding Agent Onboarding Guide
 
-You first read this document to get onboarded, to learn how to work with this repo. Then you read how_oneshot_works.md to learn how the code actually works. Do not attempt changes before you have read both.
+IMPORTANT: You first read this document to get onboarded, to learn how to work with this repo. Then you read app/docs/how_oneshot_works.md to learn how the code actually works. Do not attempt changes before you have read both.
 
 ## Philosophy: Primum Non Nocere (First, Do No Harm)
 
@@ -24,7 +34,7 @@ Before investigating specific issues, verify basic system health:
 
 ```bash
 # Test the agent CLI directly
-./agent web_agent "hello"
+./oneshot web_agent "hello"
 
 # Test MCP server functionality
 python3 -c "from app.mcp_modules.agents import list_agents; print(list_agents('.'))"

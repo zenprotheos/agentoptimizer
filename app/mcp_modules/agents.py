@@ -9,16 +9,20 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, List
 
-def list_agents(project_root: Path) -> str:
+def list_agents(project_root) -> str:
     """List all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task.
     
     Args:
-        project_root: Path to the project root directory
+        project_root: Path to the project root directory (can be string or Path object)
         
     Returns:
         str: JSON formatted list of available agents with their descriptions
     """
     try:
+        # Convert to Path object if it's a string
+        if isinstance(project_root, str):
+            project_root = Path(project_root)
+        
         agents_dir = project_root / "agents"
         agents = []
         

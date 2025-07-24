@@ -186,12 +186,20 @@ Temporary Items
 .apdisk
 
 # Project specific
-.specstory/
+/.specstory
+/.logfire
+/.qwen
+/.gemini
 mcp.json
+AGENT.md
+
+# Logs & temp files
 *.log
 test_output/
 temp/
 z_temp/ 
+
+# Usage data
 /runs/*
 /artifacts/*
 

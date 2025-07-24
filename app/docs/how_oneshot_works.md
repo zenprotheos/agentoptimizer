@@ -205,7 +205,7 @@ model_settings = ModelSettings(
 
 ## Data Flow: File Passing Example
 
-1.  **CLI Call**: `./agent writing_agent "summarize this" --files "report.md"`
+1.  **CLI Call**: `./oneshot writing_agent "summarize this" --files "report.md"`
 2.  **`agent_runner.py`**: Parses arguments. `files` = `["report.md"]`.
 3.  **`agent_template_processor.py`**:
     - Reads the content of `report.md`.
