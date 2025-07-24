@@ -1,16 +1,12 @@
-## URGENT & IMPORTANT SET UP
-
-Before you can do anything useful with this repo, you need to set it up. You will know it is set up if you see the oneshot mcp server with its `call_agent` tool (mcp_oneshot_call_agent), in your tools, and the logfire mcp server with its `arbitrary_query` tool (mcp_logfire_arbitrary_query) in your tools.
-
-If you do not see those things then the repo is not properly set up. You MUST read app/docs/how_to_setup.md and guide the user through setup, doing the tasks you can and helping the user through the manual steps. Once successfully setup, come back and remove this URGENT & IMPORTANT SETUP section of this onboarding document. That will ensure that you don't unnecessarily repeat the setup steps in future.
-
-CRITICAL: Ask yourself, is the oneshot system setup based on the guide above? If yes, delete this section and then continue with your task.
-
-
 
 # Oneshot Agent System - Coding Agent Onboarding Guide
 
-IMPORTANT: You first read this document to get onboarded, to learn how to work with this repo. Then you read app/docs/how_oneshot_works.md to learn how the code actually works. Do not attempt changes before you have read both.
+## Required Reading Before Making Code Changes
+
+1. **This document** - Learn the workflow and diagnostic approach for the oneshot repo
+2. **app/docs/how_oneshot_works.md** - Understand the oneshot system architecture and codebase
+
+**DO NOT modify code until you've read both documents.** Most issues are likely configuration or environment problems, not bugs in the core system.
 
 ## Philosophy: Primum Non Nocere (First, Do No Harm)
 
@@ -106,6 +102,13 @@ mcp_context7_get-library-docs(
 2. The `/runs` directory is not writable.
 3. The `run.json` file for the run is corrupted.
 
+### Issue: "oneshot MCP tools not visible"
+**Root causes**:
+1. oneshot MCP has been disabled in cursor tools & integration settings.
+2. A zombie or cached mcp process is running in the background and Cursor is not registering changes. If toggle on and off does not work, the Cursor window may need to be shut down and restarted.
+
+Important Note: any changes to an mcp server require it to be toggled on and off again in the Cursor Settings before the Cursor agent can use the updated tools. Only the user can do that step.
+
 ## Safe Contribution Guidelines
 
 ### Creating New Agents and Tools
@@ -134,3 +137,10 @@ If you break the application:
 3.  **Most issues are environmental or configuration-related**.
 4.  **The core app is stable**. Assume it works correctly until you can prove otherwise.
 5.  **Consult `how_oneshot_works.md`** for technical details.
+
+# IMPORTANT REMINDER
+
+**Before touching any code**: 
+- Read this document → Learn the diagnostic workflow
+- Read `how_oneshot_works.md` → Understand the architecture
+- Only then are you sufficiently knowledgeable about the system to make changes.

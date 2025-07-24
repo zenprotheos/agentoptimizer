@@ -3,7 +3,7 @@ Your job is to help get the user setup with as little pain as possible.
 
 # Step 1: Install dependencies
 
-(Cursor should do this step for the user.)
+(The Cursor Agent should do this step for the user.)
 
 ```bash
    pip install -r requirements.txt
@@ -11,7 +11,7 @@ Your job is to help get the user setup with as little pain as possible.
 
 # Step 2: Set up your environment file
 
-(Cursor should do this step for the user)
+(The Cursor Agent should do this step for the user)
 
 Find the .env_example file and rename it to .env
 You will then need to add your keys for openrouter and logfire
@@ -45,10 +45,10 @@ Paste it after the equals sign
 
 ## Step 5: Set up the MCP Servers
 
-(Cursor should do this step for the user)
+(The Cursor Agent should do this step for the user)
 
 1. Look in the .cursor folder and find mcp_example.json. Rename it to mcp.json and open the file
-2. You should see mcp server config details for the context7, logfire and the oneshot system.
+2. The You Agent should see mcp server config details for the context7, logfire and the oneshot system.
 3. Add the logfire READ token from the previous step to the part of the logfire mcp server config where it says PASTE_YOUR_LOGFIRE_READ_TOKEN_HERE
 
 # Switch on MCP Servers
@@ -60,13 +60,28 @@ Paste it after the equals sign
 - Logfire
 - Context 7
 - oneshot
-3. You should now see a green dot icon next to each server to show that they are configured and working
+3. The You Agent should now see a green dot icon next to each server to show that they are configured and working
 4. Ask cursor if it can see the logfire, context7 and oneshot mcp servers. If it says yes, then you are ready to roll
 
 You can show/see a screenshot of this at docs/images/mcp_settings.jpg
 
 # Run a test
 
+Run the setup test to see if everything is working 
+```python
+python3 app/tests/test_system.py
+```
+
+We would like to see:
+
+✅ PASS: Valid Agent Configuration
+✅ PASS: Tool Functionality
+✅ PASS: File Processing
+✅ PASS: Template Includes
+✅ PASS: Error Handling
+✅ PASS: MCP Server Integration
+
+Overall: 6/6 tests passed
 
 
 # Get started
