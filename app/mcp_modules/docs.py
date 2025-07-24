@@ -51,6 +51,64 @@ Describe how the agent should approach tasks...
 Current tools in the framework:
 - `web_search`: Search the web using DuckDuckGo API
 - `web_read_page`: Read and extract content from web pages
+- `agent_caller`: Call other agents (supports file passing for multi-agent workflows)
+- `file_creator`: Create and save files with metadata
+- Various analysis and processing tools
+
+## File Passing and Context Management
+
+### Overview
+Agents can receive file context through the file passing system, enabling efficient multi-agent workflows without token regeneration overhead.
+
+### Template Integration
+Include `{% include "provided_content.md" %}` in your agent's system prompt to automatically handle file content:
+
+```markdown
+---
+name: analysis_agent
+description: "Analyzes provided documents and generates insights"
+tools:
+  - file_creator
+---
+
+# ABOUT YOU
+You are an expert analyst who reviews documents and creates comprehensive reports.
+
+{% include "about_me.md" %}
+
+## PROVIDED CONTENT
+{% include "provided_content.md" %}
+
+## YOUR APPROACH
+When files are provided, analyze them thoroughly and create structured outputs...
+```
+
+### File-Aware Agent Design
+Design agents to handle both direct messages and file-based context:
+
+1. **Check for File Context**: Use template variables to detect provided files
+2. **Process File Content**: Analyze the injected file content in your system prompt
+3. **Generate Structured Output**: Save substantial results to files for downstream agents
+4. **Maintain Clean Responses**: Return concise summaries to the orchestrator
+
+### Multi-Agent Workflow Patterns
+
+#### Sequential Processing
+```
+Research Agent → generates report.md
+     ↓
+Analysis Agent → receives report.md, creates analysis.md  
+     ↓
+Presentation Agent → receives both files, creates slides.pdf
+```
+
+#### Parallel Processing with Aggregation
+```
+Data Agent → processes data.csv → insights.md
+Content Agent → reviews content.md → summary.md
+     ↓
+Report Agent → receives insights.md + summary.md → final_report.pdf
+```
 
 ## Configuration Options
 
@@ -72,8 +130,11 @@ Current tools in the framework:
 1. **Clear Purpose**: Define a specific role and purpose for your agent
 2. **Appropriate Tools**: Only include tools the agent actually needs
 3. **Good Prompts**: Write clear, specific system prompts
-4. **Test Thoroughly**: Test your agent with various inputs
-5. **Document Well**: Include good descriptions and examples
+4. **File-Aware Design**: Include `{% include "provided_content.md" %}` for file handling
+5. **Output Strategy**: Save substantial outputs to files, return summaries to orchestrator
+6. **Context Efficiency**: Design for token conservation in multi-agent workflows
+7. **Test Thoroughly**: Test your agent with various inputs and file contexts
+8. **Document Well**: Include good descriptions and examples
 
 ## Example Agents
 

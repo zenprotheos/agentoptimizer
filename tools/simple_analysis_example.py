@@ -1,7 +1,7 @@
 # tools/simple_analysis_example.py
 # Example tool using the new Pydantic AI-powered tool helper
 
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {

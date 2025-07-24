@@ -2,12 +2,12 @@
 
 ## Overview
 
-This guide teaches you how to create powerful, minimal-code tools using the `app/tool_helper.py` system. Tools built with this system integrate seamlessly with the Pydantic AI-powered agent framework and require minimal boilerplate code.
+This guide teaches you how to create powerful, minimal-code tools using the `app/tool_services.py` system. Tools built with this system integrate seamlessly with the Pydantic AI-powered agent framework and require minimal boilerplate code.
 
 ## Core Principles
 
 1. **Minimal Code**: Most tools require only 10-20 lines of actual logic
-2. **Single Import**: `from app.tool_helper import *` gives you everything
+2. **Single Import**: `from app.tool_services import *` gives you everything
 3. **Automatic Metadata**: File saving includes YAML frontmatter, token counting, and summaries
 4. **Error-Free**: The helper handles all error cases gracefully
 5. **Consistent Structure**: All tools follow the same pattern
@@ -18,7 +18,7 @@ Every tool follows this exact structure:
 
 ```python
 # tools/your_tool_name.py
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {
@@ -47,7 +47,7 @@ def your_tool_name(param1: str, param2: int = 5) -> str:
 
 ## Available Helper Functions
 
-After `from app.tool_helper import *`, you have access to:
+After `from app.tool_services import *`, you have access to:
 
 | Function | Purpose | Example |
 |----------|---------|---------|
@@ -61,6 +61,193 @@ After `from app.tool_helper import *`, you have access to:
 | `api(url, method, **kwargs)` | HTTP requests with auto-auth | `api("https://api.example.com")` |
 | `set_run_id(run_id)` | Set current run ID for file organization | `set_run_id("a1b2c3d4")` |
 | `get_run_id()` | Get current run ID | `get_run_id()` |
+
+## Agent-to-Agent Communication with File Passing
+
+The tool system supports powerful **agent-to-agent communication** through the `agent_caller` tool, which includes a unique **file passing capability** not available in standard MCP `call_agent` functions.
+
+### File Passing Parameter
+
+Tools can accept a `files` parameter to enable **multi-agent workflows with file context**:
+
+```python
+"files": {
+    "type": "array",
+    "items": {"type": "string"},
+    "description": "Optional list of file paths to pass context to the called agent",
+    "default": []
+}
+```
+
+### How File Passing Works
+
+When files are provided to an agent-calling tool:
+
+1. **File Content Injection**: Each file's content is read using `read(filepath)`
+2. **Automatic Formatting**: Content is injected into the message with clear delimiters
+3. **Error Handling**: Missing or unreadable files are handled gracefully
+4. **Context Preservation**: Target agent receives full file contents as part of its context
+
+### File Passing Example
+
+```python
+# tools/document_processor.py
+from app.tool_services import *
+import json
+
+def document_processor(files: List[str], task: str) -> str:
+    """Process multiple documents and pass them to another agent"""
+    
+    # Create enhanced message with file contents
+    enhanced_message = f"Task: {task}\n\n"
+    
+    # Add file contents
+    if files:
+        enhanced_message += "FILE CONTEXT:\n"
+        for file_path in files:
+            try:
+                content = read(file_path)
+                enhanced_message += f"=== FILE: {file_path} ===\n{content}\n\n"
+            except Exception as e:
+                enhanced_message += f"=== FILE: {file_path} ===\n[ERROR: {e}]\n\n"
+    
+    # The target agent receives the complete message with all file contents
+    # This enables sophisticated multi-agent workflows where agents can
+    # build upon each other's work through file-based context sharing
+    
+    return json.dumps({
+        "success": True,
+        "files_processed": len(files),
+        "enhanced_message_preview": enhanced_message[:200] + "...",
+        "note": "File contents are automatically injected into agent messages"
+    }, indent=2)
+```
+
+### Multi-Agent Workflow Benefits
+
+This file passing capability enables:
+
+- **Sequential Processing**: Agent A creates files → Agent B processes them
+- **Context Continuity**: Rich context sharing between specialized agents  
+- **Workflow Orchestration**: Complex multi-step processes across agent teams
+- **Educational Transparency**: Clear visibility into how agents share information
+
+### File Passing vs Standard MCP
+
+| Feature | Tools with File Passing | Standard MCP `call_agent` |
+|---------|--------------------------|---------------------------|
+| **File Context** | ✅ Automatic file content injection | ❌ No file passing capability |
+| **Multi-Agent Workflows** | ✅ Rich context sharing between agents | ❌ Limited to text messages only |
+| **Context Preservation** | ✅ Full file contents available to target agent | ❌ Manual file handling required |
+| **Error Handling** | ✅ Graceful handling of missing/corrupt files | ❌ No built-in file error handling |
+
+This makes tools with file passing capabilities significantly more powerful for complex, multi-agent workflows where context sharing is essential.
+
+### Designing File-Aware Tools
+
+When creating tools that participate in multi-agent workflows, consider these patterns:
+
+#### 1. **Content Generation Tools**
+Tools that produce substantial output should save to files:
+
+```python
+def research_tool(topic: str) -> str:
+    """Generate comprehensive research report"""
+    
+    # Generate substantial content
+    research_data = llm(f"Conduct thorough research on: {topic}")
+    
+    # Save to file for downstream agents
+    saved_file = save(research_data, f"Research report: {topic}")
+    
+    # Return concise summary to orchestrator
+    summary = llm(f"Summarize this research in 2-3 sentences: {research_data}")
+    
+    return json.dumps({
+        "success": True,
+        "summary": summary,
+        "detailed_report": saved_file["filepath"],
+        "tokens_saved": saved_file["frontmatter"]["tokens"]
+    }, indent=2)
+```
+
+#### 2. **File Processing Tools**
+Tools that work with provided files:
+
+```python
+def analysis_tool(analysis_type: str, files: List[str] = None) -> str:
+    """Analyze provided files or request specific files"""
+    
+    if not files:
+        return json.dumps({
+            "error": "This tool requires files to analyze. Please provide file paths."
+        })
+    
+    # Process each file
+    results = []
+    for filepath in files:
+        content = read(filepath)
+        analysis = llm(f"Perform {analysis_type} analysis on: {content}")
+        results.append({"file": filepath, "analysis": analysis})
+    
+    # Combine results and save
+    combined_analysis = "\n\n".join([f"## {r['file']}\n{r['analysis']}" for r in results])
+    saved_file = save(combined_analysis, f"{analysis_type} analysis results")
+    
+    return json.dumps({
+        "success": True,
+        "files_processed": len(files),
+        "analysis_report": saved_file["filepath"]
+    }, indent=2)
+```
+
+#### 3. **Orchestration Tools**
+Tools that coordinate multi-agent workflows:
+
+```python
+def workflow_orchestrator(task: str, workflow_type: str) -> str:
+    """Orchestrate multi-step workflows with file passing"""
+    
+    if workflow_type == "research_to_presentation":
+        # Step 1: Research
+        research_result = agent_caller(
+            agent_name="research_agent",
+            message=f"Research this topic: {task}"
+        )
+        
+        # Extract file path from research result
+        research_files = extract_file_paths(research_result)
+        
+        # Step 2: Analysis with file passing
+        analysis_result = agent_caller(
+            agent_name="analysis_agent", 
+            message="Analyze the research and create key insights",
+            files=research_files
+        )
+        
+        # Step 3: Presentation with both files
+        all_files = research_files + extract_file_paths(analysis_result)
+        presentation_result = agent_caller(
+            agent_name="presentation_agent",
+            message="Create presentation from research and analysis", 
+            files=all_files
+        )
+        
+        return json.dumps({
+            "success": True,
+            "workflow": "research_to_presentation",
+            "steps_completed": 3,
+            "final_output": presentation_result
+        }, indent=2)
+```
+
+### File-Aware Tool Design Principles
+
+1. **Save Substantial Content**: If your tool generates more than ~500 tokens, save to a file
+2. **Return File References**: Include file paths in tool responses for downstream use
+3. **Handle File Input**: Design tools to optionally accept and process file lists
+4. **Graceful Degradation**: Handle missing files elegantly with clear error messages
+5. **Metadata Rich**: Include useful metadata in file frontmatter and tool responses
 
 ## Run-Aware Artifact Organization
 
@@ -115,7 +302,7 @@ run_id: a1b2c3d4
 
 ```python
 # tools/text_processor.py
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {
@@ -165,7 +352,7 @@ def text_processor(text: str, operation: str) -> str:
 
 ```python
 # tools/data_analyzer.py
-from app.tool_helper import *
+from app.tool_services import *
 from pydantic import BaseModel
 from typing import List
 import json
@@ -234,7 +421,7 @@ def data_analyzer(data_file: str, analysis_type: str) -> str:
 
 ```python
 # tools/research_assistant.py
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {
@@ -307,7 +494,7 @@ def research_assistant(topic: str, depth: str = "detailed") -> str:
 
 ```python
 # tools/content_generator.py
-from app.tool_helper import *
+from app.tool_services import *
 import json
 from datetime import datetime
 
@@ -428,7 +615,7 @@ Best regards,
 
 ```python
 # tools/api_processor.py
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {

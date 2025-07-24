@@ -1,7 +1,7 @@
 # tools/structured_example.py
 # Example tool showing structured output with Pydantic AI
 
-from app.tool_helper import *
+from app.tool_services import *
 from pydantic import BaseModel
 from typing import List
 import json

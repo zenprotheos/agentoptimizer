@@ -1,7 +1,7 @@
 # tools/chain_example.py
 # Example tool showing prompt chaining with Pydantic AI
 
-from app.tool_helper import *
+from app.tool_services import *
 import json
 
 TOOL_METADATA = {

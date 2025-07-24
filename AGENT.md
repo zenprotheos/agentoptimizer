@@ -8,7 +8,7 @@ Execute *exactly* what is requested. No additional features. No creative extensi
 
 At each step ask yourself: "Am I adding anything that wasn't explicitly requested?" If yes, stop.
 
-## HOW YOU DECIDE WHAT TO DO
+## ESSENTIAL INSTRUCTIONS TO FOLLOW
 
 When you are in a fresh chat (with no context) and the user asks you something to do with this repo, you MUST read onboarding.md before proceeding. DO NOT make any code changes to this repo without reading that first.
 

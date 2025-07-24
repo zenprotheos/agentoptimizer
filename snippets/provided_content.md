@@ -8,6 +8,24 @@ If you do not have sufficient information to complete the task as requested, mes
 
 <provided_files>
 
-<$provided_filepaths$>
+{% if provided_files %}
+## File Contents:
+{% for filepath, content in provided_files.items() %}
+### File: {{ filepath }}
+```
+{{ content }}
+```
+{% endfor %}
+{% elif provided_filepaths %}
+## Provided Files:
+{% for filepath in provided_filepaths %}
+- {{ filepath }}
+{% endfor %}
+{% endif %}
+
+{% if provided_files_summary %}
+## Summary of Provided Files:
+{{ provided_files_summary }}
+{% endif %}
 
 </provided_files> 

@@ -6,7 +6,7 @@ model: "openai/gpt-4.1-mini"
 tools:
   - web_read_page
   - web_search
-  - youtube_highlighter
+  - file_creator
 
 mcp:
   - zapier-email

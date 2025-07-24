@@ -52,13 +52,15 @@ def list_tools() -> str:
     return list_tools_impl(project_root)
 
 @mcp.tool()
-def call_agent(agent_name: str, message: str, debug: bool = False) -> str:
+def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "", debug: bool = False) -> str:
     """
     Call an agent by name with a message.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
         message: Message to send to the agent
+        files: Pipe-separated list of file paths (e.g. "file1.md|file2.md"). Default empty string.
+        run_id: Optional run ID to continue an existing conversation (if None, starts new conversation)
         debug: If True, returns detailed debug output including tool calls
         
     Returns:
@@ -67,6 +69,13 @@ def call_agent(agent_name: str, message: str, debug: bool = False) -> str:
     try:
         # Build command with appropriate flags
         cmd = ["bash", str(project_root / "agent"), agent_name, message]
+        
+        # Add files if provided
+        if files:
+            cmd.extend(["--files", files])
+        
+        if run_id:
+            cmd.extend(["--run-id", run_id])
         if debug:
             cmd.append("--debug")
         
@@ -80,10 +89,21 @@ def call_agent(agent_name: str, message: str, debug: bool = False) -> str:
         if result.returncode == 0:
             return result.stdout.strip()
         else:
-            return f"ERROR: Agent execution failed: {result.stderr.strip()}"
+            # Parse error for better formatting
+            error_output = result.stderr.strip()
+            
+            # Check if it's a structured error from our agent runner
+            if "Agent Configuration Error:" in error_output:
+                return f"❌ **Configuration Error**\n\n{error_output}\n\n💡 **How to fix:**\n- Check your agent's YAML frontmatter syntax\n- Verify all tool and MCP server names are correct\n- Ensure required fields (name, description, model) are present"
+            elif "Agent execution failed:" in error_output:
+                return f"❌ **Execution Error**\n\n{error_output}\n\n💡 **Troubleshooting:**\n- Check if the specified model exists on OpenRouter\n- Verify your OPENROUTER_API_KEY is valid\n- Ensure all tools and MCP servers are properly configured"
+            else:
+                return f"❌ **Agent Error**\n\n{error_output}"
             
     except Exception as e:
         return f"ERROR: Failed to call agent {agent_name}: {e}"
+
+
 
 if __name__ == "__main__":
     mcp.run()

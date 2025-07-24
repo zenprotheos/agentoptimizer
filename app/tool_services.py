@@ -1,4 +1,4 @@
-# app/tool_helper.py
+# app/tool_services.py
 
 import os
 import json
@@ -50,8 +50,11 @@ class ToolHelper:
     
     def _setup_clients(self):
         """Setup internal clients"""
-        self.artifacts_dir = Path(__file__).parent.parent / "artifacts"
-        self.artifacts_dir.mkdir(exist_ok=True)
+        self.artifacts_base_dir = Path(__file__).parent.parent / "artifacts"
+        self.artifacts_base_dir.mkdir(exist_ok=True)
+        
+        # Current run ID for file organization (will be set by tools)
+        self._current_run_id = None
         
         # Setup template engine
         snippets_dir = Path(__file__).parent.parent / "snippets"
@@ -244,19 +247,41 @@ class ToolHelper:
         
         return results
     
+    # RUN ID MANAGEMENT
+    def set_run_id(self, run_id: str):
+        """Set the current run ID for file organization"""
+        self._current_run_id = run_id
+    
+    def get_run_id(self) -> Optional[str]:
+        """Get the current run ID"""
+        return self._current_run_id
+    
+    def _get_artifacts_dir(self) -> Path:
+        """Get the artifacts directory for the current run"""
+        if self._current_run_id:
+            artifacts_dir = self.artifacts_base_dir / self._current_run_id
+        else:
+            # Fallback to base artifacts dir if no run ID is set
+            artifacts_dir = self.artifacts_base_dir / "no_run_id"
+        
+        artifacts_dir.mkdir(exist_ok=True)
+        return artifacts_dir
+    
     # ULTRA-MINIMAL FILE OPERATIONS
     def read(self, filepath: str) -> str:
         """Read any file"""
         return Path(filepath).read_text()
     
     def save(self, content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
-        """Save content and return filepath + metadata"""
+        """Save content and return filepath + metadata (organized by run ID)"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_desc = description.lower().replace(' ', '_').replace('/', '_')[:50]
             filename = f"{timestamp}_{safe_desc}.md" if safe_desc else f"{timestamp}_output.md"
         
-        filepath = self.artifacts_dir / filename
+        # Get run-specific artifacts directory
+        artifacts_dir = self._get_artifacts_dir()
+        filepath = artifacts_dir / filename
         
         # Calculate tokens
         token_count = self._count_tokens(content)
@@ -280,11 +305,14 @@ summary: {summary}
         
         return {
             "filepath": str(filepath),
+            "run_id": self._current_run_id,
+            "artifacts_dir": str(artifacts_dir),
             "frontmatter": {
                 "description": description,
                 "created": datetime.now().isoformat(),
                 "tokens": token_count,
-                "summary": summary
+                "summary": summary,
+                "run_id": self._current_run_id
             }
         }
     
@@ -355,6 +383,14 @@ def template(template_str: str, **context) -> str:
     """Global template function"""
     return helper.template(template_str, **context)
 
+def set_run_id(run_id: str):
+    """Set the current run ID for file organization"""
+    return helper.set_run_id(run_id)
+
+def get_run_id() -> Optional[str]:
+    """Get the current run ID"""
+    return helper.get_run_id()
+
 # Namespace class for even cleaner usage
 class AI:
     """Namespace for AI operations - enables ai.llm(), ai.save(), etc."""
@@ -366,12 +402,15 @@ class AI:
     read = staticmethod(read)
     api = staticmethod(api)
     template = staticmethod(template)
+    set_run_id = staticmethod(set_run_id)
+    get_run_id = staticmethod(get_run_id)
 
 # Create global AI instance
 ai = AI()
 
-# Define what gets imported with "from app.tool_helper import *"
+# Define what gets imported with "from app.tool_services import *"
 __all__ = [
     'llm', 'llm_json', 'llm_structured', 'chain_prompts',
-    'save', 'read', 'api', 'template', 'ai', 'helper'
+    'save', 'read', 'api', 'template', 'set_run_id', 'get_run_id',
+    'ai', 'helper'
 ]

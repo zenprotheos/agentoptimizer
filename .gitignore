@@ -190,7 +190,10 @@ Temporary Items
 mcp.json
 *.log
 test_output/
-temp/ 
+temp/
+z_temp/ 
+/runs/*
+/artifacts/*
 
 # Test files
 *test*.py

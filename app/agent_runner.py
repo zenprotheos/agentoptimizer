@@ -23,8 +23,13 @@ from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 # Add the parent directory to the Python path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import MCP-related classes
+# Import MCP-related classes and run persistence
 from app.mcp_config import MCPConfigManager, MCPServerConfig
+from app.run_persistence import RunPersistence
+from app.tool_services import helper as tool_services
+from app.agent_template_processor import AgentTemplateProcessor
+from app.agent_validation import AgentConfigValidator
+from app.agent_errors import AgentConfigError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -48,7 +53,7 @@ class AgentConfig:
         self.system_prompt = config_data['system_prompt']
 
 
-class SimplifiedAgentRunner:
+class AgentRunner:
     """Simplified agent runner that leverages Pydantic AI's built-in capabilities"""
     
     def __init__(self, agents_dir: str = "agents", tools_dir: str = "tools", config_file: str = "config.yaml"):
@@ -65,8 +70,25 @@ class SimplifiedAgentRunner:
         # Initialize MCP configuration manager
         self.mcp_config_manager = MCPConfigManager(project_root, self.config)
         
-        # Initialize Jinja2 environment for template rendering
-        self._setup_template_engine()
+        # Initialize run persistence
+        self.run_persistence = RunPersistence(project_root / "runs")
+        
+        # Initialize template processor
+        template_config = self.config.get('template_engine', {})
+        self.template_processor = AgentTemplateProcessor(
+            project_root=project_root,
+            template_config=template_config,
+            tool_services=tool_services
+        )
+        
+        # Initialize validator
+        available_tools = list(self.loaded_tools.keys())
+        available_mcp_servers = list(self.mcp_config_manager.get_available_servers().keys())
+        self.validator = AgentConfigValidator(
+            tools_dir=self.tools_dir,
+            available_tools=available_tools,
+            available_mcp_servers=available_mcp_servers
+        )
     
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file"""
@@ -125,81 +147,51 @@ class SimplifiedAgentRunner:
         except Exception as e:
             print(f"Warning: Failed to initialize Logfire: {e}")
     
-    def _setup_template_engine(self):
-        """Setup Jinja2 template engine for includes"""
-        template_config = self.config.get('template_engine', {})
-        
-        # Get base path for includes, default to ./snippets
-        base_path = template_config.get('base_path', './snippets')
-        if not Path(base_path).is_absolute():
-            base_path = Path(__file__).parent.parent / base_path
-        else:
-            base_path = Path(base_path)
-        
-        # Create the snippets directory if it doesn't exist
-        base_path.mkdir(parents=True, exist_ok=True)
-        
-        # Initialize Jinja2 environment
-        self.enable_async = template_config.get('enable_async', True)
-        self.jinja_env = Environment(
-            loader=FileSystemLoader([
-                str(base_path),  # Primary snippets directory
-                '/',  # Allow absolute paths
-            ]),
-            autoescape=template_config.get('autoescape', False),
-            enable_async=self.enable_async
-        )
-        
-        print(f"Template engine initialized with base path: {base_path}")
-    
-    async def _render_template(self, content: str) -> str:
-        """Render Jinja2 template content with includes"""
+    async def _parse_agent_config(self, agent_file: Path, files: List[str] = None) -> AgentConfig:
+        """Parse agent configuration using template processor with comprehensive validation"""
         try:
-            template = self.jinja_env.from_string(content)
-            if self.enable_async:
-                return await template.render_async()
-            else:
-                return template.render()
-        except TemplateNotFound as e:
-            raise ValueError(f"Template include file not found: {e}")
+            # Process template first (includes basic validation)
+            template_result = await self.template_processor.process_agent_template(
+                agent_file=agent_file,
+                files=files,
+                additional_context={}
+            )
+            
+            config_data = template_result['config_data']
+            
+            # Then perform additional validations (tools, MCP servers, etc.)
+            if "tools" in config_data:
+                self.validator.validate_tools(config_data["tools"], agent_file)
+            
+            if "mcp" in config_data:
+                self.validator.validate_mcp_servers(config_data["mcp"], agent_file)
+            
+            if "model" in config_data:
+                self.validator.validate_model_name(config_data["model"], agent_file)
+            
+            # Validate numeric ranges
+            self.validator.validate_numeric_ranges(config_data, agent_file)
+            
+            # Add system prompt
+            config_data['system_prompt'] = template_result['system_prompt']
+            
+            # Apply defaults from config file
+            model_defaults = self.config.get('model_settings', {})
+            for key, default_value in model_defaults.items():
+                if key not in config_data:
+                    config_data[key] = default_value
+            
+            return AgentConfig(config_data)
+        except AgentConfigError:
+            # Re-raise agent config errors as-is (they have helpful messages)
+            raise
         except Exception as e:
-            raise ValueError(f"Template rendering error: {e}")
-    
-    async def _parse_agent_config(self, agent_file: Path) -> AgentConfig:
-        """Parse agent configuration from markdown file"""
-        content = agent_file.read_text()
-        
-        # Split on the first --- to get the YAML frontmatter
-        parts = content.split('---', 2)
-        if len(parts) < 3:
-            raise ValueError(f"Invalid agent file format: {agent_file}")
-        
-        # Parse YAML frontmatter
-        yaml_content = parts[1].strip()
-        config_data = yaml.safe_load(yaml_content)
-        
-        # Extract system prompt (everything after the second ---)
-        system_prompt = parts[2].strip()
-        
-        # Render system prompt with Jinja2 template engine for includes
-        try:
-            system_prompt = await self._render_template(system_prompt)
-        except Exception as e:
-            raise ValueError(f"Error rendering template for {agent_file}: {e}")
-        
-        config_data['system_prompt'] = system_prompt
-        
-        # Apply defaults from config file
-        model_defaults = self.config.get('model_settings', {})
-        for key, default_value in model_defaults.items():
-            if key not in config_data:
-                config_data[key] = default_value
-        
-        return AgentConfig(config_data)
+            raise AgentConfigError(f"Unexpected error processing agent template for {agent_file}: {e}", agent_file)
     
     def _create_tool_functions(self, tool_names: List[str]) -> List[Any]:
-        """Create tool functions for Pydantic AI from loaded tools"""
+        """Create tool functions for Pydantic AI from loaded tools with enhanced error handling"""
         tool_functions = []
+        errors = []
         
         for tool_name in tool_names:
             if tool_name in self.loaded_tools:
@@ -209,14 +201,38 @@ class SimplifiedAgentRunner:
                 if tool_func:
                     tool_functions.append(tool_func)
                 else:
-                    print(f"ERROR: Tool '{tool_name}' has no main function")
+                    errors.append(f"Tool '{tool_name}' has no main function - check tool file structure")
             else:
                 available_tools = list(self.loaded_tools.keys())
-                print(f"ERROR: Tool '{tool_name}' not found in loaded tools.")
-                print(f"Available tools: {available_tools}")
-                print(f"Check agent configuration file for typos or ensure the tool file exists in the tools directory.")
+                # Simple fuzzy matching for suggestions
+                close_matches = [t for t in available_tools if self._is_similar_tool_name(tool_name, t)]
+                
+                error_msg = f"Tool '{tool_name}' not found in loaded tools."
+                if close_matches:
+                    error_msg += f" Did you mean: {', '.join(close_matches[:3])}?"
+                error_msg += f" Available tools: {', '.join(sorted(available_tools))}"
+                errors.append(error_msg)
+        
+        if errors:
+            # Log errors but don't fail - let the agent run with available tools
+            for error in errors:
+                print(f"WARNING: {error}")
         
         return tool_functions
+    
+    def _is_similar_tool_name(self, name1: str, name2: str) -> bool:
+        """Conservative similarity check for tool name suggestions"""
+        # Only suggest if one is a substring of the other (for obvious typos)
+        if len(name1) >= 4 and len(name2) >= 4:
+            if name1.lower() in name2.lower() or name2.lower() in name1.lower():
+                return True
+        
+        # Only suggest for single character differences in same-length names
+        if len(name1) == len(name2) and len(name1) >= 5:
+            diff_count = sum(c1 != c2 for c1, c2 in zip(name1.lower(), name2.lower()))
+            return diff_count == 1  # Only single character differences
+        
+        return False
     
     async def _create_mcp_servers(self, mcp_configs: List[Union[str, MCPServerConfig]]) -> List[Any]:
         """Create and initialize MCP servers for an agent"""
@@ -234,9 +250,16 @@ class SimplifiedAgentRunner:
                 server_json_config = self.mcp_config_manager.get_server_config(server_name)
                 if not server_json_config:
                     available_servers = list(self.mcp_config_manager.get_available_servers().keys())
-                    print(f"ERROR: MCP server '{server_name}' not found in configuration.")
-                    print(f"Available MCP servers: {available_servers}")
-                    print(f"Check agent configuration file for typos. Server names are case-sensitive unless case_insensitive_matching is enabled.")
+                    # Simple fuzzy matching for suggestions
+                    close_matches = [s for s in available_servers if self._is_similar_tool_name(server_name, s)]
+                    
+                    error_msg = f"MCP server '{server_name}' not found in configuration."
+                    if close_matches:
+                        error_msg += f" Did you mean: {', '.join(close_matches[:3])}?"
+                    error_msg += f" Available MCP servers: {', '.join(sorted(available_servers))}"
+                    error_msg += " Check your MCP server configuration in .cursor/mcp.json"
+                    
+                    print(f"WARNING: {error_msg}")
                     continue
                 
                 mcp_server = self.mcp_config_manager.create_mcp_server(
@@ -254,8 +277,33 @@ class SimplifiedAgentRunner:
         
         return mcp_servers
     
-    async def run_agent_async(self, agent_name: str, message: str):
-        """Run an agent asynchronously - leverages Pydantic AI's built-in capabilities"""
+    async def run_agent_async(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None):
+        """Run an agent asynchronously with optional run continuation and file context
+        
+        Args:
+            agent_name: Name of the agent to run
+            message: Message to send to the agent
+            files: Optional list of file paths to provide as context to the agent
+            run_id: Optional run ID to continue an existing conversation
+        """
+        
+        # Handle run continuation or creation
+        message_history = []
+        is_new_run = run_id is None
+        
+        if run_id is None:
+            # Generate new run ID
+            run_id = self.run_persistence.generate_run_id()
+        else:
+            # Load existing run history
+            if self.run_persistence.run_exists(run_id):
+                message_history = self.run_persistence.get_message_history(run_id)
+            else:
+                return {
+                    "output": "",
+                    "success": False,
+                    "error": f"Run {run_id} not found"
+                }
         
         # Load agent configuration
         agent_file = self.agents_dir / f"{agent_name}.md"
@@ -267,12 +315,22 @@ class SimplifiedAgentRunner:
             }
         
         try:
-            config = await self._parse_agent_config(agent_file)
+            config = await self._parse_agent_config(agent_file, files)
+        except AgentConfigError as e:
+            return {
+                "output": "",
+                "success": False,
+                "error": f"Agent Configuration Error: {e.get_formatted_message()}",
+                "error_type": "configuration",
+                "agent_file": str(agent_file)
+            }
         except Exception as e:
             return {
                 "output": "",
                 "success": False,
-                "error": f"Error parsing agent config: {e}"
+                "error": f"Unexpected error parsing agent config: {e}",
+                "error_type": "unexpected",
+                "agent_file": str(agent_file)
             }
         
         # Set up OpenRouter API key
@@ -284,14 +342,41 @@ class SimplifiedAgentRunner:
                 "error": "OPENROUTER_API_KEY environment variable not set"
             }
         
-        # Create OpenRouter model
-        model = OpenAIModel(
-            model_name=config.model,
-            provider=OpenAIProvider(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=api_key
+        # Create OpenRouter model with validation
+        try:
+            model = OpenAIModel(
+                model_name=config.model,
+                provider=OpenAIProvider(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=api_key
+                )
             )
-        )
+        except Exception as e:
+            # Check for common model name issues
+            model_error = str(e)
+            if "404" in model_error or "not found" in model_error.lower():
+                return {
+                    "output": "",
+                    "success": False,
+                    "error": f"Model '{config.model}' not found on OpenRouter. Check https://openrouter.ai/models for available models.",
+                    "error_type": "model_not_found",
+                    "model_name": config.model
+                }
+            elif "401" in model_error or "unauthorized" in model_error.lower():
+                return {
+                    "output": "",
+                    "success": False,
+                    "error": "OpenRouter API authentication failed. Check your OPENROUTER_API_KEY.",
+                    "error_type": "auth_failed"
+                }
+            else:
+                return {
+                    "output": "",
+                    "success": False,
+                    "error": f"Failed to initialize model '{config.model}': {e}",
+                    "error_type": "model_init_failed",
+                    "model_name": config.model
+                }
         
         # Create model settings
         model_settings = ModelSettings(
@@ -337,17 +422,26 @@ class SimplifiedAgentRunner:
             )
         
         try:
-            # Run the agent - Pydantic AI handles everything
+            # Create or update run in persistence
+            if is_new_run:
+                self.run_persistence.create_run(run_id, agent_name, message)
+            
+            # Set run ID in tool helper for file organization
+            tool_services.set_run_id(run_id)
+            
+            # Run the agent with message history - Pydantic AI handles everything
             if mcp_servers:
                 async with agent.run_mcp_servers():
-                    result = await agent.run(message, usage_limits=usage_limits)
+                    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
             else:
-                result = await agent.run(message, usage_limits=usage_limits)
+                result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
             
-            # Return simplified response - let Pydantic AI handle the complexity
-            return {
+            # Prepare response data
+            response_data = {
                 "output": str(result.output),
                 "success": True,
+                "run_id": run_id,
+                "is_new_run": is_new_run,
                 "usage": {
                     "requests": result.usage().requests,
                     "request_tokens": result.usage().request_tokens,
@@ -360,6 +454,11 @@ class SimplifiedAgentRunner:
                 "tool_calls_summary": self._extract_tool_call_summary(result.all_messages())
             }
             
+            # Update run persistence with new messages
+            self.run_persistence.update_run(run_id, response_data, result.new_messages())
+            
+            return response_data
+            
         except Exception as e:
             # Handle common MCP server errors with helpful messages
             error_message = str(e)
@@ -368,6 +467,7 @@ class SimplifiedAgentRunner:
                 return {
                     "output": "",
                     "success": False,
+                    "run_id": run_id if 'run_id' in locals() else None,
                     "error": f"MCP server authentication failed: {e}\n"
                             f"This usually means the MCP server requires authentication credentials.\n"
                             f"Check your MCP server configuration for missing API keys or tokens."
@@ -376,6 +476,7 @@ class SimplifiedAgentRunner:
                 return {
                     "output": "",
                     "success": False,
+                    "run_id": run_id if 'run_id' in locals() else None,
                     "error": f"MCP server connection failed: {e}\n"
                             f"Check that the MCP server is running and accessible."
                 }
@@ -383,6 +484,7 @@ class SimplifiedAgentRunner:
                 return {
                     "output": "",
                     "success": False,
+                    "run_id": run_id if 'run_id' in locals() else None,
                     "error": f"Agent execution failed: {e}"
                 }
     
@@ -399,21 +501,26 @@ class SimplifiedAgentRunner:
         
         return list(set(tool_calls))  # Unique tool names used
     
-    def run_agent(self, agent_name: str, message: str):
+    def run_agent(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None):
         """Synchronous wrapper"""
-        return asyncio.run(self.run_agent_async(agent_name, message))
+        return asyncio.run(self.run_agent_async(agent_name, message, files, run_id))
     
-    def run_agent_clean(self, agent_name: str, message: str) -> str:
+    def run_agent_clean(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None) -> str:
         """Clean formatted response for MCP server"""
-        result = self.run_agent(agent_name, message)
+        result = self.run_agent(agent_name, message, files, run_id)
         
         if result["success"]:
             output = result["output"]
             
-            # Add usage stats
+            # Add run and usage stats
             usage = result["usage"]
             output += f"\n\n---\n"
-            output += f"**Usage:** {usage['requests']} requests"
+            output += f"**Run ID:** `{result['run_id']}`"
+            if result.get("is_new_run"):
+                output += " (new conversation)"
+            else:
+                output += " (continued conversation)"
+            output += f"\n**Usage:** {usage['requests']} requests"
             if usage["total_tokens"]:
                 output += f", {usage['total_tokens']:,} tokens"
             if result["tool_calls_summary"]:
@@ -421,26 +528,60 @@ class SimplifiedAgentRunner:
             
             return output
         else:
-            return f"ERROR: {result['error']}"
+            error_output = f"ERROR: {result['error']}"
+            if result.get("run_id"):
+                error_output += f"\n**Run ID:** `{result['run_id']}`"
+            return error_output
 
 
 def main():
     """CLI interface"""
     if len(sys.argv) < 3:
-        print("Usage: python agent_runner_simplified.py <agent_name> <message> [--json]")
+        print("Usage: python agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--run-id <run_id>] [--json] [--debug]")
         sys.exit(1)
     
     agent_name = sys.argv[1]
     message = sys.argv[2]
-    json_output = "--json" in sys.argv[3:]
     
-    runner = SimplifiedAgentRunner()
+    # Parse optional arguments
+    args = sys.argv[3:]
+    json_output = "--json" in args
+    debug_output = "--debug" in args
+    
+    # Parse files if provided
+    files = None
+    if "--files" in args:
+        try:
+            files_index = args.index("--files")
+            if files_index + 1 < len(args):
+                files_str = args[files_index + 1]
+                files = [f.strip() for f in files_str.split('|') if f.strip()]
+            else:
+                print("ERROR: --files requires a pipe-separated list of file paths")
+                sys.exit(1)
+        except ValueError:
+            pass
+    
+    # Parse run_id if provided
+    run_id = None
+    if "--run-id" in args:
+        try:
+            run_id_index = args.index("--run-id")
+            if run_id_index + 1 < len(args):
+                run_id = args[run_id_index + 1]
+            else:
+                print("ERROR: --run-id requires a value")
+                sys.exit(1)
+        except ValueError:
+            pass
+    
+    runner = AgentRunner()
     
     if json_output:
-        result = runner.run_agent(agent_name, message)
+        result = runner.run_agent(agent_name, message, files, run_id)
         print(json.dumps(result, indent=2))
     else:
-        result = runner.run_agent_clean(agent_name, message)
+        result = runner.run_agent_clean(agent_name, message, files, run_id)
         print(result)
 
 
