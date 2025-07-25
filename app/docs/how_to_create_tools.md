@@ -874,17 +874,32 @@ Use clear, specific descriptions in metadata:
 # NOT: "Analyze data"
 ```
 
-### 4. Consistent Return Format
-Always return structured JSON:
+### 4. Consistent Return Format (IMPORTANT: Minimal Response Pattern)
+Always return structured JSON with MINIMAL content to avoid token waste:
+
+**✅ RECOMMENDED PATTERN:**
 ```python
 return json.dumps({
     "success": True,
     "operation": "data_analysis",
-    "result": analysis_result,
     "filepath": saved_file["filepath"],
-    "metadata": {"tokens": token_count, "processing_time": elapsed}
+    "summary": "Brief description of what was saved",
+    "tokens": saved_file["frontmatter"]["tokens"],
+    "run_id": saved_file["run_id"]
 }, indent=2)
 ```
+
+**❌ AVOID THIS PATTERN:**
+```python
+return json.dumps({
+    "success": True,
+    "result": analysis_result,  # DON'T include full content!
+    "filepath": saved_file["filepath"],
+    "full_data": large_dataset  # This wastes tokens and confuses agents!
+}, indent=2)
+```
+
+**Key Principle**: If you've saved content to a file, return only the filepath and essential metadata. Agents can read the file directly if needed. This prevents agents from repeating large amounts of content in their responses.
 
 ### 5. Use Type Hints
 Always include proper type hints:

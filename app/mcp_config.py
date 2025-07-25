@@ -26,9 +26,10 @@ class MCPConfigError(Exception):
 class MCPConfigManager:
     """Manages MCP server configurations from mcp.json files"""
     
-    def __init__(self, workspace_path: Path, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, workspace_path: Path, config: Optional[Dict[str, Any]] = None, debug: bool = False):
         self.workspace_path = workspace_path
         self.config = config or {}
+        self.debug = debug
         self._config_cache: Optional[Dict[str, Any]] = None
     
     def load_mcp_config(self) -> Dict[str, Any]:
@@ -52,9 +53,11 @@ class MCPConfigManager:
                 with open(global_config_path, 'r') as f:
                     global_config = json.load(f)
                     config.update(global_config.get('mcpServers', {}))
-                    print(f"Loaded global MCP config from {global_config_path}")
+                    if self.debug:
+                        print(f"Loaded global MCP config from {global_config_path}")
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"Warning: Failed to load global MCP config from {global_config_path}: {e}")
+                if self.debug:
+                    print(f"Warning: Failed to load global MCP config from {global_config_path}: {e}")
         
         # Load local configuration (higher priority, overrides global)
         if local_config_path.exists():
@@ -62,9 +65,11 @@ class MCPConfigManager:
                 with open(local_config_path, 'r') as f:
                     local_config = json.load(f)
                     config.update(local_config.get('mcpServers', {}))
-                    print(f"Loaded local MCP config from {local_config_path}")
+                    if self.debug:
+                        print(f"Loaded local MCP config from {local_config_path}")
             except (json.JSONDecodeError, KeyError) as e:
-                print(f"Warning: Failed to load local MCP config from {local_config_path}: {e}")
+                if self.debug:
+                    print(f"Warning: Failed to load local MCP config from {local_config_path}: {e}")
         
         self._config_cache = config
         return config
@@ -86,7 +91,8 @@ class MCPConfigManager:
             server_name_lower = server_name.lower()
             for key, value in config.items():
                 if key.lower() == server_name_lower:
-                    print(f"MCP server '{server_name}' matched '{key}' (case-insensitive)")
+                    if self.debug:
+                        print(f"MCP server '{server_name}' matched '{key}' (case-insensitive)")
                     return value
         
         return None

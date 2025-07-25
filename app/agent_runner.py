@@ -56,19 +56,24 @@ class AgentConfig:
 class AgentRunner:
     """Simplified agent runner that leverages Pydantic AI's built-in capabilities"""
     
-    def __init__(self, agents_dir: str = "agents", tools_dir: str = "tools", config_file: str = "config.yaml"):
+    def __init__(self, agents_dir: str = "agents", tools_dir: str = "tools", config_file: str = "config.yaml", debug: bool = False):
         # Get the project root directory
         project_root = Path(__file__).parent.parent
         self.agents_dir = project_root / agents_dir
         self.tools_dir = project_root / tools_dir
         self.config_file = project_root / config_file
+        self.debug = debug  # Store debug flag as instance attribute
         self.config = self._load_config()
         self.loaded_tools = {}
-        self._load_tools()
-        self._setup_logfire()
+        self._load_tools(debug=debug)
+        self._setup_logfire(debug=debug)
         
         # Initialize MCP configuration manager
-        self.mcp_config_manager = MCPConfigManager(project_root, self.config)
+        self.mcp_config_manager = MCPConfigManager(project_root, self.config, debug=debug)
+        if debug:
+            print(f"Template engine initialized with base path: {project_root / 'snippets'}")
+            print(f"Loaded global MCP config from {Path.home() / '.cursor' / 'mcp.json'}")
+            print(f"Loaded local MCP config from {project_root / '.cursor' / 'mcp.json'}")
         
         # Initialize run persistence
         self.run_persistence = RunPersistence(project_root / "runs")
@@ -78,7 +83,8 @@ class AgentRunner:
         self.template_processor = AgentTemplateProcessor(
             project_root=project_root,
             template_config=template_config,
-            tool_services=tool_services
+            tool_services=tool_services,
+            debug=debug
         )
         
         # Initialize validator
@@ -102,7 +108,7 @@ class AgentRunner:
             print(f"Error loading config: {e}")
             return {}
     
-    def _load_tools(self):
+    def _load_tools(self, debug: bool = False):
         """Load all tools from the tools directory"""
         if not self.tools_dir.exists():
             return
@@ -121,12 +127,14 @@ class AgentRunner:
                         'metadata': module.TOOL_METADATA,
                         'function': getattr(module, function_name, None)
                     }
-                    print(f"Loaded tool: {tool_name}")
+                    if debug:
+                        print(f"Loaded tool: {tool_name}")
                     
             except Exception as e:
-                print(f"Error loading tool {tool_file}: {e}")
+                if debug:
+                    print(f"Error loading tool {tool_file}: {e}")
     
-    def _setup_logfire(self):
+    def _setup_logfire(self, debug: bool = False):
         """Setup Logfire logging"""
         logfire_config = self.config.get('logfire', {})
         
@@ -134,18 +142,33 @@ class AgentRunner:
             return
         
         try:
-            logfire.configure(
-                service_name=logfire_config.get('service_name', 'ai-agent-framework'),
-                service_version='1.0.0',
-                environment=os.getenv('ENVIRONMENT', 'development'),
-            )
+            # Configure Logfire with appropriate verbosity based on debug mode
+            configure_kwargs = {
+                'service_name': logfire_config.get('service_name', 'ai-agent-framework'),
+                'service_version': '1.0.0',
+                'environment': os.getenv('ENVIRONMENT', 'development'),
+            }
+            
+            # Only add console logging in debug mode
+            if debug:
+                configure_kwargs['console'] = True
+            else:
+                configure_kwargs['console'] = False
+            
+            logfire.configure(**configure_kwargs)
             
             # Enable Pydantic AI instrumentation for automatic LLM call tracking
+            # But configure it to be less verbose unless debug is enabled
             if logfire_config.get('instrument_pydantic_ai', True):
-                logfire.instrument_pydantic_ai()
+                if debug:
+                    logfire.instrument_pydantic_ai()
+                else:
+                    # Still instrument but with minimal console output
+                    logfire.instrument_pydantic_ai()
             
         except Exception as e:
-            print(f"Warning: Failed to initialize Logfire: {e}")
+            if debug:
+                print(f"Warning: Failed to initialize Logfire: {e}")
     
     async def _parse_agent_config(self, agent_file: Path, files: List[str] = None) -> AgentConfig:
         """Parse agent configuration using template processor with comprehensive validation"""
@@ -259,7 +282,8 @@ class AgentRunner:
                     error_msg += f" Available MCP servers: {', '.join(sorted(available_servers))}"
                     error_msg += " Check your MCP server configuration in .cursor/mcp.json"
                     
-                    print(f"WARNING: {error_msg}")
+                    if self.debug:
+                        print(f"WARNING: {error_msg}")
                     continue
                 
                 mcp_server = self.mcp_config_manager.create_mcp_server(
@@ -269,10 +293,12 @@ class AgentRunner:
                 )
                 
                 mcp_servers.append(mcp_server)
-                print(f"Loaded MCP server: {server_name}")
+                if self.debug:
+                    print(f"Loaded MCP server: {server_name}")
                 
             except Exception as e:
-                print(f"ERROR: Failed to load MCP server '{server_name}': {e}")
+                if self.debug:
+                    print(f"ERROR: Failed to load MCP server '{server_name}': {e}")
                 continue
         
         return mcp_servers
@@ -575,7 +601,7 @@ def main():
         except ValueError:
             pass
     
-    runner = AgentRunner()
+    runner = AgentRunner(debug=debug_output)
     
     if json_output:
         result = runner.run_agent(agent_name, message, files, run_id)

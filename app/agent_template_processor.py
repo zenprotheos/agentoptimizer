@@ -21,11 +21,12 @@ class AgentTemplateProcessor:
     - System prompt assembly
     """
     
-    def __init__(self, project_root: Path, template_config: Dict[str, Any], tool_services):
+    def __init__(self, project_root: Path, template_config: Dict[str, Any], tool_services, debug: bool = False):
         self.project_root = project_root
         self.template_config = template_config
         self.tool_services = tool_services
         self.enable_async = template_config.get('enable_async', False)
+        self.debug = debug
         self._setup_jinja_environment()
     
     def _setup_jinja_environment(self):
@@ -41,7 +42,8 @@ class AgentTemplateProcessor:
             enable_async=self.enable_async
         )
         
-        print(f"Template engine initialized with base path: {base_path}")
+        if self.debug:
+            print(f"Template engine initialized with base path: {base_path}")
     
     async def process_agent_template(
         self, 

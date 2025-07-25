@@ -10,7 +10,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "read_file_metadata",
-        "description": "Read metadata from markdown or JSON files in the artifacts directory",
+        "description": "Read metadata from markdown or JSON files in the artifacts directory. Helps you understand whether you should read the full file.",
         "parameters": {
             "type": "object",
             "properties": {

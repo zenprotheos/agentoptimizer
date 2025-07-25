@@ -79,15 +79,16 @@ The schema uses example values to show the expected format. Provide comprehensiv
         # Save results to file as JSON
         saved_file = save_json(search_results, f"Structured search results for: {query}")
         
+        # Return minimal response with filepath and essential metadata only
         return json.dumps({
             "success": True,
             "query": query,
-            "schema": schema_dict,
-            "results": search_results,
+            "schema_keys": list(schema_dict.keys()) if isinstance(schema_dict, dict) else "complex_schema",
             "filepath": saved_file["filepath"],
             "run_id": saved_file["run_id"],
             "tokens": saved_file["frontmatter"]["tokens"],
-            "model_used": "openai/gpt-4o-mini-search-preview"
+            "model_used": "openai/gpt-4o-mini-search-preview",
+            "summary": f"Search completed and results saved to {saved_file['filepath']}"
         }, indent=2)
         
     except Exception as e:
