@@ -33,7 +33,7 @@ Before investigating specific issues, verify basic system health:
 ./oneshot web_agent "hello"
 
 # Test MCP server functionality
-python3 -c "from app.mcp_modules.agents import list_agents; print(list_agents('.'))"
+python3 -c "from app.oneshot_mcp_tools.agents import list_agents; print(list_agents('.'))"
 
 # Test run persistence
 python3 -c "from app.run_persistence import RunPersistence; rp = RunPersistence(); print('Run persistence OK')"

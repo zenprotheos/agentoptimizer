@@ -198,6 +198,24 @@ class AgentTemplateProcessor:
             'provided_files_summary': summary
         }
     
+    def _get_builtin_variables(self) -> Dict[str, Any]:
+        """Generate built-in template variables available to all agents"""
+        from datetime import datetime
+        import os
+        
+        now = datetime.now()
+        
+        return {
+            'current_timestamp': now.isoformat(),
+            'current_date': now.strftime('%Y-%m-%d'),
+            'current_time': now.strftime('%H:%M:%S'),
+            'current_datetime_friendly': now.strftime('%A, %B %d, %Y at %I:%M %p'),
+            'current_unix_timestamp': int(now.timestamp()),
+            'working_directory': str(Path.cwd()),
+            'user_home': str(Path.home()),
+            'project_root': str(self.project_root),
+        }
+
     async def _render_system_prompt(self, raw_prompt: str, context: Dict[str, Any]) -> str:
         """Render system prompt with full template context and enhanced error handling"""
         try:
@@ -205,11 +223,15 @@ class AgentTemplateProcessor:
             snippets_dir = self.project_root / self.template_config.get('base_path', 'snippets')
             # Note: Skip validation here to avoid recursion issues - validation happens in agent_runner
             
+            # Add built-in variables to context (context overrides built-ins if there are conflicts)
+            builtin_vars = self._get_builtin_variables()
+            full_context = {**builtin_vars, **context}
+            
             template = self.jinja_env.from_string(raw_prompt)
             if self.enable_async:
-                return await template.render_async(**context)
+                return await template.render_async(**full_context)
             else:
-                return template.render(**context)
+                return template.render(**full_context)
         except TemplateNotFound as e:
             raise TemplateProcessingError(
                 f"Template include file not found: {e}",

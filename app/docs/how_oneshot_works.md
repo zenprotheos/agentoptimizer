@@ -20,7 +20,7 @@ The main execution logic resides in `app/agent_runner.py`. This script is the or
 
 Its key responsibilities are:
 - **Argument Parsing**: Uses `click` to parse CLI arguments (`agent_name`, `message`, `--run-id`, `--files`).
-- **Configuration Loading**: Reads `config.yaml` to determine which tools are available for which agents.
+- **Configuration Loading**: Reads `config.yaml` to load model defaults, framework settings, and other global configuration parameters.
 - **Agent Definition Loading**: Reads the specified agent's markdown file from `/agents/{agent_name}.md`.
 - **Tool Loading**: Dynamically imports and collects tool functions from the `/tools/` directory via `app/tool_services.py`.
 - **Context Processing**: Utilizes `app/agent_template_processor.py` to inject dynamic content (like passed file contents) into the agent's system prompt.
@@ -129,7 +129,7 @@ async def _parse_agent_config(self, agent_file: Path, files: List[str] = None) -
 ---
 name: research_agent
 description: "Conducts thorough research"
-model: "openai/gpt-4o"           # Overrides config.yaml default
+model: "openai/gpt-4.1-mini"           # Overrides config.yaml default
 temperature: 0.3                  # Lower temperature for factual work
 max_tokens: 4096                  # Longer responses than default
 tools:

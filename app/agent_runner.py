@@ -409,7 +409,7 @@ class AgentRunner:
             agent = Agent(
                 model=model,
                 system_prompt=config.system_prompt,
-                tools=tool_functions if tool_functions else None,
+                tools=tool_functions if tool_functions else [],
                 model_settings=model_settings,
                 mcp_servers=mcp_servers
             )
@@ -417,7 +417,7 @@ class AgentRunner:
             agent = Agent(
                 model=model,
                 system_prompt=config.system_prompt,
-                tools=tool_functions if tool_functions else None,
+                tools=tool_functions if tool_functions else [],
                 model_settings=model_settings
             )
         

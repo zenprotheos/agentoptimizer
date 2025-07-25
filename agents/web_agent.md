@@ -4,9 +4,7 @@ description: "This agent can search the web and read webpages on behalf of CB. I
 model: "openai/gpt-4.1-mini"
 
 tools:
-  - web_read_page
-  - web_search
-  - file_creator
+  - structured_search
 
 mcp:
   - zapier-email

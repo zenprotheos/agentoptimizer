@@ -56,11 +56,38 @@ After `from app.tool_services import *`, you have access to:
 | `llm_structured(prompt, Model, **kwargs)` | Structured Pydantic output | `llm_structured("Analyze", Analysis)` |
 | `chain_prompts(prompts, **kwargs)` | Multi-step conversation | `chain_prompts(["Step 1", "Step 2"])` |
 | `save(content, description, filename)` | Save with run-aware organization | `save(text, "Analysis results")` |
+| `save_json(content, description, filename)` | Save JSON with metadata wrapper | `save_json(data, "Structured results")` |
 | `read(filepath)` | Read any file | `read("data.txt")` |
 | `template(template_str, **context)` | Jinja2 templating | `template("Hello {{name}}", name="AI")` |
 | `api(url, method, **kwargs)` | HTTP requests with auto-auth | `api("https://api.example.com")` |
 | `set_run_id(run_id)` | Set current run ID for file organization | `set_run_id("a1b2c3d4")` |
 | `get_run_id()` | Get current run ID | `get_run_id()` |
+
+### Built-in Template Variables in LLM Calls
+
+All LLM functions (`llm`, `llm_json`, `llm_structured`, `chain_prompts`) automatically support built-in template variables in system prompts:
+
+```python
+def my_analysis_tool(data: str) -> str:
+    system_prompt = """You are analyzing data at {{ current_datetime_friendly }}.
+    Working directory: {{ working_directory }}
+    Current date: {{ current_date }}
+    
+    Provide thorough analysis with timestamp context."""
+    
+    result = llm(data, system_prompt=system_prompt)
+    return result
+```
+
+**Available Built-in Variables:**
+- `{{ current_timestamp }}` - ISO 8601 timestamp
+- `{{ current_date }}` - YYYY-MM-DD format  
+- `{{ current_time }}` - HH:MM:SS format
+- `{{ current_datetime_friendly }}` - Human-readable format
+- `{{ current_unix_timestamp }}` - Unix timestamp
+- `{{ working_directory }}` - Current working directory
+- `{{ user_home }}` - User's home directory
+- `{{ project_root }}` - Project root directory
 
 ## Agent-to-Agent Communication with File Passing
 
@@ -344,6 +371,49 @@ def text_processor(text: str, operation: str) -> str:
         "filepath": saved_file["filepath"],
         "run_id": saved_file["run_id"],
         "artifacts_dir": saved_file["artifacts_dir"],
+        "tokens": saved_file["frontmatter"]["tokens"]
+    }, indent=2)
+```
+
+### 1.5. Structured Data Tool (JSON)
+
+```python
+# tools/structured_data_processor.py
+from app.tool_services import *
+import json
+
+TOOL_METADATA = {
+    "type": "function",
+    "function": {
+        "name": "structured_data_processor",
+        "description": "Process and save structured data as JSON",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "data_type": {"type": "string", "description": "Type of data to process"},
+                "query": {"type": "string", "description": "Query for structured data"}
+            },
+            "required": ["data_type", "query"]
+        }
+    }
+}
+
+def structured_data_processor(data_type: str, query: str) -> str:
+    """Process structured data and save as JSON"""
+    
+    # Generate structured data using LLM
+    structured_data = llm_json(f"Generate {data_type} data for: {query}")
+    
+    # save_json() creates proper JSON structure with metadata wrapper
+    saved_file = save_json(structured_data, f"{data_type} data for: {query}")
+    
+    return json.dumps({
+        "success": True,
+        "data_type": data_type,
+        "query": query,
+        "filepath": saved_file["filepath"],
+        "run_id": saved_file["run_id"],
+        "content_type": saved_file["content_type"],
         "tokens": saved_file["frontmatter"]["tokens"]
     }, indent=2)
 ```
@@ -764,6 +834,30 @@ except Exception as e:
     return json.dumps({"error": str(e)}, indent=2)
 ```
 
+### 1.5. Choosing Between save() and save_json()
+Use the appropriate save function based on your content type:
+
+**Use `save()` for:**
+- Text content, reports, analysis
+- Markdown-formatted content
+- Human-readable documents
+- Content that benefits from markdown formatting
+
+**Use `save_json()` for:**
+- Structured data (dicts, lists)
+- API responses
+- Search results
+- Data that will be parsed by other tools
+- Content that's better suited for programmatic access
+
+```python
+# For text content
+saved_file = save(analysis_text, "Analysis report")
+
+# For structured data
+saved_file = save_json(search_results, "Search results")
+```
+
 ### 2. Parameter Validation
 Validate inputs early:
 ```python
@@ -814,6 +908,24 @@ def my_tool(data: str) -> str:
     }, indent=2)
 ```
 
+### 7. JSON File Structure
+When using `save_json()`, your files will have this structure:
+```json
+{
+  "metadata": {
+    "description": "Description of the data",
+    "created": "2025-07-25T08:45:43.731070",
+    "tokens": 487,
+    "summary": "Brief summary of the data...",
+    "run_id": "1910ea06",
+    "file_type": "json"
+  },
+  "data": {
+    // Your actual structured data here
+  }
+}
+```
+
 ## Common Patterns
 
 ### File Processing Pattern
@@ -846,6 +958,22 @@ def generate_tool(topic: str) -> str:
     return json.dumps({"success": True, "filepath": saved["filepath"]})
 ```
 
+### Structured Data + JSON Pattern
+```python
+def structured_tool(query: str) -> str:
+    # Generate structured data
+    data = llm_json(f"Generate structured data for: {query}")
+    
+    # Save as JSON with metadata wrapper
+    saved = save_json(data, f"Structured data for: {query}")
+    
+    return json.dumps({
+        "success": True, 
+        "filepath": saved["filepath"],
+        "content_type": saved["content_type"]
+    })
+```
+
 ## Testing Your Tools
 
 Test tools independently:
@@ -864,6 +992,7 @@ With this system, creating powerful tools requires:
 3. Write 5-15 lines of logic using helper functions
 4. Return structured JSON results
 5. Leverage run awareness for educational value
+6. Choose appropriate save function (`save()` or `save_json()`)
 
 The helper handles all complexity: LLM integration, file operations, error handling, metadata generation, token counting, and **run-aware artifact organization**. 
 
@@ -873,5 +1002,7 @@ The helper handles all complexity: LLM integration, file operations, error handl
 - **Context Correlation**: Easy to understand which files came from which conversations
 - **Progressive Building**: Multiple tool calls build related artifacts together
 - **Visible Traceability**: Run IDs in frontmatter connect files to conversation history
+- **Flexible File Formats**: Choose between markdown and JSON based on content type
+- **Structured Data Support**: JSON files with metadata wrapper for programmatic access
 
 Focus on your tool's unique logic, not boilerplate code. The system automatically handles conversation continuity and artifact organization for an optimal educational experience. 

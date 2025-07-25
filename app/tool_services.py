@@ -11,6 +11,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from jinja2 import Environment, FileSystemLoader
 import tiktoken
+import functools
+import inspect
 
 # Pydantic AI imports
 from pydantic_ai import Agent
@@ -20,8 +22,163 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 from dotenv import load_dotenv
 
+# Logfire import
+try:
+    import logfire
+    LOGFIRE_AVAILABLE = True
+except ImportError:
+    LOGFIRE_AVAILABLE = False
+    # Create a no-op logfire mock
+    class MockLogfire:
+        def instrument(self, name):
+            return lambda func: func
+        def span(self, name, **kwargs):
+            return self
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def info(self, *args, **kwargs):
+            pass
+        def error(self, *args, **kwargs):
+            pass
+        def configure(self, **kwargs):
+            pass
+    logfire = MockLogfire()
+
 # Load environment variables from .env file
 load_dotenv()
+
+def auto_instrument(operation_type: str):
+    """Decorator that automatically adds Logfire instrumentation to methods"""
+    def decorator(func):
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            if not LOGFIRE_AVAILABLE or not hasattr(logfire, '_configured'):
+                return func(*args, **kwargs)
+            
+            # Extract method name and relevant parameters for logging
+            func_name = func.__name__
+            span_name = f"tool_services.{operation_type}.{func_name}"
+            
+            # Create span attributes from function signature
+            span_attrs = {}
+            try:
+                sig = inspect.signature(func)
+                bound_args = sig.bind(*args, **kwargs)
+                bound_args.apply_defaults()
+                
+                # Add safe parameters to span (avoid logging sensitive data)
+                for param_name, param_value in bound_args.arguments.items():
+                    if param_name in ['self', 'cls']:
+                        continue
+                    if param_name in ['prompt', 'content'] and isinstance(param_value, str):
+                        # Log only first 100 chars of text content
+                        span_attrs[param_name] = param_value[:100] + "..." if len(param_value) > 100 else param_value
+                    elif param_name == 'model':
+                        span_attrs['model'] = param_value
+                    elif param_name in ['filename', 'filepath', 'description', 'url', 'method']:
+                        span_attrs[param_name] = str(param_value)
+                    elif param_name in ['temperature', 'max_tokens', 'run_id']:
+                        span_attrs[param_name] = param_value
+            except Exception:
+                # If signature inspection fails, continue without detailed params
+                pass
+            
+            with logfire.span(span_name, **span_attrs) as span:
+                try:
+                    result = func(*args, **kwargs)
+                    
+                    # Log successful completion with relevant metrics
+                    if operation_type == 'llm' and isinstance(result, str):
+                        logfire.info(f"{func_name} completed", 
+                                   response_length=len(result),
+                                   operation=operation_type)
+                    elif operation_type == 'file' and isinstance(result, dict):
+                        logfire.info(f"{func_name} completed",
+                                   filepath=result.get('filepath'),
+                                   tokens=result.get('frontmatter', {}).get('tokens'),
+                                   operation=operation_type)
+                    elif operation_type == 'api' and hasattr(result, 'status_code'):
+                        logfire.info(f"{func_name} completed",
+                                   status_code=result.status_code,
+                                   operation=operation_type)
+                    else:
+                        logfire.info(f"{func_name} completed", operation=operation_type)
+                    
+                    return result
+                except Exception as e:
+                    logfire.error(f"{func_name} failed", 
+                                error=str(e), 
+                                error_type=type(e).__name__,
+                                operation=operation_type)
+                    raise
+        
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            if not LOGFIRE_AVAILABLE or not hasattr(logfire, '_configured'):
+                return await func(*args, **kwargs)
+            
+            # Extract method name and relevant parameters for logging
+            func_name = func.__name__
+            span_name = f"tool_services.{operation_type}.{func_name}"
+            
+            # Create span attributes from function signature
+            span_attrs = {}
+            try:
+                sig = inspect.signature(func)
+                bound_args = sig.bind(*args, **kwargs)
+                bound_args.apply_defaults()
+                
+                # Add safe parameters to span (avoid logging sensitive data)
+                for param_name, param_value in bound_args.arguments.items():
+                    if param_name in ['self', 'cls']:
+                        continue
+                    if param_name in ['prompt', 'content'] and isinstance(param_value, str):
+                        # Log only first 100 chars of text content
+                        span_attrs[param_name] = param_value[:100] + "..." if len(param_value) > 100 else param_value
+                    elif param_name == 'model':
+                        span_attrs['model'] = param_value
+                    elif param_name in ['filename', 'filepath', 'description', 'url', 'method']:
+                        span_attrs[param_name] = str(param_value)
+                    elif param_name in ['temperature', 'max_tokens', 'run_id']:
+                        span_attrs[param_name] = param_value
+            except Exception:
+                # If signature inspection fails, continue without detailed params
+                pass
+            
+            with logfire.span(span_name, **span_attrs) as span:
+                try:
+                    result = await func(*args, **kwargs)
+                    
+                    # Log successful completion with relevant metrics
+                    if operation_type == 'llm' and isinstance(result, str):
+                        logfire.info(f"{func_name} completed", 
+                                   response_length=len(result),
+                                   operation=operation_type)
+                    elif operation_type == 'file' and isinstance(result, dict):
+                        logfire.info(f"{func_name} completed",
+                                   filepath=result.get('filepath'),
+                                   tokens=result.get('frontmatter', {}).get('tokens'),
+                                   operation=operation_type)
+                    else:
+                        logfire.info(f"{func_name} completed", operation=operation_type)
+                    
+                    return result
+                except Exception as e:
+                    logfire.error(f"{func_name} failed", 
+                                error=str(e), 
+                                error_type=type(e).__name__,
+                                operation=operation_type)
+                    raise
+        
+        # Return appropriate wrapper based on whether function is async
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
 
 class ToolHelper:
     """Lightweight helper for tools using Pydantic AI - can be imported independently"""
@@ -39,6 +196,7 @@ class ToolHelper:
         self.config = self._load_config()
         self._setup_clients()
         self._setup_pydantic_ai()
+        self._setup_logfire()
     
     def _load_config(self):
         """Load config with sensible defaults"""
@@ -47,6 +205,33 @@ class ToolHelper:
             with open(config_path) as f:
                 return yaml.safe_load(f) or {}
         return {}
+    
+    def _setup_logfire(self):
+        """Setup Logfire if available and not already configured"""
+        if not LOGFIRE_AVAILABLE:
+            return
+            
+        # Check if already configured by agent_runner
+        if hasattr(logfire, '_configured'):
+            return
+            
+        logfire_config = self.config.get('logfire', {})
+        
+        if not logfire_config.get('enabled', True) or not os.getenv('LOGFIRE_WRITE_TOKEN'):
+            return
+        
+        try:
+            logfire.configure(
+                service_name=logfire_config.get('service_name', 'oneshot-tools'),
+                service_version='1.0.0',
+                environment=os.getenv('ENVIRONMENT', 'development'),
+            )
+            
+            # Mark as configured to avoid double configuration
+            logfire._configured = True
+            
+        except Exception as e:
+            print(f"Warning: Failed to initialize Logfire in tool_services: {e}")
     
     def _setup_clients(self):
         """Setup internal clients"""
@@ -99,11 +284,47 @@ class ToolHelper:
             total_tokens_limit=usage_limits_config.get('total_tokens_limit')
         )
     
+    def _get_builtin_variables(self) -> Dict[str, Any]:
+        """Generate built-in template variables available to all tools (same as agent system)"""
+        from datetime import datetime
+        
+        now = datetime.now()
+        
+        return {
+            'current_timestamp': now.isoformat(),
+            'current_date': now.strftime('%Y-%m-%d'),
+            'current_time': now.strftime('%H:%M:%S'),
+            'current_datetime_friendly': now.strftime('%A, %B %d, %Y at %I:%M %p'),
+            'current_unix_timestamp': int(now.timestamp()),
+            'working_directory': str(Path.cwd()),
+            'user_home': str(Path.home()),
+            'project_root': str(Path(__file__).parent.parent),
+        }
+    
+    def _expand_system_prompt_with_builtins(self, system_prompt: str) -> str:
+        """Expand system prompt with built-in variables using Jinja2 template rendering"""
+        if not system_prompt:
+            return system_prompt
+            
+        try:
+            # Get built-in variables
+            builtin_vars = self._get_builtin_variables()
+            
+            # Use Jinja2 to render the system prompt with built-in variables
+            template = self.jinja_env.from_string(system_prompt)
+            return template.render(**builtin_vars)
+        except Exception as e:
+            # If template rendering fails, return original prompt
+            print(f"Warning: Failed to expand system prompt with built-ins: {e}")
+            return system_prompt
+    
     # ULTRA-MINIMAL LLM CALLING using Pydantic AI
+    @auto_instrument('llm')
     def llm(self, prompt: str, model: str = None, system_prompt: str = None, **kwargs) -> str:
         """Ultra-simple LLM call using Pydantic AI"""
         return asyncio.run(self._llm_async(prompt, model, system_prompt, **kwargs))
     
+    @auto_instrument('llm')
     async def _llm_async(self, prompt: str, model: str = None, system_prompt: str = None, **kwargs) -> str:
         """Async LLM call using Pydantic AI"""
         # Override model if specified
@@ -131,10 +352,15 @@ class ToolHelper:
             }
             current_settings = ModelSettings(**{k: v for k, v in settings_dict.items() if v is not None})
         
+        # Expand system prompt with built-in variables
+        expanded_system_prompt = self._expand_system_prompt_with_builtins(
+            system_prompt or "You are a helpful assistant."
+        )
+        
         # Create a simple agent for this call
         agent = Agent(
             model=current_model,
-            system_prompt=system_prompt or "You are a helpful assistant.",
+            system_prompt=expanded_system_prompt,
             model_settings=current_settings
         )
         
@@ -142,6 +368,7 @@ class ToolHelper:
         result = await agent.run(prompt, usage_limits=self.usage_limits)
         return str(result.output)
     
+    @auto_instrument('llm')
     def llm_json(self, prompt: str, model: str = None, **kwargs) -> Dict:
         """LLM call that returns parsed JSON using Pydantic AI"""
         json_prompt = f"{prompt}\n\nRespond with valid JSON only."
@@ -151,10 +378,12 @@ class ToolHelper:
         except json.JSONDecodeError:
             return {"error": "Failed to parse JSON response", "raw_response": response}
     
+    @auto_instrument('llm')
     def llm_structured(self, prompt: str, pydantic_model: Type[BaseModel], model: str = None, **kwargs):
         """LLM call with structured output using Pydantic AI"""
         return asyncio.run(self._llm_structured_async(prompt, pydantic_model, model, **kwargs))
     
+    @auto_instrument('llm')
     async def _llm_structured_async(self, prompt: str, pydantic_model: Type[BaseModel], model: str = None, **kwargs):
         """Async structured LLM call using Pydantic AI"""
         # Override model if specified
@@ -182,11 +411,16 @@ class ToolHelper:
             }
             current_settings = ModelSettings(**{k: v for k, v in settings_dict.items() if v is not None})
         
+        # Expand system prompt with built-in variables
+        expanded_system_prompt = self._expand_system_prompt_with_builtins(
+            "You are a helpful assistant. Respond with structured data matching the required format."
+        )
+        
         # Create agent with structured response
         agent = Agent(
             model=current_model,
             result_type=pydantic_model,
-            system_prompt="You are a helpful assistant. Respond with structured data matching the required format.",
+            system_prompt=expanded_system_prompt,
             model_settings=current_settings
         )
         
@@ -195,10 +429,12 @@ class ToolHelper:
         return result.output
     
     # CHAIN PROMPTS - using Pydantic AI conversation capabilities
+    @auto_instrument('llm')
     def chain_prompts(self, prompts: List[str], model: str = None, system_prompt: str = None, **kwargs) -> List[str]:
         """Chain multiple prompts together using Pydantic AI conversation"""
         return asyncio.run(self._chain_prompts_async(prompts, model, system_prompt, **kwargs))
     
+    @auto_instrument('llm')
     async def _chain_prompts_async(self, prompts: List[str], model: str = None, system_prompt: str = None, **kwargs) -> List[str]:
         """Async prompt chaining"""
         # Override model if specified
@@ -226,10 +462,15 @@ class ToolHelper:
             }
             current_settings = ModelSettings(**{k: v for k, v in settings_dict.items() if v is not None})
         
+        # Expand system prompt with built-in variables
+        expanded_system_prompt = self._expand_system_prompt_with_builtins(
+            system_prompt or "You are a helpful assistant."
+        )
+        
         # Create agent for conversation
         agent = Agent(
             model=current_model,
-            system_prompt=system_prompt or "You are a helpful assistant.",
+            system_prompt=expanded_system_prompt,
             model_settings=current_settings
         )
         
@@ -249,8 +490,10 @@ class ToolHelper:
     
     # RUN ID MANAGEMENT
     def set_run_id(self, run_id: str):
-        """Set the current run ID for file organization"""
+        """Set the current run ID for file organization and todo tools"""
         self._current_run_id = run_id
+        # Set environment variable for todo tools to access run context
+        os.environ['ONESHOT_RUN_ID'] = run_id
     
     def get_run_id(self) -> Optional[str]:
         """Get the current run ID"""
@@ -268,10 +511,12 @@ class ToolHelper:
         return artifacts_dir
     
     # ULTRA-MINIMAL FILE OPERATIONS
+    @auto_instrument('file')
     def read(self, filepath: str) -> str:
         """Read any file"""
         return Path(filepath).read_text()
     
+    @auto_instrument('file')
     def save(self, content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
         """Save content and return filepath + metadata (organized by run ID)"""
         if not filename:
@@ -316,7 +561,69 @@ summary: {summary}
             }
         }
     
+    @auto_instrument('file')
+    def save_json(self, content: Union[Dict, List, str], description: str = "", filename: str = None) -> Dict[str, Any]:
+        """Save JSON content with metadata wrapper and return filepath + metadata (organized by run ID)"""
+        if not filename:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_desc = description.lower().replace(' ', '_').replace('/', '_')[:50]
+            filename = f"{timestamp}_{safe_desc}.json" if safe_desc else f"{timestamp}_output.json"
+        
+        # Get run-specific artifacts directory
+        artifacts_dir = self._get_artifacts_dir()
+        filepath = artifacts_dir / filename
+        
+        # Handle different content types
+        if isinstance(content, str):
+            try:
+                # Try to parse as JSON if it's a string
+                data = json.loads(content)
+            except json.JSONDecodeError:
+                # If not valid JSON, treat as plain text
+                data = content
+        else:
+            # Assume it's already a dict/list
+            data = content
+        
+        # Calculate tokens on the data
+        data_str = json.dumps(data, indent=2, default=str)
+        token_count = self._count_tokens(data_str)
+        
+        # Create summary (first 200 chars of data)
+        summary = str(data)[:200].replace('\n', ' ').strip()
+        if len(str(data)) > 200:
+            summary += "..."
+        
+        # Create metadata
+        metadata = {
+            "description": description,
+            "created": datetime.now().isoformat(),
+            "tokens": token_count,
+            "summary": summary,
+            "run_id": self._current_run_id,
+            "file_type": "json"
+        }
+        
+        # Create JSON structure with metadata and data
+        json_content = {
+            "metadata": metadata,
+            "data": data
+        }
+        
+        # Write JSON file
+        with open(filepath, 'w') as f:
+            json.dump(json_content, f, indent=2, default=str)
+        
+        return {
+            "filepath": str(filepath),
+            "run_id": self._current_run_id,
+            "artifacts_dir": str(artifacts_dir),
+            "frontmatter": metadata,
+            "content_type": "json"
+        }
+    
     # ULTRA-MINIMAL API CALLS
+    @auto_instrument('api')
     def api(self, url: str, method: str = "GET", **kwargs) -> requests.Response:
         """Simple API call with auto env var injection"""
         headers = kwargs.get('headers', {})
@@ -333,6 +640,7 @@ summary: {summary}
         return requests.request(method, url, **kwargs)
     
     # TEMPLATE RENDERING
+    @auto_instrument('template')
     def template(self, template_str: str, **context) -> str:
         """Render Jinja2 template"""
         template = self.jinja_env.from_string(template_str)
@@ -351,34 +659,47 @@ summary: {summary}
 helper = ToolHelper()
 
 # CONVENIENCE FUNCTIONS FOR EVEN LESS BOILERPLATE
+@auto_instrument('llm')
 def llm(prompt: str, **kwargs) -> str:
     """Global LLM function using Pydantic AI"""
     return helper.llm(prompt, **kwargs)
 
+@auto_instrument('llm')
 def llm_json(prompt: str, **kwargs) -> Dict:
     """Global LLM JSON function using Pydantic AI"""
     return helper.llm_json(prompt, **kwargs)
 
+@auto_instrument('llm')
 def llm_structured(prompt: str, pydantic_model: Type[BaseModel], **kwargs):
     """Global structured LLM function using Pydantic AI"""
     return helper.llm_structured(prompt, pydantic_model, **kwargs)
 
+@auto_instrument('llm')
 def chain_prompts(prompts: List[str], **kwargs) -> List[str]:
     """Global prompt chaining function using Pydantic AI"""
     return helper.chain_prompts(prompts, **kwargs)
 
+@auto_instrument('file')
 def save(content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
     """Global save function"""
     return helper.save(content, description, filename)
 
+@auto_instrument('file')
+def save_json(content: Union[Dict, List, str], description: str = "", filename: str = None) -> Dict[str, Any]:
+    """Global save_json function"""
+    return helper.save_json(content, description, filename)
+
+@auto_instrument('file')
 def read(filepath: str) -> str:
     """Global read function"""
     return helper.read(filepath)
 
+@auto_instrument('api')
 def api(url: str, method: str = "GET", **kwargs) -> requests.Response:
     """Global API function"""
     return helper.api(url, method, **kwargs)
 
+@auto_instrument('template')
 def template(template_str: str, **context) -> str:
     """Global template function"""
     return helper.template(template_str, **context)
@@ -399,6 +720,7 @@ class AI:
     llm_structured = staticmethod(llm_structured)
     chain_prompts = staticmethod(chain_prompts)
     save = staticmethod(save)
+    save_json = staticmethod(save_json)
     read = staticmethod(read)
     api = staticmethod(api)
     template = staticmethod(template)
@@ -411,6 +733,6 @@ ai = AI()
 # Define what gets imported with "from app.tool_services import *"
 __all__ = [
     'llm', 'llm_json', 'llm_structured', 'chain_prompts',
-    'save', 'read', 'api', 'template', 'set_run_id', 'get_run_id',
+    'save', 'save_json', 'read', 'api', 'template', 'set_run_id', 'get_run_id',
     'ai', 'helper'
 ]

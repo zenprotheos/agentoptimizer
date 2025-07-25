@@ -11,9 +11,9 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # Import MCP functions from modular files
-from app.mcp_modules.agents import list_agents as list_agents_impl
-from app.mcp_modules.tools import list_tools as list_tools_impl
-from app.mcp_modules.read_doc import read_doc, get_available_docs
+from app.oneshot_mcp_tools.agents import list_agents as list_agents_impl
+from app.oneshot_mcp_tools.tools import list_tools as list_tools_impl
+from app.oneshot_mcp_tools.read_doc import read_doc, get_available_docs
 
 # Create the MCP server
 mcp = FastMCP(
@@ -40,7 +40,7 @@ def read_instructions_for(guide_name: str) -> str:
     Args:
         guide_name: Name of the guide to read. Available guides:
             - "how_to_create_agents": Instructions for creating new agents
-            - "how_to_make_tools": Instructions for creating new tools  
+            - "how_to_create_tools": Instructions for creating new tools  
             - "how_oneshot_works": Technical details of how the system works
     
     Returns:
@@ -64,7 +64,7 @@ def list_tools() -> str:
 @mcp.tool()
 def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "", debug: bool = False) -> str:
     """
-    Call an agent by name with a message.
+    Call an agent by name with a message using the `oneshot` bash script.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
@@ -78,7 +78,7 @@ def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "",
     """
     try:
         # Build command with appropriate flags
-        cmd = ["bash", str(project_root / "agent"), agent_name, message]
+        cmd = ["bash", str(project_root / "oneshot"), agent_name, message]
         
         # Add files if provided
         if files:

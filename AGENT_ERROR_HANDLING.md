@@ -170,7 +170,7 @@ Suggestions:
   • ---
   • name: agent_name
   • description: "Agent description"
-  • model: "openai/gpt-4o-mini"
+  • model: "openai/gpt-4.1-mini"
   • tools:
   •   - tool1
   •   - tool2
@@ -335,7 +335,7 @@ You can also test individual components manually:
 - Agent configuration parsing (`app/agent_runner.py`, `app/agent_template_processor.py`)
 - Error handling system (`app/agent_errors.py`, `app/agent_validation.py`)
 - Tool loading mechanisms (`app/tool_services.py`)
-- MCP server integration (`oneshot_mcp.py`, `app/mcp_modules/`)
+- MCP server integration (`oneshot_mcp.py`, `app/oneshot_mcp_tools/`)
 - Template processing (`app/agent_template_processor.py`)
 
 ### Test Results Interpretation

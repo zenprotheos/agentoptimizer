@@ -50,13 +50,13 @@ While the architecture is strong, a few areas could be refined to further improv
 
 ##### **Recommendation 2: Streamline MCP Module Responsibilities**
 
-*   **Observation:** The `app/mcp_modules/` directory contains `agents.py` and `tools.py`, which provide `list_agents` and `list_tools` functions for the MCP server. These functions work by manually parsing the filesystem (`agents/*.md`, `tools/*.py`). The main `AgentRunner` *also* has its own logic for parsing these same files. This creates two sources of truth for how tools and agents are discovered.
+*   **Observation:** The `app/oneshot_mcp_tools/` directory contains `agents.py` and `tools.py`, which provide `list_agents` and `list_tools` functions for the MCP server. These functions work by manually parsing the filesystem (`agents/*.md`, `tools/*.py`). The main `AgentRunner` *also* has its own logic for parsing these same files. This creates two sources of truth for how tools and agents are discovered.
 
 *   **Recommendation:**
-    1.  **Centralize Discovery Logic:** Refactor the discovery logic into the `AgentRunner`. The `list_agents` and `list_tools` functions in the `mcp_modules` should not perform their own parsing. Instead, they should instantiate the `AgentRunner` and call methods on it to get the list of loaded agents and tools.
+    1.  **Centralize Discovery Logic:** Refactor the discovery logic into the `AgentRunner`. The `list_agents` and `list_tools` functions in the `oneshot_mcp_tools` should not perform their own parsing. Instead, they should instantiate the `AgentRunner` and call methods on it to get the list of loaded agents and tools.
     2.  **Example Refactor:**
         ```python
-        # In app/mcp_modules/agents.py
+        # In app/oneshot_mcp_tools/agents.py
         from app.agent_runner import AgentRunner
 
         def list_agents(project_root: Path) -> str:
@@ -71,7 +71,7 @@ While the architecture is strong, a few areas could be refined to further improv
 
 ##### **Recommendation 3: Formalize Tool Metadata**
 
-*   **Observation:** The current tool loading mechanism in `agent_runner.py` looks for a `TOOL_METADATA` dictionary within each tool's Python file. This is a good convention. However, the `list_tools` function in `app/mcp_modules/tools.py` does a very simple text search for the presence of this variable rather than importing and inspecting it. This could lead to discrepancies.
+*   **Observation:** The current tool loading mechanism in `agent_runner.py` looks for a `TOOL_METADATA` dictionary within each tool's Python file. This is a good convention. However, the `list_tools` function in `app/oneshot_mcp_tools/tools.py` does a very simple text search for the presence of this variable rather than importing and inspecting it. This could lead to discrepancies.
 
 *   **Recommendation:**
     1.  **Enforce Metadata Structure:** Define a Pydantic `BaseModel` for the tool metadata. This ensures all tools provide consistent information (e.g., `name`, `description`, `parameters`).

@@ -30,13 +30,13 @@ class AgentConfigValidator:
         self.common_models = [
             "openai/gpt-4o",
             "openai/gpt-4o-mini", 
-            "openai/gpt-4",
-            "openai/gpt-3.5-turbo",
-            "anthropic/claude-3-sonnet",
-            "anthropic/claude-3-haiku",
-            "anthropic/claude-3-opus",
-            "google/gemini-pro",
-            "meta-llama/llama-2-70b-chat"
+            "openai/gpt-4.1-mini",
+            "openai/gpt-4.1",
+            "anthropic/claude-sonnet-4",
+            "anthropic/claude-3.5-haiku",
+            "google/gemini-2.5-flash-lite",
+            "google/gemini-2.5-flash", 
+            "google/gemini-2.5-pro"
         ]
         
         # Required fields in agent configuration

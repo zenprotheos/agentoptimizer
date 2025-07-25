@@ -8,7 +8,7 @@ Create a new agent by adding a markdown file to the `/agents` directory with thi
 ---
 name: my_agent
 description: "Brief description of what this agent does"
-model: openai/gpt-4o-mini    # Optional: overrides config.yaml default
+model: openai/gpt-4.1-mini    # Optional: overrides config.yaml default
 temperature: 0.7             # Optional: overrides config.yaml default
 max_tokens: 2048            # Optional: overrides config.yaml default
 top_p: 1.0                  # Optional: nucleus sampling
@@ -32,6 +32,53 @@ Describe how the agent should approach tasks...
 - Be concise and helpful
 - Use tools when appropriate
 - Follow best practices
+
+## Built-in Template Variables
+
+All agents have access to built-in template variables that provide dynamic context. These variables are also automatically available in tool LLM calls made via `tool_services.py`:
+
+### Date & Time Variables
+- `{{ current_timestamp }}` - ISO 8601 timestamp (e.g., "2025-01-15T14:30:00.123456")
+- `{{ current_date }}` - Date in YYYY-MM-DD format (e.g., "2025-01-15")
+- `{{ current_time }}` - Time in HH:MM:SS format (e.g., "14:30:00")
+- `{{ current_datetime_friendly }}` - Human-readable format (e.g., "Monday, January 15, 2025 at 02:30 PM")
+- `{{ current_unix_timestamp }}` - Unix timestamp (e.g., 1736950200)
+
+### Path Variables
+- `{{ working_directory }}` - Current working directory path
+- `{{ user_home }}` - User's home directory path
+- `{{ project_root }}` - Project root directory path
+
+### Usage Example
+```markdown
+---
+name: context_agent
+description: "Agent with dynamic context awareness"
+---
+
+# Context-Aware Assistant
+
+## Current Session Context
+- **Time**: {{ current_datetime_friendly }}
+- **Working Directory**: {{ working_directory }}
+- **Project**: {{ project_root | basename }}
+
+You have full awareness of the current context and timing...
+```
+
+### Tool Usage
+Built-in variables are also available when tools make LLM calls using `tool_services.py`:
+
+```python
+from app.tool_services import llm
+
+def my_tool():
+    response = llm(
+        prompt="Analyze this data",
+        system_prompt="You are analyzing data at {{ current_datetime_friendly }} in {{ working_directory }}"
+    )
+    return response
+```
 
 ## Available Tools
 
@@ -130,7 +177,7 @@ Report Agent → receives insights.md + summary.md → final_report.pdf
 ---
 name: research_agent
 description: "Conducts thorough research on topics using web search"
-model: openai/gpt-4o-mini
+model: openai/gpt-4.1-mini
 temperature: 0.3
 tools:
   - web_search
@@ -146,7 +193,7 @@ You are a thorough research assistant...
 ---
 name: writing_agent
 description: "Helps with writing tasks and content creation"
-model: openai/gpt-4o-mini
+model: openai/gpt-4.1-mini
 temperature: 0.8
 max_tokens: 4096
 ---

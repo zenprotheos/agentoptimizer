@@ -90,31 +90,33 @@ This provides a clear guide for how the agent should interact with the user.
 
 ## Designing and Describing Tools
 
-Tools are the agent's hands and eyes. How you define them directly impacts the agent's ability to interact with its environment. The description is not just for humans; it's a prompt for the agent on how to use the tool.
+Tools are the agent's hands and eyes. How you define them directly impacts the agent's ability to interact with its environment. The description is not just for humans; it's a prompt for the agent on how to use the tool. A well-described tool is the difference between an agent that can reliably solve a task and one that flounders.
 
-### 1. Writing Clear and Concise Tool Descriptions
+### 1. Writing Powerful Tool Descriptions
 
-The `description` field is the most important part of a tool definition. It's the primary text the agent uses to decide which tool to use.
+The `description` field is the most critical part of a tool's definition. It's the primary text the agent uses to decide **which** tool to use and **how** to use it. A vague description will lead to misuse or underuse.
 
 **Best Practices:**
 
-*   **Focus on Action and Outcome:** The description should clearly state what the tool *does* and what it *returns*.
-*   **Use Action Verbs:** Start the description with a strong action verb (e.g., "Find," "Read," "Execute," "Generate").
-*   **Provide Semantic Clues:** Include keywords that help the agent understand the tool's purpose. For example, the Cursor Agent's `codebase_search` description explicitly states, "This is a semantic search tool..."
-*   **Include "When to Use" Guidance:** Briefly explain the ideal scenarios for using the tool. This is especially helpful when you have multiple similar tools (e.g., semantic search vs. grep search).
+*   **Focus on Action and Outcome:** The description must clearly state what the tool *does* and what it *returns*. Use strong, unambiguous action verbs.
+*   **Provide Semantic and Contextual Clues:** Include keywords that help the agent understand the tool's purpose. For example, the Cursor Agent's `codebase_search` description explicitly states, "This is a semantic search tool..." which immediately signals its function.
+*   **Include "When to Use" and "When NOT to Use" Guidance:** This is crucial for preventing the agent from making poor choices. Briefly explain the ideal scenarios for using the tool and, just as importantly, when *not* to use it. This is especially helpful when you have multiple similar tools (e.g., semantic search vs. grep search).
+*   **Incorporate Critical Instructions and Warnings:** If a tool has limitations or requires careful handling, state this directly in the description. This is a powerful way to guide the agent's behavior.
 
 **Verbatim Examples:**
 
 **Semantic Search vs. Grep Search (from Cursor Agent):**
 
-This is a great example of how to differentiate between two similar tools.
+This is a masterclass in differentiating two similar tools. The descriptions are rich with context, telling the agent not just *what* they do, but *how* to choose between them.
 
-*   **`codebase_search`:** `{"description": "Find snippets of code from the codebase most relevant to the search query.\nThis is a semantic search tool, so the query should ask for something semantically matching what is needed..."}`
+*   **`codebase_search`:** `{"description": "Find snippets of code from the codebase most relevant to the search query.\nThis is a semantic search tool, so the query should ask for something semantically matching what is needed... Unless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording."}`
+    *   **Analysis:** It clearly identifies itself as "semantic," advises on how to formulate the query ("semantically matching"), and even provides a default behavior (reuse the user's query).
 *   **`grep_search`:** `{"description": "Fast text-based regex search that finds exact pattern matches within files or directories...\nThis is best for finding exact text matches or regex patterns.\nMore precise than semantic search for finding specific strings or patterns."}`
+    *   **Analysis:** It highlights its strengths ("Fast," "exact pattern matches," "regex") and directly contrasts itself with semantic search, giving the agent a clear decision-making framework.
 
-**File Reading with Important Caveats (from Cursor Agent):**
+**File Reading with Embedded Rules (from Cursor Agent):**
 
-This description not only explains what the tool does but also includes critical instructions on how to use it responsibly.
+This description is exceptional because it embeds critical rules and responsibilities directly into the tool's definition, forcing the agent to consider the consequences of its actions every time it thinks about reading a file.
 
 ```json
 {
@@ -123,26 +125,26 @@ This description not only explains what the tool does but also includes critical
   "parameters": { ... }
 }
 ```
+*   **Analysis:** This description goes beyond a simple "reads a file." It sets expectations about limitations ("at most 250 lines"), assigns "responsibility" to the agent, and provides a clear, actionable checklist for ensuring context is complete. This is how you build robust, reliable agents.
 
-### 2. Defining Parameters Effectively
+### 2. Defining Parameters That Guide the Agent
 
-Parameters are the inputs the agent provides to the tool. They must be clearly defined and easy to understand.
+Parameters are the inputs the agent provides to the tool. Their names and descriptions are a direct prompt to the agent on *what* information to provide. Vague parameters lead to vague tool calls.
 
 **Best Practices:**
 
 *   **Use Descriptive Names:** `query` is better than `q`, `target_file` is better than `f`.
-*   **Specify Data Types:** Use JSON schema types (`string`, `integer`, `boolean`, `array`).
-*   **Write Clear Descriptions:** The `description` for each parameter is a prompt for the agent on what value to provide.
-*   **Mark Required Parameters:** Use the `required` array in your JSON schema to indicate which parameters are mandatory.
-*   **Include an `explanation` Parameter:** As seen in the Cursor prompts, adding a dedicated `explanation` parameter forces the agent to state its reasoning for using the tool, which is excellent for observability and debugging.
+*   **Write Crystal-Clear Descriptions:** The `description` for each parameter is a micro-prompt. It should tell the agent exactly what kind of value is expected and how it will be used.
+*   **Provide Formatting Guidance:** If a parameter expects a specific format (like a regex or a specific string pattern), state this explicitly in the description.
+*   **The `explanation` Parameter: A Superpower for Observability:** As seen in the Cursor prompts, adding a dedicated `explanation` parameter is a game-changer. It forces the agent to articulate its reasoning *before* it acts, which is invaluable for debugging, understanding the agent's thought process, and enforcing accountability.
 
 **Verbatim Example: `run_terminal_cmd` (from Cursor Agent):**
 
-This example shows a complex tool with multiple parameters, each with a clear description.
+This example demonstrates how to define a high-stakes tool with parameters that encourage caution and clarity.
 
 ```json
 {
-  "description": "PROPOSE a command to run on behalf of the user...",
+  "description": "PROPOSE a command to run on behalf of the user... Note that the user will have to approve the command before it is executed... For ANY commands that would use a pager or require user interaction, you should append ` | cat` to the command...",
   "name": "run_terminal_cmd",
   "parameters": {
     "properties": {
@@ -164,12 +166,26 @@ This example shows a complex tool with multiple parameters, each with a clear de
   }
 }
 ```
+*   **Analysis:** The tool description itself is packed with warnings and instructions. The `explanation` parameter is required, forcing the agent to justify its proposed command. This is a crucial safety and clarity mechanism.
+
+**Verbatim Example: `grep_search` Parameter (from Cursor Agent):**
+
+This parameter description for a regex query is a great example of providing specific, technical guidance.
+
+```json
+"query": {
+    "description": "The regex pattern to search for. The query MUST be a valid regex, so special characters must be escaped. e.g. to search for a method call 'foo.bar(', you could use the query '\\bfoo\\.bar\\('."
+}
+```
+*   **Analysis:** It doesn't just say "the regex pattern." It explicitly warns that it "MUST be a valid regex," reminds the agent to escape special characters, and provides a concrete example. This level of detail dramatically increases the likelihood of a successful tool call.
 
 ### 3. Providing Illustrative Examples
 
-For complex tools, especially those with specific syntax requirements (like `search_project` in the Junie prompt), providing examples directly in the description can be highly effective.
+For complex tools, especially those with specific syntax requirements, providing examples directly in the description can be highly effective. This is a powerful way to show, not just tell, the agent how to use the tool correctly.
 
 **Verbatim Example: `search_project` (from Junie):**
+
+The Junie prompt provides excellent, clear examples directly within the tool's description, leaving no room for ambiguity.
 
 ```
 #### Examples
@@ -178,6 +194,8 @@ For complex tools, especially those with specific syntax requirements (like `sea
 - `search_project "authorization"`: Searches for anything containing "authorization" in filenames, symbol names, or code.
 - `search_project "authorization" pathToFile/example.doc`: Searches "authorization" inside example.doc.
 ```
+*   **Analysis:** These examples cover different use cases, from finding specific definitions to performing broad searches, and even demonstrate how to use optional parameters.
+
 
 ## Structuring the Prompt
 

@@ -59,7 +59,7 @@ Create a new agent by adding a markdown file to the `/agents` directory. The fil
 ---
 name: my_agent
 description: "Description of what this agent does"
-model: openai/gpt-4o-mini    # Optional: overrides config.yaml default
+model: openai/gpt-4.1-mini-mini    # Optional: overrides config.yaml default
 temperature: 0.7             # Optional: overrides config.yaml default
 max_tokens: 2048            # Optional: overrides config.yaml default
 tools:
@@ -139,7 +139,7 @@ The framework supports global configuration via `config.yaml`:
 ```yaml
 # Default model settings (can be overridden per agent)
 model_settings:
-  model: "openai:gpt-4o-mini"
+  model: "openai:gpt-4.1-mini-mini"
   temperature: 0.7
   max_tokens: 2048
   top_p: null
@@ -321,8 +321,8 @@ The `AgentResponse` object contains:
 
 The framework supports any model available on OpenRouter. Popular choices:
 
-- `openai/gpt-4o-mini` (fast, cheap)
-- `openai/gpt-4o` (most capable)
+- `openai/gpt-4.1-mini-mini` (fast, cheap)
+- `openai/gpt-4.1-mini` (most capable)
 - `anthropic/claude-3.5-sonnet` (excellent reasoning)
 - `google/gemini-pro` (good performance)
 
