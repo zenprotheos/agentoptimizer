@@ -64,7 +64,9 @@ def list_tools() -> str:
 @mcp.tool()
 def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "", debug: bool = False) -> str:
     """
-    Call an agent by name with a message using the `oneshot` bash script.
+    Call an agent by name with a message using the `oneshot` bash script. Use this tool to delegate tasks to specialist agents. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task. When a specialist agent returns filepath/s, you MUST give the user a link to that file so they don't have to trawl through artifacts dir to find the file/s.
+
+    Use the `list_agents` tool first to see what agents are available and their descriptions to help you choose the right agent for your task.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
