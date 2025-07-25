@@ -4,8 +4,6 @@
 from app.tool_services import *
 import json
 
-Performs web search via AI agent (GPT-4o-mini) and returns structured data matching your schema. Best for: real-time data extraction, multi-source aggregation, fact verification. The agent interprets your query, searches multiple sources, and synthesizes results into your specified format."
-
 TOOL_METADATA = {
     "type": "function",
     "function": {
