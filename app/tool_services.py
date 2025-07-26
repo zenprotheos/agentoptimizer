@@ -517,6 +517,44 @@ class ToolHelper:
         return Path(filepath).read_text()
     
     @auto_instrument('file')
+    def read_for_llm(self, filepath: str, include_frontmatter: bool = False, frontmatter_only: bool = False) -> str:
+        """Read file for LLM prompts with frontmatter handling options"""
+        content = Path(filepath).read_text()
+        
+        if frontmatter_only:
+            return self._extract_frontmatter(content)
+        elif not include_frontmatter:
+            return self._strip_frontmatter(content)
+        else:
+            return content
+    
+    def _extract_frontmatter(self, content: str) -> str:
+        """Extract only the YAML frontmatter from content"""
+        lines = content.split('\n')
+        if lines and lines[0].strip() == '---':
+            frontmatter_lines = ['---']
+            for i, line in enumerate(lines[1:], 1):
+                frontmatter_lines.append(line)
+                if line.strip() == '---':
+                    break
+            return '\n'.join(frontmatter_lines)
+        return ""
+    
+    def _strip_frontmatter(self, content: str) -> str:
+        """Strip YAML frontmatter from content if present"""
+        lines = content.split('\n')
+        if lines and lines[0].strip() == '---':
+            # Find the end of frontmatter
+            for i, line in enumerate(lines[1:], 1):
+                if line.strip() == '---':
+                    # Return content after frontmatter, skipping empty lines
+                    remaining_lines = lines[i+1:]
+                    while remaining_lines and not remaining_lines[0].strip():
+                        remaining_lines.pop(0)
+                    return '\n'.join(remaining_lines)
+        return content
+    
+    @auto_instrument('file')
     def save(self, content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
         """Save content and return filepath + metadata (organized by run ID)"""
         if not filename:
@@ -694,6 +732,11 @@ def read(filepath: str) -> str:
     """Global read function"""
     return helper.read(filepath)
 
+@auto_instrument('file')
+def read_for_llm(filepath: str, include_frontmatter: bool = False, frontmatter_only: bool = False) -> str:
+    """Global read function for LLM prompts with frontmatter handling"""
+    return helper.read_for_llm(filepath, include_frontmatter, frontmatter_only)
+
 @auto_instrument('api')
 def api(url: str, method: str = "GET", **kwargs) -> requests.Response:
     """Global API function"""
@@ -722,6 +765,7 @@ class AI:
     save = staticmethod(save)
     save_json = staticmethod(save_json)
     read = staticmethod(read)
+    read_for_llm = staticmethod(read_for_llm)
     api = staticmethod(api)
     template = staticmethod(template)
     set_run_id = staticmethod(set_run_id)
@@ -733,6 +777,6 @@ ai = AI()
 # Define what gets imported with "from app.tool_services import *"
 __all__ = [
     'llm', 'llm_json', 'llm_structured', 'chain_prompts',
-    'save', 'save_json', 'read', 'api', 'template', 'set_run_id', 'get_run_id',
+    'save', 'save_json', 'read', 'read_for_llm', 'api', 'template', 'set_run_id', 'get_run_id',
     'ai', 'helper'
 ]

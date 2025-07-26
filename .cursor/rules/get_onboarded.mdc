@@ -1,5 +1,0 @@
----
-alwaysApply: true
----
-
-When you are in a fresh chat (with no context) and the user asks you something to do with this repo, you MUST read app/docs/onboarding.md before proceeding. DO NOT make any code changes to this repo without reading that first.

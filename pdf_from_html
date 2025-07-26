@@ -1,0 +1,164 @@
+#!/bin/bash
+
+# pdf_from_html - Convert HTML file to PDF and open it
+# Usage: ./pdf_from_html <path_to_html_file>
+
+set -e  # Exit on any error
+
+# Check if argument is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <path_to_html_file>"
+    echo "Example: $0 /path/to/report.html"
+    echo "         $0 ./myreport.html"
+    exit 1
+fi
+
+HTML_FILE="$1"
+
+# Check if HTML file exists
+if [ ! -f "$HTML_FILE" ]; then
+    echo "Error: HTML file '$HTML_FILE' not found"
+    exit 1
+fi
+
+# Get absolute path of HTML file
+HTML_ABS_PATH=$(realpath "$HTML_FILE")
+
+# Get directory and filename without extension
+HTML_DIR=$(dirname "$HTML_ABS_PATH")
+HTML_BASENAME=$(basename "$HTML_FILE" .html)
+
+# Output PDF path
+PDF_PATH="$HTML_DIR/$HTML_BASENAME.pdf"
+
+echo "🔄 Converting HTML to PDF..."
+echo "📄 Input:  $HTML_ABS_PATH"
+echo "📑 Output: $PDF_PATH"
+
+# Ensure puppeteer is installed
+if [ ! -d "node_modules/puppeteer" ]; then
+    echo "⚠️  Installing Puppeteer..."
+    npm install puppeteer --silent
+fi
+
+# Create the PDF generator script directly in this directory
+cat > pdf_generator_temp.js << 'EOF'
+const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+
+async function generatePDF() {
+    const htmlPath = process.argv[2];
+    const pdfPath = process.argv[3];
+    
+    if (!fs.existsSync(htmlPath)) {
+        console.error('❌ Error: HTML file not found:', htmlPath);
+        process.exit(1);
+    }
+    
+    console.log('🚀 Starting PDF generation...');
+    
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+        
+        const page = await browser.newPage();
+        
+        // Load the HTML file
+        const fileUrl = `file://${htmlPath}`;
+        console.log(`📖 Loading: ${fileUrl}`);
+        
+        await page.goto(fileUrl, {
+            waitUntil: 'networkidle0',
+            timeout: 30000
+        });
+        
+        // Wait for dynamic content and fonts to load
+        console.log('⏳ Waiting for content to load...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        console.log('🖨️  Generating PDF...');
+        
+        // Generate PDF with optimized settings
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            },
+            printBackground: true,
+            preferCSSPageSize: true,
+            displayHeaderFooter: false,
+            scale: 1.0
+        });
+        
+        // Save PDF
+        fs.writeFileSync(pdfPath, pdfBuffer);
+        
+        console.log(`✅ PDF generated successfully!`);
+        console.log(`📊 File size: ${(pdfBuffer.length / 1024 / 1024).toFixed(2)} MB`);
+        
+    } catch (error) {
+        console.error('❌ Error generating PDF:', error.message);
+        process.exit(1);
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+    }
+}
+
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+    console.log('\n🛑 Process interrupted');
+    process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n🛑 Process terminated');
+    process.exit(1);
+});
+
+generatePDF().catch(error => {
+    console.error('❌ Fatal error:', error.message);
+    process.exit(1);
+});
+EOF
+
+# Run the PDF generation
+echo "🔧 Running PDF conversion..."
+node pdf_generator_temp.js "$HTML_ABS_PATH" "$PDF_PATH"
+
+# Clean up temporary script
+rm pdf_generator_temp.js
+
+# Check if PDF was created successfully
+if [ -f "$PDF_PATH" ]; then
+    echo "🎉 Success! PDF created at: $PDF_PATH"
+    
+    # Open the PDF
+    echo "📱 Opening PDF..."
+    if command -v open > /dev/null 2>&1; then
+        # macOS
+        open "$PDF_PATH"
+    elif command -v xdg-open > /dev/null 2>&1; then
+        # Linux
+        xdg-open "$PDF_PATH"
+    elif command -v start > /dev/null 2>&1; then
+        # Windows (Git Bash/WSL)
+        start "$PDF_PATH"
+    else
+        echo "📋 PDF ready at: $PDF_PATH"
+        echo "   (Unable to auto-open - please open manually)"
+    fi
+else
+    echo "❌ Error: PDF was not created"
+    exit 1
+fi
+
+echo "✨ Done!" 

@@ -2,11 +2,3 @@
 
 !.env
 !.env.local
-/runs
-/artifacts
-/.qwen
-/.gemini
-/.specstory
-/.logfire
-/temp
-/z_temp

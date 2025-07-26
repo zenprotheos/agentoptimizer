@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NRL Match Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .magazine-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .two-thirds {
+            grid-column: span 2;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+        }
+        
+        .team-colors-home {
+            background: linear-gradient(45deg, #dc2626, #ef4444);
+        }
+        
+        .team-colors-away {
+            background: linear-gradient(45deg, #7c3aed, #a855f7);
+        }
+        
+        .info-box {
+            border-left: 4px solid #3b82f6;
+            background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+        }
+        
+        .score-display {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { font-size: 11pt; }
+            h1 { font-size: 24pt; }
+            h2 { font-size: 18pt; }
+            h3 { font-size: 14pt; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-[210mm] mx-auto bg-white min-h-screen">
+        <!-- Header -->
+        <header class="gradient-bg text-white p-6">
+            <div class="text-center">
+                <h1 class="text-4xl font-black tracking-tight mb-2" id="match-title">NRL MATCH REPORT</h1>
+                <div class="flex justify-center items-center space-x-4 text-lg font-semibold">
+                    <span id="round-info">Round 21</span>
+                    <span>•</span>
+                    <span id="date-info">24 July 2025</span>
+                    <span>•</span>
+                    <span id="venue-info">Allianz Stadium</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Score Section -->
+        <div class="p-6 bg-gradient-to-r from-blue-50 to-cyan-50">
+            <div class="grid grid-cols-3 gap-4 items-center">
+                <div class="text-center">
+                    <div class="team-colors-home rounded-lg p-4 text-white mb-2">
+                        <h2 class="text-2xl font-bold" id="home-team">Sydney Roosters</h2>
+                    </div>
+                    <div class="score-display text-6xl font-black text-gray-800" id="home-score">30</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-4xl font-black text-gray-600 mb-2">VS</div>
+                    <div class="text-sm text-gray-600" id="kickoff-time">19:50 AEST</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="team-colors-away rounded-lg p-4 text-white mb-2">
+                        <h2 class="text-2xl font-bold" id="away-team">Melbourne Storm</h2>
+                    </div>
+                    <div class="score-display text-6xl font-black text-gray-800" id="away-score">34</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">FINAL</span>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="p-6">
+            <div class="magazine-grid">
+                
+                <!-- Match Summary -->
+                <div class="two-thirds">
+                    <div class="info-box p-6 rounded-lg">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">MATCH SUMMARY</h3>
+                        <p class="text-gray-700 leading-relaxed" id="match-summary">
+                            Loading match summary...
+                        </p>
+                        
+                        <div class="mt-6">
+                            <h4 class="font-bold text-gray-800 mb-2">TURNING POINT</h4>
+                            <p class="text-gray-700 text-sm" id="turning-point">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Match Info -->
+                <div class="stat-card p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-800 mb-3">MATCH INFO</h3>
+                    <div class="space-y-2 text-sm">
+                        <div><span class="font-semibold">Weather:</span> <span id="weather">Clear, 13.8°C</span></div>
+                        <div><span class="font-semibold">Referees:</span> <span id="referees">Ashley Klein, Chris Butler</span></div>
+                        <div><span class="font-semibold">Broadcast:</span> <span id="broadcast">Nine, Fox League</span></div>
+                        <div><span class="font-semibold">Attendance:</span> <span id="attendance">TBC</span></div>
+                    </div>
+                </div>
+                
+                <!-- Scoring Plays -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">SCORING PLAYS</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div id="scoring-timeline" class="space-y-2">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-gray-800 mb-3">GOAL KICKING</h4>
+                            <div id="goal-kicking-stats" class="space-y-2 text-sm">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Lineups -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">TEAM LINEUPS</h3>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-red-600 mb-3 flex items-center">
+                                <span id="home-team-lineup-title">Sydney Roosters</span>
+                                <span class="ml-2 text-sm text-gray-600">Captain: <span id="home-captain">TBD</span></span>
+                            </h4>
+                            <div class="mb-4">
+                                <h5 class="font-semibold text-gray-700 mb-2">Starting XIII</h5>
+                                <div id="home-lineup" class="grid grid-cols-2 gap-1 text-xs">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">Interchange</h5>
+                                <div id="home-interchange" class="grid grid-cols-2 gap-1 text-xs">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-purple-600 mb-3 flex items-center">
+                                <span id="away-team-lineup-title">Melbourne Storm</span>
+                                <span class="ml-2 text-sm text-gray-600">Captain: <span id="away-captain">TBD</span></span>
+                            </h4>
+                            <div class="mb-4">
+                                <h5 class="font-semibold text-gray-700 mb-2">Starting XIII</h5>
+                                <div id="away-lineup" class="grid grid-cols-2 gap-1 text-xs">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-700 mb-2">Interchange</h5>
+                                <div id="away-interchange" class="grid grid-cols-2 gap-1 text-xs">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Stats -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">TEAM STATISTICS</h3>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-red-600 mb-3" id="home-team-stats-title">Sydney Roosters</h4>
+                            <div id="home-team-stats" class="space-y-2 text-sm">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-purple-600 mb-3" id="away-team-stats-title">Melbourne Storm</h4>
+                            <div id="away-team-stats" class="space-y-2 text-sm">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Player of the Match -->
+                <div class="info-box p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-800 mb-3">PLAYER OF THE MATCH</h3>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">★</span>
+                        </div>
+                        <div class="font-bold text-lg" id="player-of-match">Nick Meaney</div>
+                        <div class="text-sm text-gray-600">Melbourne Storm</div>
+                    </div>
+                </div>
+                
+                <!-- Key Moments -->
+                <div class="two-thirds">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">KEY MOMENTS</h3>
+                    <div id="key-moments" class="space-y-3">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Player Statistics -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">PLAYER STATISTICS</h3>
+                    <div id="player-stats-section" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Match Analysis -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">MATCH ANALYSIS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="info-box p-4 rounded-lg">
+                            <h4 class="font-bold text-gray-800 mb-3">CONTROVERSIES</h4>
+                            <div id="controversies-section" class="space-y-2 text-sm">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="stat-card p-4 rounded-lg">
+                            <h4 class="font-bold text-gray-800 mb-3">MATCH DETAILS</h4>
+                            <div class="space-y-2 text-sm">
+                                <div><span class="font-semibold">Bunker Decisions:</span> <span id="bunker-decisions">1</span></div>
+                                <div><span class="font-semibold">Half-time Score:</span> <span id="halftime-score">6-6</span></div>
+                                <div><span class="font-semibold">Broadcast:</span> <span id="broadcast-full">Nine, Fox League, Kayo</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coach Comments -->
+                <div class="full-width">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">COACH COMMENTS</h3>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="border-l-4 border-red-500 pl-4">
+                            <h4 class="font-bold text-gray-800" id="home-coach">Trent Robinson</h4>
+                            <p class="text-gray-700 italic text-sm mt-1" id="home-coach-comment">"We fought hard, but we couldn't close it out."</p>
+                        </div>
+                        <div class="border-l-4 border-purple-500 pl-4">
+                            <h4 class="font-bold text-gray-800" id="away-coach">Craig Bellamy</h4>
+                            <p class="text-gray-700 italic text-sm mt-1" id="away-coach-comment">"The boys showed great character."</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white p-4 text-center text-sm">
+            <p>© 2025 NRL Match Report | Generated from official match data</p>
+        </footer>
+    </div>
+
+    <!-- Include the JSON data as a JavaScript variable -->
+    <script src="nrl.js"></script>
+    
+    <script>
+        // Load and populate data from JSON
+        function loadMatchData() {
+            try {
+                // Use the globally available matchData variable
+                if (typeof matchData !== 'undefined') {
+                    populateMatchReport(matchData);
+                } else {
+                    console.error('Match data not found. Make sure nrl.js is loaded.');
+                }
+            } catch (error) {
+                console.error('Error loading match data:', error);
+            }
+        }
+
+        function populateMatchReport(data) {
+            // Header information
+            document.getElementById('round-info').textContent = `Round ${data.match.round}`;
+            document.getElementById('date-info').textContent = new Date(data.match.date).toLocaleDateString('en-AU', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            document.getElementById('venue-info').textContent = data.match.venue.split(',')[0];
+            document.getElementById('kickoff-time').textContent = data.match.kickoff_time;
+            
+            // Teams and scores
+            document.getElementById('home-team').textContent = data.teams.home.name;
+            document.getElementById('away-team').textContent = data.teams.away.name;
+            document.getElementById('home-score').textContent = data.teams.home.score;
+            document.getElementById('away-score').textContent = data.teams.away.score;
+            
+            // Match info
+            document.getElementById('weather').textContent = data.match.weather;
+            document.getElementById('referees').textContent = data.match.referees.join(', ');
+            document.getElementById('broadcast').textContent = data.match.broadcast.join(', ');
+            document.getElementById('attendance').textContent = data.match.attendance || 'TBC';
+            
+            // Match summary
+            document.getElementById('match-summary').textContent = data.match_analysis.summary;
+            document.getElementById('turning-point').textContent = data.match_analysis.turning_point;
+            
+            // Player of the match
+            document.getElementById('player-of-match').textContent = data.match_analysis.player_of_the_match;
+            
+            // Scoring plays
+            const scoringTimeline = document.getElementById('scoring-timeline');
+            scoringTimeline.innerHTML = '';
+            data.scoring_plays.forEach(play => {
+                const playDiv = document.createElement('div');
+                playDiv.className = `p-3 rounded-lg ${play.team === data.teams.home.name ? 'bg-red-50 border-l-4 border-red-500' : 'bg-purple-50 border-l-4 border-purple-500'}`;
+                playDiv.innerHTML = `
+                    <div class="font-semibold text-sm">${play.minute}' - ${play.player}</div>
+                    <div class="text-xs text-gray-600">${play.description}</div>
+                `;
+                scoringTimeline.appendChild(playDiv);
+            });
+            
+            // Goal kicking stats
+            const goalKickingStats = document.getElementById('goal-kicking-stats');
+            goalKickingStats.innerHTML = '';
+            data.goal_kicking.forEach(kicker => {
+                const kickerDiv = document.createElement('div');
+                kickerDiv.innerHTML = `
+                    <div class="font-semibold">${kicker.player}</div>
+                    <div class="text-gray-600">${kicker.goals_successful}/${kicker.goals_attempted} (${Math.round(kicker.conversion_rate * 100)}%)</div>
+                `;
+                goalKickingStats.appendChild(kickerDiv);
+            });
+            
+            // Team stats
+            const homeStats = document.getElementById('home-team-stats');
+            const awayStats = document.getElementById('away-team-stats');
+            document.getElementById('home-team-stats-title').textContent = data.teams.home.name;
+            document.getElementById('away-team-stats-title').textContent = data.teams.away.name;
+            
+            const statsToShow = [
+                ['Possession', 'possession_percent', '%'],
+                ['Completion Rate', 'completion_rate', ''],
+                ['Tackles Made', 'tackles_made', ''],
+                ['Missed Tackles', 'missed_tackles', ''],
+                ['Errors', 'errors', ''],
+                ['Penalties', 'penalties_conceded', '']
+            ];
+            
+            homeStats.innerHTML = '';
+            awayStats.innerHTML = '';
+            
+            statsToShow.forEach(([label, key, suffix]) => {
+                const homeValue = data.team_stats[data.teams.home.name][key];
+                const awayValue = data.team_stats[data.teams.away.name][key];
+                
+                homeStats.innerHTML += `<div class="flex justify-between"><span>${label}:</span><span class="font-semibold">${homeValue}${suffix}</span></div>`;
+                awayStats.innerHTML += `<div class="flex justify-between"><span>${label}:</span><span class="font-semibold">${awayValue}${suffix}</span></div>`;
+            });
+            
+            // Key moments
+            const keyMoments = document.getElementById('key-moments');
+            keyMoments.innerHTML = '';
+            data.key_moments.forEach(moment => {
+                const momentDiv = document.createElement('div');
+                momentDiv.className = 'bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded-lg';
+                momentDiv.innerHTML = `
+                    <div class="font-semibold text-sm">${moment.minute}' - ${moment.team}</div>
+                    <div class="text-sm text-gray-700">${moment.description}</div>
+                `;
+                keyMoments.appendChild(momentDiv);
+            });
+            
+            // Team lineups
+            document.getElementById('home-team-lineup-title').textContent = data.teams.home.name;
+            document.getElementById('away-team-lineup-title').textContent = data.teams.away.name;
+            document.getElementById('home-captain').textContent = data.teams.home.captain;
+            document.getElementById('away-captain').textContent = data.teams.away.captain;
+            
+            // Populate home team lineup
+            const homeLineup = document.getElementById('home-lineup');
+            const homeInterchange = document.getElementById('home-interchange');
+            homeLineup.innerHTML = '';
+            homeInterchange.innerHTML = '';
+            
+            data.teams.home.lineup.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'text-gray-700 py-1';
+                playerDiv.textContent = player;
+                homeLineup.appendChild(playerDiv);
+            });
+            
+            data.teams.home.interchange.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'text-gray-600 py-1';
+                playerDiv.textContent = player;
+                homeInterchange.appendChild(playerDiv);
+            });
+            
+            // Populate away team lineup
+            const awayLineup = document.getElementById('away-lineup');
+            const awayInterchange = document.getElementById('away-interchange');
+            awayLineup.innerHTML = '';
+            awayInterchange.innerHTML = '';
+            
+            data.teams.away.lineup.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'text-gray-700 py-1';
+                playerDiv.textContent = player;
+                awayLineup.appendChild(playerDiv);
+            });
+            
+            data.teams.away.interchange.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'text-gray-600 py-1';
+                playerDiv.textContent = player;
+                awayInterchange.appendChild(playerDiv);
+            });
+            
+            // Player statistics
+            const playerStatsSection = document.getElementById('player-stats-section');
+            playerStatsSection.innerHTML = '';
+            
+            Object.entries(data.player_stats).forEach(([playerName, stats]) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'stat-card p-4 rounded-lg';
+                playerCard.innerHTML = `
+                    <h4 class="font-bold text-gray-800 mb-2">${playerName}</h4>
+                    <div class="text-xs text-gray-600 mb-2">${stats.team} - ${stats.position}</div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>Minutes: <span class="font-semibold">${stats.minutes_played}</span></div>
+                        <div>Tries: <span class="font-semibold">${stats.tries}</span></div>
+                        <div>Try Assists: <span class="font-semibold">${stats.try_assists}</span></div>
+                        <div>Run Metres: <span class="font-semibold">${stats.run_metres}m</span></div>
+                        <div>Tackles: <span class="font-semibold">${stats.tackles}</span></div>
+                        <div>Tackle Breaks: <span class="font-semibold">${stats.tackle_breaks}</span></div>
+                        <div>Errors: <span class="font-semibold">${stats.errors}</span></div>
+                        <div>Line Breaks: <span class="font-semibold">${stats.line_breaks}</span></div>
+                    </div>
+                `;
+                playerStatsSection.appendChild(playerCard);
+            });
+            
+            // Controversies
+            const controversiesSection = document.getElementById('controversies-section');
+            controversiesSection.innerHTML = '';
+            
+            if (data.match_analysis.controversies && data.match_analysis.controversies.length > 0) {
+                data.match_analysis.controversies.forEach(controversy => {
+                    const controversyDiv = document.createElement('div');
+                    controversyDiv.className = 'text-gray-700 italic';
+                    controversyDiv.textContent = `• ${controversy}`;
+                    controversiesSection.appendChild(controversyDiv);
+                });
+            } else {
+                controversiesSection.innerHTML = '<div class="text-gray-500 italic">No major controversies reported</div>';
+            }
+            
+            // Additional match details
+            document.getElementById('bunker-decisions').textContent = data.match.bunker_decisions;
+            document.getElementById('halftime-score').textContent = `${data.teams.home.halftime_score}-${data.teams.away.halftime_score}`;
+            document.getElementById('broadcast-full').textContent = data.match.broadcast.join(', ');
+
+            // Coach comments
+            document.getElementById('home-coach').textContent = data.teams.home.coach;
+            document.getElementById('away-coach').textContent = data.teams.away.coach;
+            document.getElementById('home-coach-comment').textContent = data.match_analysis.coach_comments[data.teams.home.coach];
+            document.getElementById('away-coach-comment').textContent = data.match_analysis.coach_comments[data.teams.away.coach];
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadMatchData);
+    </script>
+</body>
+</html>
