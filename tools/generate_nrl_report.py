@@ -99,7 +99,7 @@ Remember, You MUST reply in JSON format per the provided schema."""
         
         # Generate PDF using the pdf_from_html script
         print(f"📄 Generating PDF report...")
-        pdf_script_path = os.path.join(os.getcwd(), "pdf_from_html")
+        pdf_script_path = os.path.join(os.getcwd(), "tools", "generate_pdf_from_html")
         
         # Run the PDF generation script
         result = subprocess.run(

@@ -3,13 +3,8 @@
 Todo read tool for the AI Agent framework - reads the current todo list for the session
 """
 
-from ast import Return
-import json
-import os
-from pathlib import Path
-from typing import Dict, Any, List
+from app.tool_services import *
 
-# OpenAI tools spec compliant metadata
 TOOL_METADATA = {
     "type": "function",
     "function": {
@@ -23,17 +18,12 @@ TOOL_METADATA = {
     }
 }
 
-
 def todo_read() -> str:
-    """
-    Read the current todo list for the session
+    """Read the current todo list for the session"""
     
-    Returns:
-        JSON string containing the current todo list with items, their status, priority, and content
-    """
     try:
-        # Get the current run ID from environment variable set by agent runner
-        run_id = os.getenv('ONESHOT_RUN_ID')
+        # Get the current run ID from tool_services
+        run_id = get_run_id()
         if not run_id:
             return json.dumps({
                 "error": "No active run session found. Todo lists are session-specific.",
@@ -50,13 +40,15 @@ def todo_read() -> str:
                 "todos": []
             }, indent=2)
         
-        # Read and return the todo list
-        with open(todo_file, 'r') as f:
-            todos = json.load(f)
+        # Use tool_services read function and parse JSON
+        todo_content = read(str(todo_file))
+        todos = json.loads(todo_content)
         
         return json.dumps({
+            "success": True,
             "message": f"Found {len(todos)} todo items for this session",
-            "todos": todos
+            "todos": todos,
+            "run_id": run_id
         }, indent=2)
         
     except json.JSONDecodeError as e:
@@ -69,7 +61,6 @@ def todo_read() -> str:
             "error": f"Failed to read todo list: {str(e)}",
             "todos": []
         }, indent=2)
-
 
 if __name__ == "__main__":
     # Test the function

@@ -1,5 +1,9 @@
 # Agent Creation Guide
 
+## Background
+
+
+
 ## Agent File Structure
 
 Create a new agent by adding a markdown file to the `/agents` directory with this structure:

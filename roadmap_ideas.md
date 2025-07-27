@@ -1,0 +1,9 @@
+- fastapi entry point at app/main.py
+- read file tools allow for multiple files and dir
+- cursor-like files for the orchestrator
+- update to instructions to help it determine whether setup is needed
+- does list_tools filter for *.py files in /tools dir - how do we handle bash scripts that call node stuff
+- updating requirements.txt when creating new tools that have depns
+- deploy as a github action
+- deploy static sites to github sites
+- deploy to railway with file volume as mirror of pc files

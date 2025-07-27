@@ -3,12 +3,8 @@
 Todo write tool for the AI Agent framework - updates the todo list for the current session
 """
 
-import json
-import os
-from rlcompleter import Completer
+from app.tool_services import *
 import uuid
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 
 # OpenAI tools spec compliant metadata
 TOOL_METADATA = {
@@ -73,8 +69,8 @@ def todo_write(todos: List[Dict[str, Any]], merge: bool = True) -> str:
         JSON string confirming the update and showing the current todo list
     """
     try:
-        # Get the current run ID from environment variable set by agent runner
-        run_id = os.getenv('ONESHOT_RUN_ID')
+        # Get the current run ID from tool_services
+        run_id = get_run_id()
         if not run_id:
             return json.dumps({
                 "error": "No active run session found. Todo lists are session-specific.",
@@ -93,8 +89,9 @@ def todo_write(todos: List[Dict[str, Any]], merge: bool = True) -> str:
         existing_todos = []
         if merge and todo_file.exists():
             try:
-                with open(todo_file, 'r') as f:
-                    existing_todos = json.load(f)
+                # Use tool_services read function
+                todo_content = read(str(todo_file))
+                existing_todos = json.loads(todo_content)
             except (json.JSONDecodeError, FileNotFoundError):
                 existing_todos = []
         
@@ -105,7 +102,7 @@ def todo_write(todos: List[Dict[str, Any]], merge: bool = True) -> str:
             
             # Generate ID if not provided
             if 'id' not in processed_todo or not processed_todo['id']:
-                processed_todo['id'] = str(len(existing_todos) + len(processed_todos) + 1)
+                processed_todo['id'] = str(uuid.uuid4())[:8]  # Use UUID for better uniqueness
             
             # Set default priority if not provided
             if 'priority' not in processed_todo:
@@ -130,9 +127,8 @@ def todo_write(todos: List[Dict[str, Any]], merge: bool = True) -> str:
         status_priority = {'in_progress': 0, 'pending': 1, 'completed': 2, 'cancelled': 3}
         final_todos.sort(key=lambda x: (status_priority.get(x['status'], 4), x['id']))
         
-        # Save the updated todo list
-        with open(todo_file, 'w') as f:
-            json.dump(final_todos, f, indent=2)
+        # Use tool_services to save the todo list as JSON
+        saved_file = save_json(final_todos, f"Todo list for run {run_id}", f"todos.json")
         
         # Count todos by status
         status_counts = {}
@@ -145,7 +141,8 @@ def todo_write(todos: List[Dict[str, Any]], merge: bool = True) -> str:
             "message": f"Todo list updated successfully. {len(processed_todos)} item(s) {'merged' if merge else 'added'}.",
             "status_summary": status_counts,
             "total_todos": len(final_todos),
-            "todos": final_todos
+            "run_id": run_id,
+            "filepath": saved_file["filepath"]
         }, indent=2)
         
     except Exception as e:

@@ -1,22 +1,8 @@
 # tools/wip_doc_edit.py
 # Tool for editing WIP (Work In Progress) documents using filepath
 
-import json
-
-# Handle imports for both standalone testing and normal tool usage
-try:
-    from app.tool_services import *
-except ImportError:
-    # For standalone testing, add parent directory to path
-    import sys
-    import os
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from app.tool_services import *
-
-from pathlib import Path
-from datetime import datetime
+from app.tool_services import *
 import uuid
-import re
 
 TOOL_METADATA = {
     "type": "function",
@@ -76,8 +62,8 @@ def wip_doc_edit(file_path: str, content: str, edit_type: str = "append", sectio
         document_name = doc_path.stem
         audit_path = doc_path.parent / f"{document_name}.json"
         
-        # Read current content
-        current_content = doc_path.read_text()
+        # Use tool_services read function
+        current_content = read(str(doc_path))
         
         # Perform the edit based on edit_type
         if edit_type == "append":
@@ -132,8 +118,8 @@ def wip_doc_edit(file_path: str, content: str, edit_type: str = "append", sectio
         if status:
             new_content = _update_status_in_content(new_content, status)
         
-        # Write updated content
-        doc_path.write_text(new_content)
+        # Use tool_services save function without frontmatter for WIP documents
+        saved_file = save(new_content, f"WIP document edit: {document_name}", f"{document_name}.md", add_frontmatter=False)
         
         # Update audit log
         _update_audit_log(audit_path, document_name, edit_type, section, status, notes, new_content)
@@ -141,11 +127,12 @@ def wip_doc_edit(file_path: str, content: str, edit_type: str = "append", sectio
         return json.dumps({
             "success": True,
             "document_name": document_name,
-            "file_path": str(doc_path),
+            "file_path": saved_file["filepath"],
             "edit_type": edit_type,
             "section": section,
             "status": status,
             "notes": notes,
+            "run_id": get_run_id(),
             "summary": f"WIP document edited successfully using {edit_type}"
         }, indent=2)
         
@@ -153,7 +140,6 @@ def wip_doc_edit(file_path: str, content: str, edit_type: str = "append", sectio
         return json.dumps({
             "error": f"Failed to edit WIP document: {str(e)}"
         }, indent=2)
-
 
 def _replace_section(content: str, section_title: str, new_content: str) -> str:
     """Replace a specific section in the document"""
@@ -184,7 +170,6 @@ def _replace_section(content: str, section_title: str, new_content: str) -> str:
     new_lines = lines[:start_idx] + [f"{'#' * section_level} {section_title}", "", new_content, ""] + lines[end_idx:]
     return '\n'.join(new_lines)
 
-
 def _update_status_in_content(content: str, new_status: str) -> str:
     """Update the status line in document content"""
     lines = content.split('\n')
@@ -194,15 +179,17 @@ def _update_status_in_content(content: str, new_status: str) -> str:
             break
     return '\n'.join(lines)
 
-
 def _update_audit_log(audit_path: Path, document_name: str, edit_type: str, section: str, status: str, notes: str, new_content: str):
     """Update the audit log with the edit"""
     timestamp = datetime.now().isoformat()
     
     # Load existing audit log or create new one
     if audit_path.exists():
-        with open(audit_path, 'r') as f:
-            audit_data = json.load(f)
+        # Use tool_services read function
+        audit_content = read(str(audit_path))
+        audit_wrapper = json.loads(audit_content)
+        # Extract data from tool_services JSON wrapper
+        audit_data = audit_wrapper.get("data", audit_wrapper)
     else:
         audit_data = {
             "document_name": document_name,
@@ -225,26 +212,18 @@ def _update_audit_log(audit_path: Path, document_name: str, edit_type: str, sect
         "section": section,
         "status": status,
         "notes": notes,
-        "content_hash": _calculate_hash(new_content)
+        "content_hash": calculate_hash(new_content)
     }
     
     audit_data["audit_log"].append(audit_entry)
     
-    # Write updated audit log
-    with open(audit_path, 'w') as f:
-        json.dump(audit_data, f, indent=2)
-
-
-def _calculate_hash(content: str) -> str:
-    """Calculate hash of content for change tracking"""
-    import hashlib
-    return hashlib.md5(content.encode()).hexdigest()
-
+    # Use tool_services save_json function
+    save_json(audit_data, f"WIP audit log: {document_name}", f"{document_name}.json")
 
 # Test the tool if run directly
 if __name__ == "__main__":
     # Test editing (requires existing WIP document)
-    test_file = "wip_documents/test_doc.md"
+    test_file = "artifacts/no_run_id/test_tool_services.md"
     if Path(test_file).exists():
         result = wip_doc_edit(test_file, "This is additional content.", edit_type="append", notes="Test edit")
         print("Test Result:")

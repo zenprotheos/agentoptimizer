@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Simple Agent MCP Server
-A basic MCP server that provides agent calling functionality.
+This is the oneshot MCP Server which provides the entry point for coding agents like cursor and claude code to orchestrate specialised agents (when in `orchestrator` role) and learn how tocreate agents and tools (when in `developer` role).
 """
 
 import subprocess
@@ -11,14 +10,14 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # Import MCP functions from modular files
-from app.oneshot_mcp_tools.agents import list_agents as list_agents_impl
-from app.oneshot_mcp_tools.tools import list_tools as list_tools_impl
-from app.oneshot_mcp_tools.read_doc import read_doc, get_available_docs
+from app.oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
+from app.oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
+from app.oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
 
 # Create the MCP server
 mcp = FastMCP(
     name="oneshot",
-    instructions="You are a helpful assistant that can call agents to help you with tasks. You can call agents by name with a message. You can also list all available agents and tools."
+    instructions="You are a helpful assistant that can call agents to help you with tasks. You can call agents by name with a message. You can also list all available agents and tools. You can read howto guides for creating agents & tools"
 )
 
 # Get project root
@@ -26,7 +25,7 @@ project_root = Path(__file__).parent
 
 @mcp.tool()
 def list_agents() -> str:
-    """List all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task.
+    """Use this to list all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task.
     
     Returns:
         str: JSON formatted list of available agents with their descriptions
@@ -35,13 +34,15 @@ def list_agents() -> str:
 
 @mcp.tool()
 def read_instructions_for(guide_name: str) -> str:
-    """Use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
+    """When in developer mode, use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
     
     Args:
         guide_name: Name of the guide to read. Available guides:
-            - "how_to_create_agents": Instructions for creating new agents
-            - "how_to_create_tools": Instructions for creating new tools  
-            - "how_oneshot_works": Technical details of how the system works
+            - "how_oneshot_works": Technical details of how the oneshot system works
+            - "how_to_create_agents": Use this guide for creating new agents
+            - "how_to_create_tools": Use this guide for creating new tools
+            - "how_to_use_tool_services": Guide for understanding how to use the tool_services in new tools
+
     
     Returns:
         str: Contents of the requested documentation guide
@@ -54,7 +55,7 @@ def read_instructions_for(guide_name: str) -> str:
 
 @mcp.tool()
 def list_tools() -> str:
-    """Lists all available tools and MCP servers with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.
+    """Use this to list all available tools with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.
     
     Returns:
         str: JSON formatted list of all native tools and MCP servers with full metadata

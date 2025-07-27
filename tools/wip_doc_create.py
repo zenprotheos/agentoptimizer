@@ -1,20 +1,7 @@
 # tools/wip_doc_create.py
 # Tool for creating WIP (Work In Progress) documents, including from existing files
 
-import json
-
-# Handle imports for both standalone testing and normal tool usage
-try:
-    from app.tool_services import *
-except ImportError:
-    # For standalone testing, add parent directory to path
-    import sys
-    import os
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from app.tool_services import *
-
-from pathlib import Path
-from datetime import datetime
+from app.tool_services import *
 import uuid
 
 TOOL_METADATA = {
@@ -62,7 +49,7 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
     """Create a WIP document either from scratch or from an existing file"""
     
     try:
-        # Get run-aware artifacts directory (same as tool_services.py)
+        # Get run-aware artifacts directory using tool_services
         current_run_id = get_run_id()
         if current_run_id:
             artifacts_dir = Path("artifacts") / current_run_id
@@ -82,9 +69,10 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
         # Get content from existing file if specified
         if existing_file_path:
             try:
+                # Use tool_services read function
                 file_content = read(existing_file_path)
-                # Strip frontmatter if present
-                content = _strip_frontmatter(file_content)
+                # Use tool_services strip_frontmatter function
+                content = strip_frontmatter(file_content)
             except Exception as e:
                 return json.dumps({
                     "error": f"Failed to read existing file '{existing_file_path}': {str(e)}"
@@ -101,8 +89,8 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
 
 {content}"""
         
-        # Write the document
-        doc_path.write_text(document_content)
+        # Use tool_services save function without frontmatter for WIP documents
+        saved_doc = save(document_content, f"WIP document: {title}", f"{document_name}.md", add_frontmatter=False)
         
         # Create audit log
         audit_data = {
@@ -110,7 +98,7 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
             "title": title,
             "created_at": timestamp,
             "current_status": status,
-            "file_path": str(doc_path),
+            "file_path": saved_doc["filepath"],
             "audit_log": [
                 {
                     "edit_id": str(uuid.uuid4()),
@@ -119,24 +107,24 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
                     "status": status,
                     "notes": notes,
                     "source_file": existing_file_path if existing_file_path else None,
-                    "content_hash": _calculate_hash(document_content)
+                    "content_hash": calculate_hash(document_content)
                 }
             ]
         }
         
-        # Write audit log
-        with open(audit_path, 'w') as f:
-            json.dump(audit_data, f, indent=2)
+        # Use tool_services save_json function for audit log
+        saved_audit = save_json(audit_data, f"WIP audit log: {document_name}", f"{document_name}.json")
         
         return json.dumps({
             "success": True,
             "document_name": document_name,
             "title": title,
-            "file_path": str(doc_path),
-            "audit_path": str(audit_path),
+            "file_path": saved_doc["filepath"],
+            "audit_path": saved_audit["filepath"],
             "status": status,
             "source_file": existing_file_path,
             "notes": notes,
+            "run_id": current_run_id,
             "summary": f"WIP document '{document_name}' created successfully"
         }, indent=2)
         
@@ -144,28 +132,6 @@ def wip_doc_create(document_name: str, title: str, content: str = None, existing
         return json.dumps({
             "error": f"Failed to create WIP document: {str(e)}"
         }, indent=2)
-
-
-def _strip_frontmatter(content: str) -> str:
-    """Strip YAML frontmatter from content if present"""
-    lines = content.split('\n')
-    if lines and lines[0].strip() == '---':
-        # Find the end of frontmatter
-        for i, line in enumerate(lines[1:], 1):
-            if line.strip() == '---':
-                # Return content after frontmatter, skipping empty lines
-                remaining_lines = lines[i+1:]
-                while remaining_lines and not remaining_lines[0].strip():
-                    remaining_lines.pop(0)
-                return '\n'.join(remaining_lines)
-    return content
-
-
-def _calculate_hash(content: str) -> str:
-    """Calculate hash of content for change tracking"""
-    import hashlib
-    return hashlib.md5(content.encode()).hexdigest()
-
 
 # Test the tool if run directly
 if __name__ == "__main__":

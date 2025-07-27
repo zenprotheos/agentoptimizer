@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Documentation reading functions
+Meta tool for Orchestration agents
 """
 
 import os

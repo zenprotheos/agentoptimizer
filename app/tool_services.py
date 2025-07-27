@@ -1,10 +1,15 @@
 # app/tool_services.py
+"""
+This module provides a helpful set of capabillities that are commonly used by agent tools. It can be imported into a new tool so that code can be kept DRY. Changes to this module should trigger updates to the how_to_use_tool_services guide.
+"""
 
 import os
 import json
 import yaml
 import requests
 import asyncio
+import re
+import ast
 from pathlib import Path
 from typing import Dict, Any, Union, Optional, List, Type
 from datetime import datetime
@@ -555,7 +560,7 @@ class ToolHelper:
         return content
     
     @auto_instrument('file')
-    def save(self, content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
+    def save(self, content: str, description: str = "", filename: str = None, add_frontmatter: bool = True) -> Dict[str, Any]:
         """Save content and return filepath + metadata (organized by run ID)"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -574,8 +579,9 @@ class ToolHelper:
         if len(content) > 200:
             summary += "..."
         
-        # Add frontmatter
-        frontmatter = f"""---
+        # Add frontmatter if requested
+        if add_frontmatter:
+            final_content = f"""---
 description: {description}
 created: {datetime.now().isoformat()}
 tokens: {token_count}
@@ -583,8 +589,10 @@ summary: {summary}
 ---
 
 {content}"""
+        else:
+            final_content = content
         
-        filepath.write_text(frontmatter)
+        filepath.write_text(final_content)
         
         return {
             "filepath": str(filepath),
@@ -692,6 +700,25 @@ summary: {summary}
         except:
             return int(len(text.split()) * 1.3)  # Rough estimate
 
+    def calculate_hash(self, content: str) -> str:
+        """Calculate hash of content for change tracking"""
+        import hashlib
+        return hashlib.md5(content.encode()).hexdigest()
+
+    def strip_frontmatter(self, content: str) -> str:
+        """Strip YAML frontmatter from content if present"""
+        lines = content.split('\n')
+        if lines and lines[0].strip() == '---':
+            # Find the end of frontmatter
+            for i, line in enumerate(lines[1:], 1):
+                if line.strip() == '---':
+                    # Return content after frontmatter, skipping empty lines
+                    remaining_lines = lines[i+1:]
+                    while remaining_lines and not remaining_lines[0].strip():
+                        remaining_lines.pop(0)
+                    return '\n'.join(remaining_lines)
+        return content
+
 
 # GLOBAL INSTANCE - IMPORT AND USE IMMEDIATELY
 helper = ToolHelper()
@@ -718,9 +745,9 @@ def chain_prompts(prompts: List[str], **kwargs) -> List[str]:
     return helper.chain_prompts(prompts, **kwargs)
 
 @auto_instrument('file')
-def save(content: str, description: str = "", filename: str = None) -> Dict[str, Any]:
+def save(content: str, description: str = "", filename: str = None, add_frontmatter: bool = True) -> Dict[str, Any]:
     """Global save function"""
-    return helper.save(content, description, filename)
+    return helper.save(content, description, filename, add_frontmatter)
 
 @auto_instrument('file')
 def save_json(content: Union[Dict, List, str], description: str = "", filename: str = None) -> Dict[str, Any]:
@@ -755,6 +782,14 @@ def get_run_id() -> Optional[str]:
     """Get the current run ID"""
     return helper.get_run_id()
 
+def calculate_hash(content: str) -> str:
+    """Global calculate_hash function"""
+    return helper.calculate_hash(content)
+
+def strip_frontmatter(content: str) -> str:
+    """Global strip_frontmatter function"""
+    return helper.strip_frontmatter(content)
+
 # Namespace class for even cleaner usage
 class AI:
     """Namespace for AI operations - enables ai.llm(), ai.save(), etc."""
@@ -776,7 +811,10 @@ ai = AI()
 
 # Define what gets imported with "from app.tool_services import *"
 __all__ = [
+    # Core functions
     'llm', 'llm_json', 'llm_structured', 'chain_prompts',
     'save', 'save_json', 'read', 'read_for_llm', 'api', 'template', 'set_run_id', 'get_run_id',
-    'ai', 'helper'
+    'calculate_hash', 'strip_frontmatter', 'ai', 'helper',
+    # Common imports for tools
+    'json', 'yaml', 'Path', 're', 'ast', 'os', 'datetime', 'BaseModel', 'Dict', 'Any', 'List', 'Optional', 'Type'
 ]

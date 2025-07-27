@@ -1,21 +1,7 @@
 # tools/wip_doc_read.py
 # Tool for reading WIP (Work In Progress) documents and related operations
 
-import json
-
-# Handle imports for both standalone testing and normal tool usage
-try:
-    from app.tool_services import *
-except ImportError:
-    # For standalone testing, add parent directory to path
-    import sys
-    import os
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from app.tool_services import *
-
-from pathlib import Path
-from datetime import datetime
-import re
+from app.tool_services import *
 
 TOOL_METADATA = {
     "type": "function",
@@ -76,7 +62,8 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
                     "error": f"WIP document not found at '{file_path}'"
                 }, indent=2)
             
-            content = doc_path.read_text()
+            # Use tool_services read function
+            content = read(str(doc_path))
             
             # Strip frontmatter and metadata if requested
             if strip_frontmatter:
@@ -88,9 +75,12 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
             status = "unknown"
             
             if audit_path.exists():
-                with open(audit_path, 'r') as f:
-                    audit_data = json.load(f)
-                    status = audit_data.get("current_status", "unknown")
+                # Use tool_services read function
+                audit_content = read(str(audit_path))
+                audit_wrapper = json.loads(audit_content)
+                # Extract data from tool_services JSON wrapper
+                audit_data = audit_wrapper.get("data", audit_wrapper)
+                status = audit_data.get("current_status", "unknown")
             
             return json.dumps({
                 "success": True,
@@ -127,11 +117,14 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
                 # Get additional info from audit log
                 if audit_path.exists():
                     try:
-                        with open(audit_path, 'r') as f:
-                            audit_data = json.load(f)
-                            doc_info["status"] = audit_data.get("current_status", "unknown")
-                            doc_info["created_at"] = audit_data.get("created_at")
-                            doc_info["title"] = audit_data.get("title", document_name)
+                        # Use tool_services read function
+                        audit_content = read(str(audit_path))
+                        audit_wrapper = json.loads(audit_content)
+                        # Extract data from tool_services JSON wrapper
+                        audit_data = audit_wrapper.get("data", audit_wrapper)
+                        doc_info["status"] = audit_data.get("current_status", "unknown")
+                        doc_info["created_at"] = audit_data.get("created_at")
+                        doc_info["title"] = audit_data.get("title", document_name)
                     except:
                         pass
                 
@@ -165,8 +158,11 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
                     "error": f"No audit log found for document '{document_name}'"
                 }, indent=2)
             
-            with open(audit_path, 'r') as f:
-                audit_data = json.load(f)
+            # Use tool_services read function
+            audit_content = read(str(audit_path))
+            audit_wrapper = json.loads(audit_content)
+            # Extract data from tool_services JSON wrapper
+            audit_data = audit_wrapper.get("data", audit_wrapper)
             
             return json.dumps({
                 "success": True,
@@ -213,11 +209,14 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
                     # Get additional info from audit log
                     if audit_path.exists():
                         try:
-                            with open(audit_path, 'r') as f:
-                                audit_data = json.load(f)
-                                match_info["status"] = audit_data.get("current_status", "unknown")
-                                match_info["created_at"] = audit_data.get("created_at")
-                                match_info["title"] = audit_data.get("title", document_name)
+                            # Use tool_services read function
+                            audit_content = read(str(audit_path))
+                            audit_wrapper = json.loads(audit_content)
+                            # Extract data from tool_services JSON wrapper
+                            audit_data = audit_wrapper.get("data", audit_wrapper)
+                            match_info["status"] = audit_data.get("current_status", "unknown")
+                            match_info["created_at"] = audit_data.get("created_at")
+                            match_info["title"] = audit_data.get("title", document_name)
                         except:
                             pass
                     

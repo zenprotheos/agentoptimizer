@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tool-related MCP functions
+Meta tool for Orchestration agents
 """
 
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 def list_tools(project_root: Path) -> str:
-    """Lists all available tools and MCP servers with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.
+    """Lists all available tools with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.
     
     Args:
         project_root: Path to the project root directory

@@ -1,28 +1,25 @@
-#!/usr/bin/env python3
-"""
-Agent-related MCP functions
-"""
+# tools/list_agents.py
+from app.tool_services import *
 
-import json
-import subprocess
-import yaml
-from pathlib import Path
-from typing import Dict, Any, List
+TOOL_METADATA = {
+    "type": "function",
+    "function": {
+        "name": "list_agents",
+        "description": "List all available agents in the core agents directory with their names, descriptions, models, and tools to help choose which agent to use for a specific task",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    }
+}
 
-def list_agents(project_root) -> str:
-    """List all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task.
+def list_agents() -> str:
+    """List all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task."""
     
-    Args:
-        project_root: Path to the project root directory (can be string or Path object)
-        
-    Returns:
-        str: JSON formatted list of available agents with their descriptions
-    """
     try:
-        # Convert to Path object if it's a string
-        if isinstance(project_root, str):
-            project_root = Path(project_root)
-        
+        # Get project root from tool_services
+        project_root = Path(__file__).parent.parent
         agents_dir = project_root / "agents"
         agents = []
         
@@ -31,8 +28,8 @@ def list_agents(project_root) -> str:
         
         for agent_file in agents_dir.glob("*.md"):
             try:
-                # Simple parsing of agent file to get basic info
-                content = agent_file.read_text()
+                # Use tool_services read function
+                content = read(str(agent_file))
                 
                 # Extract YAML frontmatter
                 if content.startswith("---"):
@@ -67,12 +64,21 @@ def list_agents(project_root) -> str:
                     "tools": []
                 })
         
-        return json.dumps({
+        # Save results using tool_services
+        result_data = {
             "agents": agents,
             "total": len(agents)
+        }
+        
+        saved_file = save_json(result_data, "Available agents list")
+        
+        return json.dumps({
+            "success": True,
+            "agents": agents,
+            "total": len(agents),
+            "filepath": saved_file["filepath"],
+            "run_id": saved_file["run_id"]
         }, indent=2)
         
     except Exception as e:
-        return json.dumps({"error": f"Failed to list agents: {e}"}, indent=2)
-
- 
+        return json.dumps({"error": f"Failed to list agents: {e}"}, indent=2) 

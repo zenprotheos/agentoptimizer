@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simplified AI Agent Framework using Pydantic AI - removes unnecessary duplications
+The core module for the oneshot agent framework. It is used to run agents and tools. Changes to this module should be done with great caution and should trigger updates to the how_agent_runner_works guide.
 """
 
 import os
@@ -51,6 +51,7 @@ class AgentConfig:
         self.tools = config_data.get('tools', [])
         self.mcp = config_data.get('mcp', [])
         self.system_prompt = config_data['system_prompt']
+        self.request_limit = config_data.get('request_limit')  # Per-agent override for usage limits
 
 
 class AgentRunner:
@@ -422,9 +423,12 @@ class AgentRunner:
         if config.mcp:
             mcp_servers = await self._create_mcp_servers(config.mcp)
         
-        # Create usage limits
+        # Create usage limits - use agent-specific request_limit if provided, otherwise fall back to global config
+        default_request_limit = self.config.get('usage_limits', {}).get('request_limit', 50)
+        agent_request_limit = config.request_limit if config.request_limit is not None else default_request_limit
+        
         usage_limits = UsageLimits(
-            request_limit=self.config.get('usage_limits', {}).get('request_limit', 50),
+            request_limit=agent_request_limit,
             request_tokens_limit=self.config.get('usage_limits', {}).get('request_tokens_limit'),
             response_tokens_limit=self.config.get('usage_limits', {}).get('response_tokens_limit'),
             total_tokens_limit=self.config.get('usage_limits', {}).get('total_tokens_limit')
@@ -486,6 +490,21 @@ class AgentRunner:
             return response_data
             
         except Exception as e:
+            # Handle usage limit exceeded with specific messaging
+            from pydantic_ai.exceptions import UsageLimitExceeded
+            
+            if isinstance(e, UsageLimitExceeded):
+                return {
+                    "output": "",
+                    "success": False,
+                    "run_id": run_id if 'run_id' in locals() else None,
+                    "error": f"Agent reached usage limit: {e}\n"
+                            f"The agent exceeded its configured limits to prevent infinite loops or excessive costs.\n"
+                            f"Consider increasing the request_limit in the agent's configuration if this task requires more iterations.",
+                    "error_type": "usage_limit_exceeded",
+                    "usage_limit_type": "request_limit" if "request_limit" in str(e) else "token_limit"
+                }
+            
             # Handle common MCP server errors with helpful messages
             error_message = str(e)
             
