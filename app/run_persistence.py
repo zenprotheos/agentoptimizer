@@ -100,11 +100,19 @@ class RunPersistence:
         if not run_data:
             raise ValueError(f"Run {run_id} does not exist")
         
-        # Convert new messages to JSON-serializable format
-        serializable_messages = to_jsonable_python(new_messages)
-        
-        # Append new messages to history
-        run_data["message_history"].extend(serializable_messages)
+        # Try to serialize messages, but handle binary content gracefully
+        try:
+            serializable_messages = to_jsonable_python(new_messages)
+            run_data["message_history"].extend(serializable_messages)
+        except Exception as e:
+            # If serialization fails (likely due to binary content), store a placeholder
+            placeholder_messages = [{
+                "type": "message_with_binary_content",
+                "count": len(new_messages),
+                "error": f"Could not serialize messages containing binary content: {str(e)[:100]}",
+                "timestamp": datetime.utcnow().isoformat()
+            }]
+            run_data["message_history"].extend(placeholder_messages)
         
         # Update usage statistics
         if result.get("usage"):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-The core module for the oneshot agent framework. It is used to run agents and tools. Changes to this module should be done with great caution and should trigger updates to the how_agent_runner_works guide.
+The core module for the oneshot agent framework. It is used to run agents and tools. Changes to this module should be done with great caution and should trigger updates to the how_agent_runner_works.md guide.
 """
 
 import os
@@ -10,7 +10,7 @@ import json
 import importlib.util
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Tuple
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -304,13 +304,36 @@ class AgentRunner:
         
         return mcp_servers
     
-    async def run_agent_async(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None):
+    def _process_multimodal_inputs(self, files: List[str] = None, urls: List[str] = None) -> Tuple[bool, Any]:
+        """Process inputs and determine if multimodal handling is needed"""
+        if not files and not urls:
+            return False, None
+            
+        # Lazy import to avoid loading multimodal dependencies unless needed
+        try:
+            from app.multimodal_processor import MultimodalProcessor
+        except ImportError as e:
+            if self.debug:
+                print(f"Multimodal processor not available - falling back to text processing: {e}")
+            return False, None
+        
+        processor = MultimodalProcessor(self.config, self.debug)
+        
+        if processor.should_use_multimodal(files or [], urls or []):
+            result = processor.process_inputs(files, urls)
+            return True, result
+        else:
+            # Fall back to existing text processing
+            return False, None
+    
+    async def run_agent_async(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Run an agent asynchronously with optional run continuation and file context
         
         Args:
             agent_name: Name of the agent to run
             message: Message to send to the agent
             files: Optional list of file paths to provide as context to the agent
+            urls: Optional list of URLs to provide as context to the agent
             run_id: Optional run ID to continue an existing conversation
         """
         
@@ -341,8 +364,42 @@ class AgentRunner:
                 "error": f"Agent {agent_name} not found at {agent_file}"
             }
         
+        # Check for multimodal inputs first
+        is_multimodal, multimodal_result = self._process_multimodal_inputs(files, urls)
+        
         try:
-            config = await self._parse_agent_config(agent_file, files)
+            if is_multimodal:
+                # For multimodal, only process text files through template processor
+                text_files = []
+                if files:
+                    for file_path in files:
+                        filepath = Path(file_path)
+                        if filepath.exists():
+                            from app.multimodal_processor import MediaTypeDetector
+                            if not MediaTypeDetector.is_supported_media(filepath):
+                                text_files.append(file_path)
+                config = await self._parse_agent_config(agent_file, text_files)
+                
+                # If multimodal result has text context, inject it into the system prompt
+                if multimodal_result.text_context:
+                    # Use the template processor to inject the text context
+                    from app.agent_template_processor import AgentTemplateProcessor
+                    template_processor = AgentTemplateProcessor(
+                        self.agents_dir.parent, 
+                        self.config.get('template_engine', {}), 
+                        tool_services, 
+                        self.debug
+                    )
+                    
+                    # Re-render the system prompt with the multimodal text context
+                    rendered_prompt = await template_processor._render_system_prompt(
+                        config.system_prompt, 
+                        multimodal_result.text_context
+                    )
+                    config.system_prompt = rendered_prompt
+            else:
+                # Use existing text processing
+                config = await self._parse_agent_config(agent_file, files)
         except AgentConfigError as e:
             return {
                 "output": "",
@@ -460,11 +517,21 @@ class AgentRunner:
             tool_services.set_run_id(run_id)
             
             # Run the agent with message history - Pydantic AI handles everything
-            if mcp_servers:
-                async with agent.run_mcp_servers():
-                    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+            if is_multimodal:
+                # Use multimodal message construction
+                message_parts = multimodal_result.create_message_parts(message)
+                if mcp_servers:
+                    async with agent.run_mcp_servers():
+                        result = await agent.run(message_parts, message_history=message_history, usage_limits=usage_limits)
+                else:
+                    result = await agent.run(message_parts, message_history=message_history, usage_limits=usage_limits)
             else:
-                result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+                # Use existing text-based flow
+                if mcp_servers:
+                    async with agent.run_mcp_servers():
+                        result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+                else:
+                    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
             
             # Prepare response data
             response_data = {
@@ -546,13 +613,13 @@ class AgentRunner:
         
         return list(set(tool_calls))  # Unique tool names used
     
-    def run_agent(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None):
+    def run_agent(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Synchronous wrapper"""
-        return asyncio.run(self.run_agent_async(agent_name, message, files, run_id))
+        return asyncio.run(self.run_agent_async(agent_name, message, files, urls, run_id))
     
-    def run_agent_clean(self, agent_name: str, message: str, files: List[str] = None, run_id: Optional[str] = None) -> str:
+    def run_agent_clean(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None) -> str:
         """Clean formatted response for MCP server"""
-        result = self.run_agent(agent_name, message, files, run_id)
+        result = self.run_agent(agent_name, message, files, urls, run_id)
         
         if result["success"]:
             output = result["output"]
@@ -582,7 +649,7 @@ class AgentRunner:
 def main():
     """CLI interface"""
     if len(sys.argv) < 3:
-        print("Usage: python agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--run-id <run_id>] [--json] [--debug]")
+        print("Usage: python agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--urls <url1|url2|...>] [--run-id <run_id>] [--json] [--debug]")
         sys.exit(1)
     
     agent_name = sys.argv[1]
@@ -607,6 +674,20 @@ def main():
         except ValueError:
             pass
     
+    # Parse URLs if provided
+    urls = None
+    if "--urls" in args:
+        try:
+            urls_index = args.index("--urls")
+            if urls_index + 1 < len(args):
+                urls_str = args[urls_index + 1]
+                urls = [u.strip() for u in urls_str.split('|') if u.strip()]
+            else:
+                print("ERROR: --urls requires a pipe-separated list of URLs")
+                sys.exit(1)
+        except ValueError:
+            pass
+    
     # Parse run_id if provided
     run_id = None
     if "--run-id" in args:
@@ -623,10 +704,10 @@ def main():
     runner = AgentRunner(debug=debug_output)
     
     if json_output:
-        result = runner.run_agent(agent_name, message, files, run_id)
+        result = runner.run_agent(agent_name, message, files, urls, run_id)
         print(json.dumps(result, indent=2))
     else:
-        result = runner.run_agent_clean(agent_name, message, files, run_id)
+        result = runner.run_agent_clean(agent_name, message, files, urls, run_id)
         print(result)
 
 

@@ -63,9 +63,9 @@ def list_tools() -> str:
     return list_tools_impl(project_root)
 
 @mcp.tool()
-def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "", debug: bool = False) -> str:
+def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", run_id: str = "", debug: bool = False) -> str:
     """
-    Call an agent by name with a message using the `oneshot` bash script. Use this tool to delegate tasks to specialist agents. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
+    Call an agent by name with a message using the `oneshot` bash script. Use this tool to delegate tasks to specialist agents. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
 
     **File Link Requirements:**
     - When an agent generates or saves files, ALWAYS provide clickable file:// links at the end of your response
@@ -74,12 +74,19 @@ def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "",
     - Present file links in a clear "Generated Files" section with descriptive labels
     - This prevents users from having to search through the artifacts directory manually
 
+    **Multimodal Support:**
+    - Use `files` for local media files (images, PDFs, audio, video) and text files
+    - Use `urls` for web-based media content (e.g., "https://example.com/image.jpg|https://example.com/doc.pdf")
+    - Agents with multimodal-capable models (like gpt-4o) can process images, documents, audio, and video
+    - Text files are processed through the existing template system, media files are passed directly to the LLM
+
     Use the `list_agents` tool first to see what agents are available and their descriptions to help you choose the right agent for your task.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
         message: Message to send to the agent
         files: Pipe-separated list of file paths (e.g. "file1.md|file2.md"). Default empty string.
+        urls: Pipe-separated list of URLs for media content (e.g. "https://example.com/image.jpg|https://example.com/doc.pdf"). Default empty string.
         run_id: Optional run ID to continue an existing conversation (if None, starts new conversation)
         debug: If True, returns detailed debug output including tool calls
         
@@ -93,6 +100,10 @@ def call_agent(agent_name: str, message: str, files: str = "", run_id: str = "",
         # Add files if provided
         if files:
             cmd.extend(["--files", files])
+        
+        # Add URLs if provided
+        if urls:
+            cmd.extend(["--urls", urls])
         
         if run_id:
             cmd.extend(["--run-id", run_id])
