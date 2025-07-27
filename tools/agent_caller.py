@@ -65,12 +65,12 @@ def agent_caller(
     try:
         # Get project root (where the 'agent' bash script is located)
         project_root = Path(__file__).parent.parent
-        agent_script = project_root / "agent"
+        agent_script = project_root / "oneshot"
         
         if not agent_script.exists():
             return json.dumps({
                 "success": False,
-                "error": "Agent script not found. This tool requires the 'agent' bash script to be present.",
+                "error": "Agent script not found. This tool requires the 'oneshot' bash script to be present.",
                 "agent_name": agent_name,
                 "call_id": str(uuid.uuid4())[:8]
             }, indent=2)

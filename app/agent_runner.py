@@ -145,16 +145,20 @@ class AgentRunner:
     
 
     
-    async def run_agent_async(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
+    async def run_agent_async(self, agent_name: Optional[str] = None, message: str = "", files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Run an agent asynchronously with optional run continuation and file context
         
         Args:
-            agent_name: Name of the agent to run
+            agent_name: Name of the agent to run (defaults to "oneshot_agent" for orchestration)
             message: Message to send to the agent
             files: Optional list of file paths to provide as context to the agent
             urls: Optional list of URLs to provide as context to the agent
             run_id: Optional run ID to continue an existing conversation
         """
+        
+        # Default to oneshot_agent if no agent specified
+        if agent_name is None:
+            agent_name = "oneshot_agent"
         
         # Handle run continuation or creation
         message_history = []
@@ -219,11 +223,11 @@ class AgentRunner:
             is_new_run=is_new_run
         )
     
-    def run_agent(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
+    def run_agent(self, agent_name: Optional[str] = None, message: str = "", files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Synchronous wrapper"""
         return asyncio.run(self.run_agent_async(agent_name, message, files, urls, run_id))
     
-    def run_agent_clean(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None) -> str:
+    def run_agent_clean(self, agent_name: Optional[str] = None, message: str = "", files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None) -> str:
         """Clean formatted response for MCP server"""
         result = self.run_agent(agent_name, message, files, urls, run_id)
         
@@ -251,18 +255,68 @@ class AgentRunner:
                 error_output += f"\n**Run ID:** `{result['run_id']}`"
             return error_output
 
+    def orchestrate(self, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
+        """Convenience method for external systems to use the orchestrator agent
+        
+        This method automatically uses the oneshot_agent for orchestration tasks.
+        Useful for FastAPI endpoints, webhooks, or other external integrations.
+        
+        Args:
+            message: Message to send to the orchestrator
+            files: Optional list of file paths to provide as context
+            urls: Optional list of URLs to provide as context  
+            run_id: Optional run ID to continue an existing conversation
+            
+        Returns:
+            Dict containing the orchestrator's response
+        """
+        return self.run_agent(agent_name=None, message=message, files=files, urls=urls, run_id=run_id)
+    
+    def orchestrate_clean(self, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None) -> str:
+        """Clean formatted orchestration response for external systems
+        
+        Args:
+            message: Message to send to the orchestrator
+            files: Optional list of file paths to provide as context
+            urls: Optional list of URLs to provide as context
+            run_id: Optional run ID to continue an existing conversation
+            
+        Returns:
+            Clean string response from the orchestrator
+        """
+        return self.run_agent_clean(agent_name=None, message=message, files=files, urls=urls, run_id=run_id)
+
 
 def main():
     """CLI interface"""
-    if len(sys.argv) < 3:
-        print("Usage: python agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--urls <url1|url2|...>] [--run-id <run_id>] [--json] [--debug]")
+    if len(sys.argv) < 2:
+        print("Usage: python agent_runner.py [agent_name] <message> [--files <file1|file2|...>] [--urls <url1|url2|...>] [--run-id <run_id>] [--json] [--debug]")
+        print("If agent_name is not provided, defaults to 'oneshot_agent' for orchestration")
         sys.exit(1)
     
-    agent_name = sys.argv[1]
-    message = sys.argv[2]
+    # Parse arguments - agent_name is optional
+    if len(sys.argv) == 2:
+        # Only message provided, use default agent
+        agent_name = None
+        message = sys.argv[1]
+        args = []
+    else:
+        # Check if first arg looks like an agent name or a message
+        # Simple heuristic: if it contains spaces or starts with common message words, treat as message
+        first_arg = sys.argv[1]
+        if (' ' in first_arg or 
+            first_arg.lower().startswith(('help', 'please', 'can', 'how', 'what', 'why', 'when', 'where', 'create', 'write', 'generate', 'analyze'))):
+            # Treat first arg as message
+            agent_name = None
+            message = first_arg
+            args = sys.argv[2:]
+        else:
+            # Treat first arg as agent_name
+            agent_name = first_arg
+            message = sys.argv[2]
+            args = sys.argv[3:]
     
     # Parse optional arguments
-    args = sys.argv[3:]
     json_output = "--json" in args
     debug_output = "--debug" in args
     
