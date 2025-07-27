@@ -3,14 +3,7 @@
 Web search tool for the AI Agent framework
 """
 
-import requests
-import json
-import os
-from typing import Dict, Any
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from app.tool_services import *
 
 # OpenAI tools spec compliant metadata
 TOOL_METADATA = {
@@ -49,20 +42,13 @@ def web_search(query: str, num_results: int = 5) -> str:
         JSON string containing search results
     """
     try:
-        # Get Brave API key from environment
-        api_key = os.getenv('BRAVE_API_KEY')
-        if not api_key:
+        # Check for Brave API key
+        brave_api_key = os.getenv('BRAVE_API_KEY')
+        if not brave_api_key:
             return json.dumps({"error": "BRAVE_API_KEY not found in environment variables"}, indent=2)
         
         # Brave Search API endpoint
         url = "https://api.search.brave.com/res/v1/web/search"
-        
-        # Headers for Brave API
-        headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip",
-            "X-Subscription-Token": api_key
-        }
         
         # Parameters for the search
         params = {
@@ -74,9 +60,12 @@ def web_search(query: str, num_results: int = 5) -> str:
             "freshness": "all"
         }
         
-        # Make the API request
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
+        # Use tool_services api() function with custom headers
+        response = api(url, method="GET", params=params, timeout=10, headers={
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+            "X-Subscription-Token": brave_api_key
+        })
         
         # Parse the response
         data = response.json()
@@ -98,10 +87,18 @@ def web_search(query: str, num_results: int = 5) -> str:
             "results": results
         }
         
-        return json.dumps(formatted_results, indent=2)
+        # Save results using tool_services
+        saved_file = save_json(formatted_results, f"Web search results for: {query}")
         
-    except requests.exceptions.RequestException as e:
-        return json.dumps({"error": f"API request failed: {str(e)}"}, indent=2)
+        return json.dumps({
+            "success": True,
+            "query": query,
+            "total_results": len(results),
+            "results": results,
+            "filepath": saved_file["filepath"],
+            "run_id": saved_file["run_id"]
+        }, indent=2)
+        
     except Exception as e:
         return json.dumps({"error": f"Search failed: {str(e)}"}, indent=2)
 

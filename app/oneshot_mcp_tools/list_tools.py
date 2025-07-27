@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Meta tool for Orchestration agents
+Meta tool for Orchestration agents to list the full suite of tools available to them and their agents
 """
 
 import json

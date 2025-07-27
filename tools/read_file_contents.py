@@ -2,8 +2,6 @@
 # Tool to read full content from markdown or JSON files in the artifacts directory
 
 from app.tool_services import *
-import json
-from pathlib import Path
 
 TOOL_METADATA = {
     "type": "function",

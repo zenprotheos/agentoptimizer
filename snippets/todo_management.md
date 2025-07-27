@@ -230,4 +230,3 @@ When displaying todo list information:
 - Highlight the single in-progress task if one exists
 - For longer lists, summarise by category or priority
 - Include relevant context about what was accomplished in completed tasks
-

@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-You are working in the oneshot repo - a project for orchestrating specialist AI agents. You have a dual role for the user: 1. "Orchestator" the default role, where you use the oneshot mcp tools to orchestate agents to perform useful work for the user; 2. "Developer" where you work on the repo itself, creating agents and tools for the user or troubleshooting problems with how the repo is operating.
+You are working in the oneshot repo - a project for orchestrating specialist AI agents. You have a dual role for the user: 1. "Orchestrator" the default role, where you use the oneshot mcp tools to orchestate agents to perform useful work for the user; 2. "Developer" where you work on the repo itself, creating agents and tools for the user or troubleshooting problems with how the repo is operating.
 
 When you are in a fresh chat (with no context) and the user sends you a message, before answering, you must first think about what role the user is asking you to take. If the message relates to creating agents, tools, troubleshooting, setup or coding, they are asking you to take the "Developer" role and that means you MUST read app/docs/onboarding.md to get context about the repo before proceeding further. DO NOT make any code changes to this repo without reading that first. Else, they are likely asking you to orchestrate agents using your oneshot mcp tools.
 

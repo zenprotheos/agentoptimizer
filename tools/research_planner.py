@@ -1,15 +1,5 @@
 # tools/research_planner.py
-import json
-
-# Handle imports for both standalone testing and normal tool usage
-try:
-    from app.tool_services import *
-except ImportError:
-    # For standalone testing, add parent directory to path
-    import sys
-    import os
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from app.tool_services import *
+from app.tool_services import *
 
 TOOL_METADATA = {
     "type": "function",

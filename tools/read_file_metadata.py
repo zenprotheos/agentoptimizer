@@ -2,9 +2,6 @@
 # Tool to read metadata from markdown or JSON files in the artifacts directory
 
 from app.tool_services import *
-import json
-import yaml
-from pathlib import Path
 
 TOOL_METADATA = {
     "type": "function",

@@ -3,10 +3,8 @@
 Web page reading tool for the AI Agent framework
 """
 
-import requests
+from app.tool_services import *
 from bs4 import BeautifulSoup
-import json
-from typing import Dict, Any
 from urllib.parse import urljoin, urlparse
 
 # OpenAI tools spec compliant metadata
@@ -47,13 +45,10 @@ def web_read_page(url: str, max_length: int = 5000) -> str:
     """
     
     try:
-        # Add headers to avoid being blocked
-        headers = {
+        # Use tool_services api() function with appropriate headers
+        response = api(url, method="GET", timeout=15, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
+        })
         
         # Parse the HTML
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -111,23 +106,32 @@ def web_read_page(url: str, max_length: int = 5000) -> str:
                     'url': absolute_url
                 })
         
-        return json.dumps({
+        # Create result data
+        result_data = {
             "url": url,
             "title": title_text,
             "description": description,
             "content": text,
             "links": links,
             "content_length": len(text)
+        }
+        
+        # Save results using tool_services
+        saved_file = save_json(result_data, f"Web page content from: {url}")
+        
+        return json.dumps({
+            "success": True,
+            "url": url,
+            "title": title_text,
+            "content_length": len(text),
+            "links_found": len(links),
+            "filepath": saved_file["filepath"],
+            "run_id": saved_file["run_id"]
         }, indent=2)
         
-    except requests.RequestException as e:
-        return json.dumps({
-            "error": f"Failed to fetch page: {str(e)}",
-            "url": url
-        }, indent=2)
     except Exception as e:
         return json.dumps({
-            "error": f"Failed to parse page: {str(e)}",
+            "error": f"Failed to read page: {str(e)}",
             "url": url
         }, indent=2)
 

@@ -1,0 +1,395 @@
+#!/bin/bash
+
+# generate_pdf_from_markdown - Convert Markdown file to PDF via HTML rendering
+# Usage: ./generate_pdf_from_markdown <path_to_markdown_file>
+
+set -e  # Exit on any error
+
+# Check if argument is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <path_to_markdown_file>"
+    echo "Example: $0 /path/to/document.md"
+    echo "         $0 ./README.md"
+    exit 1
+fi
+
+MARKDOWN_FILE="$1"
+
+# Check if markdown file exists
+if [ ! -f "$MARKDOWN_FILE" ]; then
+    echo "Error: Markdown file '$MARKDOWN_FILE' not found"
+    exit 1
+fi
+
+# Get absolute path of markdown file
+MARKDOWN_ABS_PATH=$(realpath "$MARKDOWN_FILE")
+
+# Get directory and filename without extension
+MARKDOWN_DIR=$(dirname "$MARKDOWN_ABS_PATH")
+MARKDOWN_BASENAME=$(basename "$MARKDOWN_FILE" .md)
+
+# Temporary HTML file path
+HTML_TEMP_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME-temp.html"
+
+# Output PDF path
+PDF_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME.pdf"
+
+echo "📝 Converting Markdown to PDF..."
+echo "📄 Input:  $MARKDOWN_ABS_PATH"
+echo "📑 Output: $PDF_PATH"
+
+# Ensure marked (markdown parser) is installed
+if [ ! -d "node_modules/marked" ]; then
+    echo "⚠️  Installing markdown parser..."
+    npm install marked --silent
+fi
+
+# Ensure puppeteer is installed
+if [ ! -d "node_modules/puppeteer" ]; then
+    echo "⚠️  Installing Puppeteer..."
+    npm install puppeteer --silent
+fi
+
+echo "🔄 Converting Markdown to HTML..."
+
+# Create the markdown to HTML converter script
+cat > markdown_to_html_temp.js << 'EOF'
+const fs = require('fs');
+
+async function convertMarkdownToHTML() {
+    const markdownPath = process.argv[2];
+    const htmlPath = process.argv[3];
+    
+    if (!fs.existsSync(markdownPath)) {
+        console.error('❌ Error: Markdown file not found:', markdownPath);
+        process.exit(1);
+    }
+    
+    try {
+        // Dynamic import for marked ES module
+        const { marked } = await import('marked');
+        
+        // Read markdown file
+        let markdownContent = fs.readFileSync(markdownPath, 'utf8');
+        
+        // Strip YAML frontmatter if present
+        if (markdownContent.startsWith('---')) {
+            const lines = markdownContent.split('\n');
+            let frontmatterEnd = -1;
+            
+            // Find the end of frontmatter (second ---)
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '---') {
+                    frontmatterEnd = i;
+                    break;
+                }
+            }
+            
+            if (frontmatterEnd > 0) {
+                // Remove frontmatter and any leading empty lines
+                markdownContent = lines.slice(frontmatterEnd + 1).join('\n');
+                // Remove leading empty lines
+                markdownContent = markdownContent.replace(/^\s*\n+/, '');
+                console.log('✂️  Stripped YAML frontmatter from markdown');
+            }
+        }
+        
+        // Configure marked options for better rendering
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false
+        });
+        
+        // Convert markdown to HTML
+        const htmlContent = marked(markdownContent);
+        
+        // Create a complete HTML document with styling
+        const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Document</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: white;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        h1 {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        
+        h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        
+        h3 { font-size: 1.25em; }
+        h4 { font-size: 1em; }
+        h5 { font-size: 0.875em; }
+        h6 { font-size: 0.85em; color: #6a737d; }
+        
+        p {
+            margin-bottom: 16px;
+        }
+        
+        blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0 0 16px 0;
+        }
+        
+        ul, ol {
+            padding-left: 2em;
+            margin-bottom: 16px;
+        }
+        
+        li {
+            margin-bottom: 0.25em;
+        }
+        
+        code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        
+        pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+        
+        table th, table td {
+            padding: 6px 13px;
+            border: 1px solid #dfe2e5;
+        }
+        
+        table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+        
+        table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+        
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+        
+        // Write HTML file
+        fs.writeFileSync(htmlPath, fullHTML, 'utf8');
+        
+        console.log('✅ HTML generated successfully');
+        
+    } catch (error) {
+        console.error('❌ Error converting markdown:', error.message);
+        process.exit(1);
+    }
+}
+
+convertMarkdownToHTML().catch(error => {
+    console.error('❌ Fatal error:', error.message);
+    process.exit(1);
+});
+EOF
+
+# Convert markdown to HTML
+node markdown_to_html_temp.js "$MARKDOWN_ABS_PATH" "$HTML_TEMP_PATH"
+
+# Clean up the markdown converter script
+rm markdown_to_html_temp.js
+
+echo "🔄 Converting HTML to PDF..."
+
+# Create the PDF generator script
+cat > pdf_generator_temp.js << 'EOF'
+const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+
+async function generatePDF() {
+    const htmlPath = process.argv[2];
+    const pdfPath = process.argv[3];
+    
+    if (!fs.existsSync(htmlPath)) {
+        console.error('❌ Error: HTML file not found:', htmlPath);
+        process.exit(1);
+    }
+    
+    console.log('🚀 Starting PDF generation...');
+    
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+        
+        const page = await browser.newPage();
+        
+        // Load the HTML file
+        const fileUrl = `file://${htmlPath}`;
+        console.log(`📖 Loading: ${fileUrl}`);
+        
+        await page.goto(fileUrl, {
+            waitUntil: 'networkidle0',
+            timeout: 30000
+        });
+        
+        // Wait for dynamic content and fonts to load
+        console.log('⏳ Waiting for content to load...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log('🖨️  Generating PDF...');
+        
+        // Generate PDF with optimized settings for markdown
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            },
+            printBackground: true,
+            preferCSSPageSize: false,
+            displayHeaderFooter: false,
+            scale: 1.0
+        });
+        
+        // Save PDF
+        fs.writeFileSync(pdfPath, pdfBuffer);
+        
+        console.log(`✅ PDF generated successfully!`);
+        console.log(`📊 File size: ${(pdfBuffer.length / 1024 / 1024).toFixed(2)} MB`);
+        
+    } catch (error) {
+        console.error('❌ Error generating PDF:', error.message);
+        process.exit(1);
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+    }
+}
+
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+    console.log('\n🛑 Process interrupted');
+    process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n🛑 Process terminated');
+    process.exit(1);
+});
+
+generatePDF().catch(error => {
+    console.error('❌ Fatal error:', error.message);
+    process.exit(1);
+});
+EOF
+
+# Run the PDF generation
+node pdf_generator_temp.js "$HTML_TEMP_PATH" "$PDF_PATH"
+
+# Clean up temporary files
+rm pdf_generator_temp.js
+rm "$HTML_TEMP_PATH"
+
+# Check if PDF was created successfully
+if [ -f "$PDF_PATH" ]; then
+    echo "🎉 Success! PDF created at: $PDF_PATH"
+    
+    # Open the PDF
+    echo "📱 Opening PDF..."
+    if command -v open > /dev/null 2>&1; then
+        # macOS
+        open "$PDF_PATH"
+    elif command -v xdg-open > /dev/null 2>&1; then
+        # Linux
+        xdg-open "$PDF_PATH"
+    elif command -v start > /dev/null 2>&1; then
+        # Windows (Git Bash/WSL)
+        start "$PDF_PATH"
+    else
+        echo "📋 PDF ready at: $PDF_PATH"
+        echo "   (Unable to auto-open - please open manually)"
+    fi
+else
+    echo "❌ Error: PDF was not created"
+    exit 1
+fi
+
+echo "✨ Done!" 
