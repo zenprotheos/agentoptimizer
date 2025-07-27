@@ -1,17 +1,60 @@
 # How Agent Runner Works: Technical Deep Dive
 
-This document provides a comprehensive technical analysis of the `agent_runner.py` module, which serves as the core orchestrator for the Oneshot agent framework. This module is the primary entry point for all agent executions, whether initiated via CLI or the MCP server.
+This document provides a comprehensive technical analysis of the agent runner system, which serves as the core orchestrator for the Oneshot agent framework. The system is built with modular components that work together to provide robust agent execution capabilities.
 
 ## Overview
 
-The `agent_runner.py` module is fundamentally a sophisticated wrapper around the **Pydantic AI** library. It handles the complete lifecycle of agent execution, from configuration parsing to result persistence, while providing robust error handling and observability through Logfire integration.
+The agent runner system is fundamentally a sophisticated wrapper around the **Pydantic AI** library, organized into four specialized modules:
 
-## Core Architecture
+- **`agent_runner.py`** - Main orchestrator and public API
+- **`agent_config.py`** - Configuration parsing and validation  
+- **`agent_tools.py`** - Tool and MCP server management
+- **`agent_executor.py`** - Core execution engine with multimodal support
 
-### Class Structure
+## System Architecture
 
-#### `AgentConfig`
-A simplified configuration container that holds all agent-specific settings:
+### Component Relationships
+
+```mermaid
+graph TD
+    A[CLI/MCP Request] --> B[AgentRunner]
+    B --> C[AgentConfigManager]
+    B --> D[AgentToolManager] 
+    B --> E[AgentExecutor]
+    B --> F[RunPersistence]
+    
+    C --> G[AgentTemplateProcessor]
+    C --> H[AgentConfigValidator]
+    C --> I[AgentConfig]
+    
+    D --> J[Tool Loading]
+    D --> K[MCP Server Creation]
+    D --> L[MCPConfigManager]
+    
+    E --> M[Multimodal Processing]
+    E --> N[Model Creation]
+    E --> O[Pydantic AI Agent]
+    E --> P[Error Handling]
+    
+    F --> Q[Run History]
+    F --> R[Message Persistence]
+    
+    O --> S[LLM API Calls]
+    O --> T[Tool Execution]
+    O --> U[Response Generation]
+    
+    style B fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+```
+
+### Module Breakdown
+
+#### `agent_config.py` - Configuration Management
+**Classes:**
+- `AgentConfig`: Data container for agent configuration parameters
+- `AgentConfigManager`: Handles parsing, validation, and template processing
 
 ```python
 class AgentConfig:
@@ -21,66 +64,136 @@ class AgentConfig:
         self.model = config_data['model']
         self.temperature = config_data.get('temperature', 0.7)
         self.max_tokens = config_data.get('max_tokens', 2048)
-        # ... other model parameters
         self.tools = config_data.get('tools', [])
         self.mcp = config_data.get('mcp', [])
         self.system_prompt = config_data['system_prompt']
+        self.request_limit = config_data.get('request_limit')
 ```
 
-**Purpose**: Encapsulates all agent configuration parameters in a single, validated object.
+**Responsibilities:**
+- YAML frontmatter parsing
+- Template processing with Jinja2
+- Configuration validation
+- Default value application
 
-#### `AgentRunner`
-The main orchestrator class that manages the complete agent execution pipeline:
+#### `agent_tools.py` - Tool and MCP Management
+**Classes:**
+- `AgentToolManager`: Manages tool loading and MCP server creation
+
+```python
+class AgentToolManager:
+    def __init__(self, tools_dir: Path, mcp_config_manager: MCPConfigManager, debug: bool = False):
+        self.tools_dir = tools_dir
+        self.mcp_config_manager = mcp_config_manager
+        self.loaded_tools = {}
+        self._load_tools()
+```
+
+**Responsibilities:**
+- Dynamic tool discovery and loading
+- Tool function creation for Pydantic AI
+- MCP server instantiation and configuration
+- Error handling with suggestions for typos
+
+#### `agent_executor.py` - Execution Engine
+**Classes:**
+- `AgentExecutor`: Core execution logic with multimodal support
+
+```python
+class AgentExecutor:
+    def __init__(self, config: Dict[str, Any], run_persistence: RunPersistence, debug: bool = False):
+        self.config = config
+        self.run_persistence = run_persistence
+        self.debug = debug
+```
+
+**Responsibilities:**
+- Multimodal input processing
+- OpenRouter model creation and configuration
+- Pydantic AI agent instantiation
+- Agent execution with error handling
+- Response formatting and persistence
+
+#### `agent_runner.py` - Main Orchestrator
+**Classes:**
+- `AgentRunner`: Coordinates all components and provides public API
 
 ```python
 class AgentRunner:
     def __init__(self, agents_dir: str = "agents", tools_dir: str = "tools", 
                  config_file: str = "config.yaml", debug: bool = False):
+        # Initialize all component managers
+        self.config_manager = AgentConfigManager(...)
+        self.tool_manager = AgentToolManager(...)
+        self.executor = AgentExecutor(...)
 ```
 
-**Key Responsibilities**:
-- Configuration management (YAML loading, defaults application)
-- Tool discovery and loading
-- MCP server management
-- Agent template processing
-- Run persistence coordination
-- Pydantic AI agent instantiation and execution
+**Responsibilities:**
+- Component initialization and coordination
+- Public API methods (`run_agent`, `run_agent_clean`)
+- CLI interface
+- High-level error handling
 
-## Initialization Process
+## How Components Fit Together
 
-### 1. Directory and Path Setup
-```python
-project_root = Path(__file__).parent.parent
-self.agents_dir = project_root / agents_dir
-self.tools_dir = project_root / tools_dir
-self.config_file = project_root / config_file
+The system follows a clean separation of concerns where each module has a specific responsibility:
+
+### Initialization Flow
+
+```mermaid
+sequenceDiagram
+    participant CLI as CLI/MCP
+    participant AR as AgentRunner
+    participant ACM as AgentConfigManager
+    participant ATM as AgentToolManager
+    participant AE as AgentExecutor
+    participant RP as RunPersistence
+    
+    CLI->>AR: Initialize AgentRunner
+    AR->>AR: Load global config
+    AR->>AR: Setup Logfire
+    AR->>ATM: Initialize tool manager
+    ATM->>ATM: Load tools from directory
+    AR->>ACM: Initialize config manager
+    AR->>AE: Initialize executor
+    AR->>RP: Initialize run persistence
+    AR-->>CLI: Ready for agent execution
 ```
 
-The runner establishes the project structure, ensuring all paths are relative to the project root.
-
-### 2. Configuration Loading
+### 1. AgentRunner Initialization
 ```python
-def _load_config(self) -> Dict[str, Any]:
-    """Load configuration from YAML file"""
+def __init__(self, agents_dir: str = "agents", tools_dir: str = "tools", 
+             config_file: str = "config.yaml", debug: bool = False):
+    # 1. Basic setup
+    project_root = Path(__file__).parent.parent
+    self.config = self._load_config()
+    self._setup_logfire(debug=debug)
+    
+    # 2. Initialize component managers
+    self.tool_manager = AgentToolManager(tools_dir, mcp_config_manager, debug)
+    self.config_manager = AgentConfigManager(project_root, config, template_processor, validator, debug)
+    self.executor = AgentExecutor(config, run_persistence, debug)
 ```
 
-Loads the global `config.yaml` file, which contains:
-- Model defaults (`model_settings`)
-- Usage limits
-- Logfire configuration
-- Template engine settings
+### 2. Component Dependencies
+- **AgentToolManager** requires `MCPConfigManager` for MCP server creation
+- **AgentConfigManager** requires `AgentTemplateProcessor` and `AgentConfigValidator`
+- **AgentExecutor** requires global config and `RunPersistence`
+- All components can operate in debug mode independently
 
-### 3. Tool Discovery and Loading
+### 3. Tool Loading Process (AgentToolManager)
 ```python
-def _load_tools(self, debug: bool = False):
+def _load_tools(self):
     """Load all tools from the tools directory"""
+    for tool_file in self.tools_dir.glob("*.py"):
+        # Dynamic import and validation
+        if hasattr(module, 'TOOL_METADATA'):
+            self.loaded_tools[tool_name] = {
+                'module': module,
+                'metadata': module.TOOL_METADATA,
+                'function': getattr(module, function_name, None)
+            }
 ```
-
-**Process**:
-1. Scans the `/tools` directory for Python files
-2. Dynamically imports each module using `importlib.util`
-3. Validates that each tool has `TOOL_METADATA`
-4. Stores tool functions in `self.loaded_tools` dictionary
 
 **Tool Structure Expected**:
 ```python
@@ -95,205 +208,139 @@ def tool_name(param1: str) -> str:
     pass
 ```
 
-### 4. Logfire Setup
-```python
-def _setup_logfire(self, debug: bool = False):
-    """Setup Logfire logging"""
-```
-
-**Configuration**:
-- Checks for `LOGFIRE_WRITE_TOKEN` environment variable
-- Configures service name, version, and environment
-- Enables Pydantic AI instrumentation for automatic LLM call tracking
-- Adjusts verbosity based on debug mode
-
-### 5. Component Initialization
-```python
-# MCP configuration manager
-self.mcp_config_manager = MCPConfigManager(project_root, self.config, debug=debug)
-
-# Run persistence
-self.run_persistence = RunPersistence(project_root / "runs")
-
-# Template processor
-self.template_processor = AgentTemplateProcessor(...)
-
-# Validator
-self.validator = AgentConfigValidator(...)
-```
-
 ## Agent Execution Flow
 
-### Entry Point: `run_agent_async()`
+The execution flow is streamlined through component delegation:
+
+### Execution Sequence
+
+```mermaid
+sequenceDiagram
+    participant CLI as CLI/MCP
+    participant AR as AgentRunner
+    participant ACM as AgentConfigManager
+    participant ATM as AgentToolManager
+    participant AE as AgentExecutor
+    participant RP as RunPersistence
+    participant PA as Pydantic AI
+    
+    CLI->>AR: run_agent_async(agent_name, message, files, run_id)
+    AR->>RP: Handle run continuation/creation
+    RP-->>AR: run_id, message_history
+    AR->>ACM: parse_agent_config(agent_file, files)
+    ACM-->>AR: AgentConfig object
+    AR->>RP: create_run() if new
+    AR->>AE: execute_agent(config, tool_manager, message, files, run_id, history)
+    AE->>AE: Process multimodal inputs
+    AE->>AE: Create OpenRouter model
+    AE->>ATM: create_tool_functions(config.tools)
+    ATM-->>AE: tool_functions[]
+    AE->>ATM: create_mcp_servers(config.mcp)
+    ATM-->>AE: mcp_servers[]
+    AE->>PA: Create and run agent
+    PA-->>AE: execution result
+    AE->>RP: update_run() with results
+    AE-->>AR: response_data
+    AR-->>CLI: formatted response
+```
+
+### Streamlined Entry Point: `run_agent_async()`
 
 ```python
 async def run_agent_async(self, agent_name: str, message: str, 
-                         files: List[str] = None, run_id: Optional[str] = None):
-```
-
-This is the core execution method that orchestrates the entire agent run process.
-
-### Step 1: Run Management
-```python
-# Handle run continuation or creation
-message_history = []
-is_new_run = run_id is None
-
-if run_id is None:
-    run_id = self.run_persistence.generate_run_id()
-else:
-    if self.run_persistence.run_exists(run_id):
-        message_history = self.run_persistence.get_message_history(run_id)
-```
-
-**Logic**:
-- If no `run_id` provided → Generate new 8-character alphanumeric ID
-- If `run_id` provided → Load existing conversation history from `/runs/{run_id}/run.json`
-- Validates run existence and handles errors gracefully
-
-### Step 2: Agent Configuration Parsing
-```python
-agent_file = self.agents_dir / f"{agent_name}.md"
-config = await self._parse_agent_config(agent_file, files)
-```
-
-**Process Flow in `_parse_agent_config()`**:
-1. **Template Processing**: Uses `AgentTemplateProcessor` to:
-   - Extract YAML frontmatter from agent `.md` file
-   - Process Jinja2 template with file contents (if provided)
-   - Generate final system prompt
-2. **Validation**: Uses `AgentConfigValidator` to:
-   - Validate tool names exist in loaded tools
-   - Validate MCP server names exist in configuration
-   - Validate model names and numeric parameters
-3. **Default Application**: Merges agent-specific config with global defaults from `config.yaml`
-
-### Step 3: Model and Provider Setup
-```python
-model = OpenAIModel(
-    model_name=config.model,
-    provider=OpenAIProvider(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=api_key
-    )
-)
-```
-
-**Error Handling**:
-- Validates `OPENROUTER_API_KEY` environment variable
-- Provides specific error messages for common issues:
-  - 404: Model not found on OpenRouter
-  - 401: Authentication failed
-  - Other initialization errors
-
-### Step 4: Model Settings Configuration
-```python
-model_settings = ModelSettings(
-    temperature=config.temperature,
-    max_tokens=config.max_tokens,
-    top_p=config.top_p,
-    presence_penalty=config.presence_penalty,
-    frequency_penalty=config.frequency_penalty,
-    timeout=config.timeout,
-    stream=config.stream,
-    parallel_tool_calls=True
-)
-```
-
-**Configuration Hierarchy**:
-1. Agent-specific settings (from YAML frontmatter)
-2. Global defaults (from `config.yaml`)
-3. Pydantic AI defaults
-
-### Step 5: Tool and MCP Server Loading
-```python
-tool_functions = self._create_tool_functions(config.tools)
-mcp_servers = await self._create_mcp_servers(config.mcp)
-```
-
-#### Tool Function Creation (`_create_tool_functions()`)
-**Process**:
-1. Iterates through requested tool names
-2. Looks up each tool in `self.loaded_tools`
-3. Extracts the actual function object
-4. Provides helpful error messages with suggestions for typos
-5. Returns list of callable functions for Pydantic AI
-
-**Error Handling**:
-- Fuzzy matching for typo suggestions
-- Lists all available tools
-- Continues execution with available tools (doesn't fail completely)
-
-#### MCP Server Creation (`_create_mcp_servers()`)
-**Process**:
-1. Processes MCP configuration (string names or `MCPServerConfig` objects)
-2. Looks up server configuration in MCP JSON files
-3. Creates actual MCP server instances using `MCPConfigManager`
-4. Handles connection and authentication errors gracefully
-
-### Step 6: Agent Instantiation
-```python
-if mcp_servers:
-    agent = Agent(
-        model=model,
-        system_prompt=config.system_prompt,
-        tools=tool_functions if tool_functions else [],
-        model_settings=model_settings,
-        mcp_servers=mcp_servers
-    )
-else:
-    agent = Agent(
-        model=model,
-        system_prompt=config.system_prompt,
-        tools=tool_functions if tool_functions else [],
-        model_settings=model_settings
+                         files: List[str] = None, urls: List[str] = None, 
+                         run_id: Optional[str] = None):
+    # 1. Handle run continuation or creation
+    message_history = []
+    is_new_run = run_id is None
+    if run_id is None:
+        run_id = self.run_persistence.generate_run_id()
+    else:
+        if self.run_persistence.run_exists(run_id):
+            message_history = self.run_persistence.get_message_history(run_id)
+    
+    # 2. Parse agent configuration (delegated to AgentConfigManager)
+    agent_file = self.agents_dir / f"{agent_name}.md"
+    config = await self.config_manager.parse_agent_config(agent_file, files)
+    
+    # 3. Create run if new
+    if is_new_run:
+        self.run_persistence.create_run(run_id, agent_name, message)
+    
+    # 4. Execute agent (delegated to AgentExecutor)
+    return await self.executor.execute_agent(
+        config=config,
+        tool_manager=self.tool_manager,
+        message=message,
+        files=files,
+        urls=urls,
+        run_id=run_id,
+        message_history=message_history,
+        is_new_run=is_new_run
     )
 ```
 
-**Note**: Separate instantiation paths for agents with and without MCP servers due to Pydantic AI requirements.
+### Component Responsibilities in Execution
 
-### Step 7: Agent Execution
+#### AgentConfigManager - Configuration Processing
 ```python
-if mcp_servers:
-    async with agent.run_mcp_servers():
-        result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
-else:
-    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+async def parse_agent_config(self, agent_file: Path, files: List[str] = None) -> AgentConfig:
+    # 1. Template processing with file injection
+    template_result = await self.template_processor.process_agent_template(
+        agent_file=agent_file, files=files, additional_context={}
+    )
+    
+    # 2. Validation of tools, MCP servers, model names, numeric ranges
+    # 3. Default application from global config
+    # 4. Return validated AgentConfig object
 ```
 
-**Key Points**:
-- MCP servers require async context management
-- Message history enables conversation continuity
-- Usage limits prevent runaway costs
-- Pydantic AI handles all LLM interaction, tool calling, and response generation
-
-### Step 8: Response Processing and Persistence
+#### AgentToolManager - Tool and MCP Management
 ```python
-response_data = {
-    "output": str(result.output),
-    "success": True,
-    "run_id": run_id,
-    "is_new_run": is_new_run,
-    "usage": {
-        "requests": result.usage().requests,
-        "request_tokens": result.usage().request_tokens,
-        "response_tokens": result.usage().response_tokens,
-        "total_tokens": result.usage().total_tokens,
-    },
-    "tool_calls_summary": self._extract_tool_call_summary(result.all_messages())
-}
+def create_tool_functions(self, tool_names: List[str]) -> List[Any]:
+    # 1. Look up tools in loaded_tools dictionary
+    # 2. Provide helpful error messages with typo suggestions
+    # 3. Return callable functions for Pydantic AI
 
-# Update run persistence with new messages
-self.run_persistence.update_run(run_id, response_data, result.new_messages())
+async def create_mcp_servers(self, mcp_configs: List[Union[str, MCPServerConfig]]) -> List[Any]:
+    # 1. Process MCP configuration
+    # 2. Create MCP server instances using MCPConfigManager
+    # 3. Handle connection and authentication errors
 ```
 
-**Data Captured**:
-- Agent output (the actual response)
-- Success/failure status
-- Run identification and continuation status
-- Detailed usage statistics
-- Tool call summary
-- Complete message history (for persistence)
+#### AgentExecutor - Core Execution
+```python
+async def execute_agent(self, config: AgentConfig, tool_manager: AgentToolManager, 
+                       message: str, files: List[str] = None, urls: List[str] = None, 
+                       run_id: Optional[str] = None, message_history: List = None,
+                       is_new_run: bool = True) -> Dict[str, Any]:
+    # 1. Process multimodal inputs (images, documents, audio, video)
+    # 2. Create OpenRouter model with validation
+    # 3. Configure model settings and usage limits
+    # 4. Get tools and MCP servers from tool_manager
+    # 5. Create and execute Pydantic AI agent
+    # 6. Format response and update persistence
+```
+
+### Multimodal Processing
+
+The system includes comprehensive multimodal support:
+
+```python
+# In AgentExecutor
+def _process_multimodal_inputs(self, files: List[str] = None, urls: List[str] = None) -> Tuple[bool, Any]:
+    # 1. Check if multimodal processing is needed
+    # 2. Handle capability errors gracefully (fall back to text)
+    # 3. Process files and URLs with proper error handling
+    # 4. Return multimodal result or None
+```
+
+**Supported Media Types:**
+- **Images**: jpg, png, gif, webp
+- **Documents**: pdf
+- **Audio**: mp3, wav, m4a  
+- **Video**: mp4, mov, avi
+- **URLs**: Any of the above formats via HTTP/HTTPS
 
 ## Configuration Hierarchy System
 
@@ -328,58 +375,86 @@ Built-in defaults from the Pydantic AI library.
 
 ## Error Handling Strategy
 
-The agent runner implements comprehensive error handling at multiple levels:
+The system implements layered error handling across components:
 
-### Configuration Errors
+### Error Handling Architecture
+
+```mermaid
+graph TD
+    A[User Input] --> B[AgentRunner]
+    B --> C{Configuration Errors}
+    B --> D{Tool/MCP Errors}
+    B --> E{Execution Errors}
+    
+    C --> F[AgentConfigError]
+    C --> G[YAMLFrontmatterError]
+    C --> H[MissingRequiredFieldError]
+    
+    D --> I[InvalidToolError]
+    D --> J[InvalidMCPServerError]
+    
+    E --> K[MultimodalProcessingError]
+    E --> L[UsageLimitExceeded]
+    E --> M[API/Model Errors]
+    
+    F --> N[Formatted Error Response]
+    G --> N
+    H --> N
+    I --> N
+    J --> N
+    K --> N
+    L --> N
+    M --> N
+    
+    style N fill:#ffebee
+    style K fill:#e8f5e8
+```
+
+### Multimodal Error Handling
 ```python
-except AgentConfigError as e:
+# In AgentExecutor._handle_execution_error()
+if isinstance(e, MultimodalProcessingError):
     return {
         "output": "",
         "success": False,
+        "run_id": run_id,
+        "error": f"Multimodal Processing Error: {e.get_formatted_message()}",
+        "error_type": "multimodal_error",
+        "multimodal_error_type": type(e).__name__
+    }
+```
+
+**Handles**:
+- **File errors**: Not found, too large, unsupported format, read permissions
+- **URL errors**: Invalid format, network issues, unsupported media types
+- **Capability errors**: Missing PydanticAI support, model incompatibility
+
+### Configuration Error Handling (AgentConfigManager)
+```python
+except AgentConfigError as e:
+    return {
         "error": f"Agent Configuration Error: {e.get_formatted_message()}",
         "error_type": "configuration",
         "agent_file": str(agent_file)
     }
 ```
 
-**Handles**:
-- Invalid YAML frontmatter
-- Missing required fields
-- Invalid tool names
-- Invalid MCP server names
-- Invalid model parameters
+**Error Types**:
+- `YAMLFrontmatterError`: YAML parsing issues with line numbers
+- `MissingRequiredFieldError`: Missing name, description, model fields
+- `InvalidModelError`: Model name validation with suggestions
+- `InvalidToolError`: Tool name validation with fuzzy matching
+- `InvalidMCPServerError`: MCP server configuration issues
 
-### API and Model Errors
-```python
-if "404" in model_error or "not found" in model_error.lower():
-    return {
-        "error": f"Model '{config.model}' not found on OpenRouter...",
-        "error_type": "model_not_found",
-        "model_name": config.model
-    }
-```
+### Tool and MCP Error Handling (AgentToolManager)
+- **Graceful degradation**: Continue with available tools if some fail
+- **Helpful suggestions**: Fuzzy matching for typos in tool/server names
+- **Detailed logging**: Debug output for troubleshooting
 
-**Handles**:
-- Model not found (404)
-- Authentication failures (401)
-- API key issues
-- Network connectivity problems
-
-### MCP Server Errors
-```python
-if "401 Unauthorized" in error_message:
-    return {
-        "error": f"MCP server authentication failed: {e}\n"
-                f"This usually means the MCP server requires authentication credentials.\n"
-                f"Check your MCP server configuration for missing API keys or tokens."
-    }
-```
-
-**Handles**:
-- Authentication failures
-- Connection timeouts
-- Server unavailability
-- Configuration issues
+### Execution Error Handling (AgentExecutor)
+- **Usage limits**: Prevents runaway costs with clear messaging
+- **API errors**: Specific handling for 401, 404, network issues
+- **MCP server errors**: Authentication and connection troubleshooting
 
 ## CLI Interface
 
@@ -447,22 +522,53 @@ Comprehensive debug output when enabled:
 - Configuration merging
 - Error details and stack traces
 
+## Architecture Benefits
+
+### 1. Separation of Concerns
+- **Configuration**: Isolated in `agent_config.py` for easier testing and modification
+- **Tool Management**: Centralized in `agent_tools.py` for consistent behavior
+- **Execution Logic**: Contained in `agent_executor.py` with multimodal support
+- **Orchestration**: Simplified in `agent_runner.py` as a clean coordinator
+
+### 2. Enhanced Maintainability
+- **Smaller modules**: Each file has focused responsibilities (~80-250 lines each)
+- **Isolated changes**: Modifications to one aspect don't affect others
+- **Independent testing**: Components can be unit tested separately
+- **Clear interfaces**: Well-defined boundaries between modules
+
+### 3. Comprehensive Error Handling
+- **Multimodal errors**: Complete handling for file/URL processing issues
+- **Layered validation**: Configuration, tool, and execution errors handled separately
+- **User-friendly messages**: Specific error messages with actionable suggestions
+
+### 4. Extensibility
+- **New media types**: Easy to add support in `multimodal_processor.py`
+- **Additional tools**: Simple addition without touching core logic
+- **Custom validators**: Can extend `AgentConfigValidator` independently
+
 ## Best Practices for Modifications
 
-### 1. Preserve Error Handling
-Any modifications should maintain the comprehensive error handling patterns, providing specific error types and helpful messages.
+### 1. Respect Module Boundaries
+- Configuration changes → `agent_config.py`
+- Tool-related changes → `agent_tools.py`  
+- Execution logic changes → `agent_executor.py`
+- API changes → `agent_runner.py`
 
-### 2. Maintain Configuration Hierarchy
-Respect the three-tier configuration system (agent-specific → global → defaults).
+### 2. Maintain Error Handling Patterns
+- Use specific error classes from `agent_errors.py`
+- Provide helpful suggestions in error messages
+- Handle capability errors gracefully (fall back, don't fail)
 
-### 3. Update Documentation
-Changes to core logic should trigger updates to this document and `how_oneshot_works.md`.
+### 3. Test Across Components
+- Unit test individual modules
+- Integration test the full flow
+- Test error scenarios thoroughly
+- Verify debug output is helpful
 
-### 4. Test with Debug Mode
-Always test modifications with `debug=True` to ensure proper logging and error visibility.
-
-### 5. Consider Backwards Compatibility
-Agent files and tool interfaces should remain compatible across updates.
+### 4. Update Documentation
+- Changes to any module should update this document
+- Update `how_oneshot_works.md` for system-level changes
+- Keep error handling examples current
 
 ## Common Troubleshooting Scenarios
 
@@ -490,4 +596,14 @@ Agent files and tool interfaces should remain compatible across updates.
 - Verify run ID format (8 alphanumeric characters)
 - Look for corrupted `run.json` files
 
-This comprehensive architecture makes the agent runner a robust, observable, and extensible foundation for the Oneshot agent framework. 
+## Summary
+
+The agent runner system provides a robust, modular, and extensible foundation for the Oneshot agent framework. Key features include:
+
+- **Modular Design**: Four focused modules with clear responsibilities
+- **Comprehensive Error Handling**: Complete multimodal and configuration error support  
+- **High Maintainability**: Smaller, testable components with defined interfaces
+- **Multimodal Support**: Full support for images, documents, audio, and video processing
+- **Clean APIs**: Well-designed interfaces for CLI, MCP, and programmatic access
+
+This architecture provides a solid foundation for reliable agent execution and future development. 

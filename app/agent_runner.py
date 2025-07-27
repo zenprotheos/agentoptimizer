@@ -7,51 +7,28 @@ import os
 import sys
 import yaml
 import json
-import importlib.util
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union, Tuple
-from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.usage import UsageLimits
+from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 import logfire
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 # Add the parent directory to the Python path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import MCP-related classes and run persistence
-from app.mcp_config import MCPConfigManager, MCPServerConfig
+# Import refactored modules
+from app.mcp_config import MCPConfigManager
 from app.run_persistence import RunPersistence
 from app.tool_services import helper as tool_services
 from app.agent_template_processor import AgentTemplateProcessor
 from app.agent_validation import AgentConfigValidator
 from app.agent_errors import AgentConfigError
+from app.agent_config import AgentConfigManager
+from app.agent_tools import AgentToolManager
+from app.agent_executor import AgentExecutor
 
 # Load environment variables from .env file
 load_dotenv()
-
-
-class AgentConfig:
-    """Simplified agent configuration - just parse what we need"""
-    def __init__(self, config_data: Dict[str, Any]):
-        self.name = config_data['name']
-        self.description = config_data['description']
-        self.model = config_data['model']
-        self.temperature = config_data.get('temperature', 0.7)
-        self.max_tokens = config_data.get('max_tokens', 2048)
-        self.top_p = config_data.get('top_p')
-        self.presence_penalty = config_data.get('presence_penalty')
-        self.frequency_penalty = config_data.get('frequency_penalty')
-        self.timeout = config_data.get('timeout', 30.0)
-        self.stream = config_data.get('stream', False)
-        self.tools = config_data.get('tools', [])
-        self.mcp = config_data.get('mcp', [])
-        self.system_prompt = config_data['system_prompt']
-        self.request_limit = config_data.get('request_limit')  # Per-agent override for usage limits
 
 
 class AgentRunner:
@@ -63,10 +40,8 @@ class AgentRunner:
         self.agents_dir = project_root / agents_dir
         self.tools_dir = project_root / tools_dir
         self.config_file = project_root / config_file
-        self.debug = debug  # Store debug flag as instance attribute
+        self.debug = debug
         self.config = self._load_config()
-        self.loaded_tools = {}
-        self._load_tools(debug=debug)
         self._setup_logfire(debug=debug)
         
         # Initialize MCP configuration manager
@@ -88,13 +63,36 @@ class AgentRunner:
             debug=debug
         )
         
+        # Initialize tool manager
+        self.tool_manager = AgentToolManager(
+            tools_dir=self.tools_dir,
+            mcp_config_manager=self.mcp_config_manager,
+            debug=debug
+        )
+        
         # Initialize validator
-        available_tools = list(self.loaded_tools.keys())
+        available_tools = self.tool_manager.get_available_tools()
         available_mcp_servers = list(self.mcp_config_manager.get_available_servers().keys())
         self.validator = AgentConfigValidator(
             tools_dir=self.tools_dir,
             available_tools=available_tools,
             available_mcp_servers=available_mcp_servers
+        )
+        
+        # Initialize config manager
+        self.config_manager = AgentConfigManager(
+            project_root=project_root,
+            config=self.config,
+            template_processor=self.template_processor,
+            validator=self.validator,
+            debug=debug
+        )
+        
+        # Initialize executor
+        self.executor = AgentExecutor(
+            config=self.config,
+            run_persistence=self.run_persistence,
+            debug=debug
         )
     
     def _load_config(self) -> Dict[str, Any]:
@@ -108,32 +106,6 @@ class AgentRunner:
         except Exception as e:
             print(f"Error loading config: {e}")
             return {}
-    
-    def _load_tools(self, debug: bool = False):
-        """Load all tools from the tools directory"""
-        if not self.tools_dir.exists():
-            return
-            
-        for tool_file in self.tools_dir.glob("*.py"):
-            try:
-                spec = importlib.util.spec_from_file_location(tool_file.stem, tool_file)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                
-                if hasattr(module, 'TOOL_METADATA'):
-                    tool_name = tool_file.stem
-                    function_name = tool_name
-                    self.loaded_tools[tool_name] = {
-                        'module': module,
-                        'metadata': module.TOOL_METADATA,
-                        'function': getattr(module, function_name, None)
-                    }
-                    if debug:
-                        print(f"Loaded tool: {tool_name}")
-                    
-            except Exception as e:
-                if debug:
-                    print(f"Error loading tool {tool_file}: {e}")
     
     def _setup_logfire(self, debug: bool = False):
         """Setup Logfire logging"""
@@ -171,160 +143,7 @@ class AgentRunner:
             if debug:
                 print(f"Warning: Failed to initialize Logfire: {e}")
     
-    async def _parse_agent_config(self, agent_file: Path, files: List[str] = None) -> AgentConfig:
-        """Parse agent configuration using template processor with comprehensive validation"""
-        try:
-            # Process template first (includes basic validation)
-            template_result = await self.template_processor.process_agent_template(
-                agent_file=agent_file,
-                files=files,
-                additional_context={}
-            )
-            
-            config_data = template_result['config_data']
-            
-            # Then perform additional validations (tools, MCP servers, etc.)
-            if "tools" in config_data:
-                self.validator.validate_tools(config_data["tools"], agent_file)
-            
-            if "mcp" in config_data:
-                self.validator.validate_mcp_servers(config_data["mcp"], agent_file)
-            
-            if "model" in config_data:
-                self.validator.validate_model_name(config_data["model"], agent_file)
-            
-            # Validate numeric ranges
-            self.validator.validate_numeric_ranges(config_data, agent_file)
-            
-            # Add system prompt
-            config_data['system_prompt'] = template_result['system_prompt']
-            
-            # Apply defaults from config file
-            model_defaults = self.config.get('model_settings', {})
-            for key, default_value in model_defaults.items():
-                if key not in config_data:
-                    config_data[key] = default_value
-            
-            return AgentConfig(config_data)
-        except AgentConfigError:
-            # Re-raise agent config errors as-is (they have helpful messages)
-            raise
-        except Exception as e:
-            raise AgentConfigError(f"Unexpected error processing agent template for {agent_file}: {e}", agent_file)
-    
-    def _create_tool_functions(self, tool_names: List[str]) -> List[Any]:
-        """Create tool functions for Pydantic AI from loaded tools with enhanced error handling"""
-        tool_functions = []
-        errors = []
-        
-        for tool_name in tool_names:
-            if tool_name in self.loaded_tools:
-                tool_info = self.loaded_tools[tool_name]
-                tool_func = tool_info['function']
-                
-                if tool_func:
-                    tool_functions.append(tool_func)
-                else:
-                    errors.append(f"Tool '{tool_name}' has no main function - check tool file structure")
-            else:
-                available_tools = list(self.loaded_tools.keys())
-                # Simple fuzzy matching for suggestions
-                close_matches = [t for t in available_tools if self._is_similar_tool_name(tool_name, t)]
-                
-                error_msg = f"Tool '{tool_name}' not found in loaded tools."
-                if close_matches:
-                    error_msg += f" Did you mean: {', '.join(close_matches[:3])}?"
-                error_msg += f" Available tools: {', '.join(sorted(available_tools))}"
-                errors.append(error_msg)
-        
-        if errors:
-            # Log errors but don't fail - let the agent run with available tools
-            for error in errors:
-                print(f"WARNING: {error}")
-        
-        return tool_functions
-    
-    def _is_similar_tool_name(self, name1: str, name2: str) -> bool:
-        """Conservative similarity check for tool name suggestions"""
-        # Only suggest if one is a substring of the other (for obvious typos)
-        if len(name1) >= 4 and len(name2) >= 4:
-            if name1.lower() in name2.lower() or name2.lower() in name1.lower():
-                return True
-        
-        # Only suggest for single character differences in same-length names
-        if len(name1) == len(name2) and len(name1) >= 5:
-            diff_count = sum(c1 != c2 for c1, c2 in zip(name1.lower(), name2.lower()))
-            return diff_count == 1  # Only single character differences
-        
-        return False
-    
-    async def _create_mcp_servers(self, mcp_configs: List[Union[str, MCPServerConfig]]) -> List[Any]:
-        """Create and initialize MCP servers for an agent"""
-        mcp_servers = []
-        
-        for mcp_config in mcp_configs:
-            try:
-                if isinstance(mcp_config, str):
-                    server_name = mcp_config
-                    server_config = MCPServerConfig(name=server_name)
-                else:
-                    server_name = mcp_config.name
-                    server_config = mcp_config
-                
-                server_json_config = self.mcp_config_manager.get_server_config(server_name)
-                if not server_json_config:
-                    available_servers = list(self.mcp_config_manager.get_available_servers().keys())
-                    # Simple fuzzy matching for suggestions
-                    close_matches = [s for s in available_servers if self._is_similar_tool_name(server_name, s)]
-                    
-                    error_msg = f"MCP server '{server_name}' not found in configuration."
-                    if close_matches:
-                        error_msg += f" Did you mean: {', '.join(close_matches[:3])}?"
-                    error_msg += f" Available MCP servers: {', '.join(sorted(available_servers))}"
-                    error_msg += " Check your MCP server configuration in .cursor/mcp.json"
-                    
-                    if self.debug:
-                        print(f"WARNING: {error_msg}")
-                    continue
-                
-                mcp_server = self.mcp_config_manager.create_mcp_server(
-                    server_name, 
-                    server_json_config, 
-                    tool_prefix=server_config.prefix
-                )
-                
-                mcp_servers.append(mcp_server)
-                if self.debug:
-                    print(f"Loaded MCP server: {server_name}")
-                
-            except Exception as e:
-                if self.debug:
-                    print(f"ERROR: Failed to load MCP server '{server_name}': {e}")
-                continue
-        
-        return mcp_servers
-    
-    def _process_multimodal_inputs(self, files: List[str] = None, urls: List[str] = None) -> Tuple[bool, Any]:
-        """Process inputs and determine if multimodal handling is needed"""
-        if not files and not urls:
-            return False, None
-            
-        # Lazy import to avoid loading multimodal dependencies unless needed
-        try:
-            from app.multimodal_processor import MultimodalProcessor
-        except ImportError as e:
-            if self.debug:
-                print(f"Multimodal processor not available - falling back to text processing: {e}")
-            return False, None
-        
-        processor = MultimodalProcessor(self.config, self.debug)
-        
-        if processor.should_use_multimodal(files or [], urls or []):
-            result = processor.process_inputs(files, urls)
-            return True, result
-        else:
-            # Fall back to existing text processing
-            return False, None
+
     
     async def run_agent_async(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Run an agent asynchronously with optional run continuation and file context
@@ -364,42 +183,9 @@ class AgentRunner:
                 "error": f"Agent {agent_name} not found at {agent_file}"
             }
         
-        # Check for multimodal inputs first
-        is_multimodal, multimodal_result = self._process_multimodal_inputs(files, urls)
-        
+        # Parse agent configuration using the config manager
         try:
-            if is_multimodal:
-                # For multimodal, only process text files through template processor
-                text_files = []
-                if files:
-                    for file_path in files:
-                        filepath = Path(file_path)
-                        if filepath.exists():
-                            from app.multimodal_processor import MediaTypeDetector
-                            if not MediaTypeDetector.is_supported_media(filepath):
-                                text_files.append(file_path)
-                config = await self._parse_agent_config(agent_file, text_files)
-                
-                # If multimodal result has text context, inject it into the system prompt
-                if multimodal_result.text_context:
-                    # Use the template processor to inject the text context
-                    from app.agent_template_processor import AgentTemplateProcessor
-                    template_processor = AgentTemplateProcessor(
-                        self.agents_dir.parent, 
-                        self.config.get('template_engine', {}), 
-                        tool_services, 
-                        self.debug
-                    )
-                    
-                    # Re-render the system prompt with the multimodal text context
-                    rendered_prompt = await template_processor._render_system_prompt(
-                        config.system_prompt, 
-                        multimodal_result.text_context
-                    )
-                    config.system_prompt = rendered_prompt
-            else:
-                # Use existing text processing
-                config = await self._parse_agent_config(agent_file, files)
+            config = await self.config_manager.parse_agent_config(agent_file, files)
         except AgentConfigError as e:
             return {
                 "output": "",
@@ -417,201 +203,21 @@ class AgentRunner:
                 "agent_file": str(agent_file)
             }
         
-        # Set up OpenRouter API key
-        api_key = os.getenv('OPENROUTER_API_KEY')
-        if not api_key:
-            return {
-                "output": "",
-                "success": False,
-                "error": "OPENROUTER_API_KEY environment variable not set"
-            }
+        # Create or update run in persistence
+        if is_new_run:
+            self.run_persistence.create_run(run_id, agent_name, message)
         
-        # Create OpenRouter model with validation
-        try:
-            model = OpenAIModel(
-                model_name=config.model,
-                provider=OpenAIProvider(
-                    base_url="https://openrouter.ai/api/v1",
-                    api_key=api_key
-                )
-            )
-        except Exception as e:
-            # Check for common model name issues
-            model_error = str(e)
-            if "404" in model_error or "not found" in model_error.lower():
-                return {
-                    "output": "",
-                    "success": False,
-                    "error": f"Model '{config.model}' not found on OpenRouter. Check https://openrouter.ai/models for available models.",
-                    "error_type": "model_not_found",
-                    "model_name": config.model
-                }
-            elif "401" in model_error or "unauthorized" in model_error.lower():
-                return {
-                    "output": "",
-                    "success": False,
-                    "error": "OpenRouter API authentication failed. Check your OPENROUTER_API_KEY.",
-                    "error_type": "auth_failed"
-                }
-            else:
-                return {
-                    "output": "",
-                    "success": False,
-                    "error": f"Failed to initialize model '{config.model}': {e}",
-                    "error_type": "model_init_failed",
-                    "model_name": config.model
-                }
-        
-        # Create model settings
-        model_settings = ModelSettings(
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            top_p=config.top_p,
-            presence_penalty=config.presence_penalty,
-            frequency_penalty=config.frequency_penalty,
-            timeout=config.timeout,
-            stream=config.stream,
-            parallel_tool_calls=True
+        # Execute the agent using the executor
+        return await self.executor.execute_agent(
+            config=config,
+            tool_manager=self.tool_manager,
+            message=message,
+            files=files,
+            urls=urls,
+            run_id=run_id,
+            message_history=message_history,
+            is_new_run=is_new_run
         )
-        
-        # Load tools and MCP servers
-        tool_functions = self._create_tool_functions(config.tools)
-        mcp_servers = []
-        if config.mcp:
-            mcp_servers = await self._create_mcp_servers(config.mcp)
-        
-        # Create usage limits - use agent-specific request_limit if provided, otherwise fall back to global config
-        default_request_limit = self.config.get('usage_limits', {}).get('request_limit', 50)
-        agent_request_limit = config.request_limit if config.request_limit is not None else default_request_limit
-        
-        usage_limits = UsageLimits(
-            request_limit=agent_request_limit,
-            request_tokens_limit=self.config.get('usage_limits', {}).get('request_tokens_limit'),
-            response_tokens_limit=self.config.get('usage_limits', {}).get('response_tokens_limit'),
-            total_tokens_limit=self.config.get('usage_limits', {}).get('total_tokens_limit')
-        )
-        
-        # Create agent
-        if mcp_servers:
-            agent = Agent(
-                model=model,
-                system_prompt=config.system_prompt,
-                tools=tool_functions if tool_functions else [],
-                model_settings=model_settings,
-                mcp_servers=mcp_servers
-            )
-        else:
-            agent = Agent(
-                model=model,
-                system_prompt=config.system_prompt,
-                tools=tool_functions if tool_functions else [],
-                model_settings=model_settings
-            )
-        
-        try:
-            # Create or update run in persistence
-            if is_new_run:
-                self.run_persistence.create_run(run_id, agent_name, message)
-            
-            # Set run ID in tool helper for file organization
-            tool_services.set_run_id(run_id)
-            
-            # Run the agent with message history - Pydantic AI handles everything
-            if is_multimodal:
-                # Use multimodal message construction
-                message_parts = multimodal_result.create_message_parts(message)
-                if mcp_servers:
-                    async with agent.run_mcp_servers():
-                        result = await agent.run(message_parts, message_history=message_history, usage_limits=usage_limits)
-                else:
-                    result = await agent.run(message_parts, message_history=message_history, usage_limits=usage_limits)
-            else:
-                # Use existing text-based flow
-                if mcp_servers:
-                    async with agent.run_mcp_servers():
-                        result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
-                else:
-                    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
-            
-            # Prepare response data
-            response_data = {
-                "output": str(result.output),
-                "success": True,
-                "run_id": run_id,
-                "is_new_run": is_new_run,
-                "usage": {
-                    "requests": result.usage().requests,
-                    "request_tokens": result.usage().request_tokens,
-                    "response_tokens": result.usage().response_tokens,
-                    "total_tokens": result.usage().total_tokens,
-                },
-                # Optionally include message history for debugging
-                "messages": result.all_messages() if self.config.get('debug', {}).get('include_message_history', False) else None,
-                # Tool calls are available in messages if needed
-                "tool_calls_summary": self._extract_tool_call_summary(result.all_messages())
-            }
-            
-            # Update run persistence with new messages
-            self.run_persistence.update_run(run_id, response_data, result.new_messages())
-            
-            return response_data
-            
-        except Exception as e:
-            # Handle usage limit exceeded with specific messaging
-            from pydantic_ai.exceptions import UsageLimitExceeded
-            
-            if isinstance(e, UsageLimitExceeded):
-                return {
-                    "output": "",
-                    "success": False,
-                    "run_id": run_id if 'run_id' in locals() else None,
-                    "error": f"Agent reached usage limit: {e}\n"
-                            f"The agent exceeded its configured limits to prevent infinite loops or excessive costs.\n"
-                            f"Consider increasing the request_limit in the agent's configuration if this task requires more iterations.",
-                    "error_type": "usage_limit_exceeded",
-                    "usage_limit_type": "request_limit" if "request_limit" in str(e) else "token_limit"
-                }
-            
-            # Handle common MCP server errors with helpful messages
-            error_message = str(e)
-            
-            if "401 Unauthorized" in error_message:
-                return {
-                    "output": "",
-                    "success": False,
-                    "run_id": run_id if 'run_id' in locals() else None,
-                    "error": f"MCP server authentication failed: {e}\n"
-                            f"This usually means the MCP server requires authentication credentials.\n"
-                            f"Check your MCP server configuration for missing API keys or tokens."
-                }
-            elif "Connection" in error_message or "timeout" in error_message.lower():
-                return {
-                    "output": "",
-                    "success": False,
-                    "run_id": run_id if 'run_id' in locals() else None,
-                    "error": f"MCP server connection failed: {e}\n"
-                            f"Check that the MCP server is running and accessible."
-                }
-            else:
-                return {
-                    "output": "",
-                    "success": False,
-                    "run_id": run_id if 'run_id' in locals() else None,
-                    "error": f"Agent execution failed: {e}"
-                }
-    
-    def _extract_tool_call_summary(self, messages) -> List[str]:
-        """Simple tool call summary - much lighter than full extraction"""
-        from pydantic_ai.messages import ToolCallPart
-        
-        tool_calls = []
-        for message in messages:
-            if hasattr(message, 'parts') and message.parts:
-                for part in message.parts:
-                    if isinstance(part, ToolCallPart):
-                        tool_calls.append(part.tool_name)
-        
-        return list(set(tool_calls))  # Unique tool names used
     
     def run_agent(self, agent_name: str, message: str, files: List[str] = None, urls: List[str] = None, run_id: Optional[str] = None):
         """Synchronous wrapper"""

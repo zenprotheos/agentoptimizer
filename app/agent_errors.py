@@ -277,4 +277,139 @@ class AgentFileFormatError(AgentConfigError):
             "Ensure there are exactly three dashes (---) before and after the YAML frontmatter"
         ]
         
+        super().__init__(message, agent_file, suggestions)
+
+
+class MultimodalProcessingError(AgentConfigError):
+    """Base class for multimodal processing errors"""
+    
+    def __init__(self, message: str, agent_file: Optional[Path] = None, suggestions: Optional[List[str]] = None):
+        if not suggestions:
+            suggestions = [
+                "Check that multimodal files exist and are accessible",
+                "Verify file formats are supported (images: jpg, png, gif, webp; documents: pdf; audio: mp3, wav, m4a; video: mp4, mov, avi)",
+                "Ensure files are within size limits (default 20MB)",
+                "Use multimodal-capable models (e.g., openai/gpt-4o, openai/gpt-4o-mini)"
+            ]
+        super().__init__(message, agent_file, suggestions)
+
+
+class MultimodalFileError(MultimodalProcessingError):
+    """Error for file-related multimodal processing issues"""
+    
+    def __init__(self, file_path: str, error_type: str, details: str = "", agent_file: Optional[Path] = None):
+        if error_type == "not_found":
+            message = f"Multimodal file not found: {file_path}"
+            suggestions = [
+                f"Check that the file '{file_path}' exists",
+                "Verify the file path is correct and accessible",
+                "Ensure you have read permissions for the file"
+            ]
+        elif error_type == "too_large":
+            message = f"Multimodal file too large: {file_path}"
+            suggestions = [
+                f"File exceeds size limit: {details}",
+                "Reduce file size or compress the media",
+                "Increase max_file_size_mb in config if appropriate",
+                "Consider using a URL reference instead of local file"
+            ]
+        elif error_type == "unsupported_format":
+            message = f"Unsupported multimodal file format: {file_path}"
+            suggestions = [
+                f"File format not supported for multimodal processing",
+                "Supported formats: Images (jpg, png, gif, webp), Documents (pdf), Audio (mp3, wav, m4a), Video (mp4, mov, avi)",
+                "Convert file to a supported format",
+                "Text files are processed separately, not as multimodal content"
+            ]
+        elif error_type == "read_error":
+            message = f"Error reading multimodal file: {file_path}"
+            suggestions = [
+                f"File read error: {details}",
+                "Check file permissions and accessibility",
+                "Verify file is not corrupted or in use by another process",
+                "Try accessing the file manually to confirm it's readable"
+            ]
+        else:
+            message = f"Multimodal file processing error: {file_path} - {details}"
+            suggestions = [
+                "Check file accessibility and format",
+                "Verify file is not corrupted",
+                "Try with a different file to isolate the issue"
+            ]
+        
+        super().__init__(message, agent_file, suggestions)
+
+
+class MultimodalURLError(MultimodalProcessingError):
+    """Error for URL-related multimodal processing issues"""
+    
+    def __init__(self, url: str, error_type: str, details: str = "", agent_file: Optional[Path] = None):
+        if error_type == "invalid_url":
+            message = f"Invalid multimodal URL: {url}"
+            suggestions = [
+                "Check URL format and ensure it's a valid web address",
+                "URLs should start with http:// or https://",
+                "Verify the URL is accessible in a web browser"
+            ]
+        elif error_type == "unsupported_format":
+            message = f"Unsupported URL format for multimodal processing: {url}"
+            suggestions = [
+                "URL should point to a supported media file",
+                "Supported formats: Images (jpg, png, gif, webp), Documents (pdf), Audio (mp3, wav, m4a), Video (mp4, mov, avi)",
+                "Check that URL ends with a supported file extension"
+            ]
+        elif error_type == "network_error":
+            message = f"Network error accessing multimodal URL: {url}"
+            suggestions = [
+                f"Network error: {details}",
+                "Check internet connection",
+                "Verify URL is accessible and not behind authentication",
+                "Try accessing the URL in a web browser"
+            ]
+        else:
+            message = f"Multimodal URL processing error: {url} - {details}"
+            suggestions = [
+                "Check URL accessibility and format",
+                "Verify network connectivity",
+                "Try with a different URL to isolate the issue"
+            ]
+        
+        super().__init__(message, agent_file, suggestions)
+
+
+class MultimodalCapabilityError(MultimodalProcessingError):
+    """Error for multimodal capability issues"""
+    
+    def __init__(self, error_type: str, details: str = "", agent_file: Optional[Path] = None):
+        if error_type == "missing_pydantic_ai_support":
+            message = "Multimodal processing not available - missing PydanticAI multimodal support"
+            suggestions = [
+                "Update PydanticAI to a version that supports multimodal content",
+                "Install PydanticAI with multimodal dependencies",
+                "Check that ImageUrl, BinaryContent, DocumentUrl, AudioUrl, VideoUrl are available",
+                "Falling back to text-only processing"
+            ]
+        elif error_type == "model_incompatible":
+            message = f"Model does not support multimodal content: {details}"
+            suggestions = [
+                "Use a multimodal-capable model (e.g., openai/gpt-4o, openai/gpt-4o-mini)",
+                "Check model documentation for multimodal support",
+                "Consider processing files as text content instead",
+                f"Current model '{details}' may only support text input"
+            ]
+        elif error_type == "configuration_error":
+            message = f"Multimodal configuration error: {details}"
+            suggestions = [
+                "Check multimodal configuration in config.yaml",
+                "Verify max_file_size_mb and other multimodal settings",
+                "Ensure multimodal section is properly formatted"
+            ]
+        else:
+            message = f"Multimodal capability error: {details}"
+            suggestions = [
+                "Check system multimodal processing capabilities",
+                "Verify all required dependencies are installed",
+                "Try with text-only processing as fallback"
+            ]
+        
         super().__init__(message, agent_file, suggestions) 

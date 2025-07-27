@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Tuple, Union, Optional
 from dataclasses import dataclass
 import mimetypes
 from urllib.parse import urlparse
+from app.agent_errors import MultimodalFileError, MultimodalURLError, MultimodalCapabilityError
 
 # Import PydanticAI multimodal classes
 try:
@@ -85,17 +86,25 @@ class MultimodalContentProcessor:
     def create_binary_content(self, filepath: Path) -> Optional[BinaryContent]:
         """Create BinaryContent object from local file"""
         if not BinaryContent:
-            if self.debug:
-                print("BinaryContent not available - PydanticAI multimodal support missing")
-            return None
+            raise MultimodalCapabilityError("missing_pydantic_ai_support")
             
         try:
+            # Check if file exists
+            if not filepath.exists():
+                raise MultimodalFileError(str(filepath), "not_found")
+            
             # Check file size
             file_size_mb = filepath.stat().st_size / (1024 * 1024)
             if file_size_mb > self.max_file_size_mb:
-                if self.debug:
-                    print(f"File {filepath} too large: {file_size_mb:.1f}MB > {self.max_file_size_mb}MB")
-                return None
+                raise MultimodalFileError(
+                    str(filepath), 
+                    "too_large", 
+                    f"{file_size_mb:.1f}MB > {self.max_file_size_mb}MB"
+                )
+            
+            # Check if format is supported
+            if not MediaTypeDetector.is_supported_media(filepath):
+                raise MultimodalFileError(str(filepath), "unsupported_format")
             
             # Read file and create BinaryContent
             data = filepath.read_bytes()
@@ -106,21 +115,31 @@ class MultimodalContentProcessor:
             
             return BinaryContent(data=data, media_type=media_type)
             
+        except MultimodalFileError:
+            # Re-raise our specific errors
+            raise
+        except PermissionError as e:
+            raise MultimodalFileError(str(filepath), "read_error", f"Permission denied: {e}")
+        except OSError as e:
+            raise MultimodalFileError(str(filepath), "read_error", f"OS error: {e}")
         except Exception as e:
-            if self.debug:
-                print(f"Error creating BinaryContent for {filepath}: {e}")
-            return None
+            raise MultimodalFileError(str(filepath), "read_error", str(e))
     
     def create_url_content(self, url: str) -> Optional[Union[ImageUrl, DocumentUrl, AudioUrl, VideoUrl]]:
         """Create appropriate URL content object based on URL"""
         if not any([ImageUrl, DocumentUrl, AudioUrl, VideoUrl]):
-            if self.debug:
-                print("URL content classes not available - PydanticAI multimodal support missing")
-            return None
+            raise MultimodalCapabilityError("missing_pydantic_ai_support")
         
         try:
+            # Basic URL validation
+            if not url.startswith(('http://', 'https://')):
+                raise MultimodalURLError(url, "invalid_url", "URL must start with http:// or https://")
+            
             # Parse URL to get file extension
             parsed = urlparse(url)
+            if not parsed.netloc:
+                raise MultimodalURLError(url, "invalid_url", "Invalid URL format")
+            
             path = Path(parsed.path)
             media_type = MediaTypeDetector.detect_file_type(path)
             
@@ -133,44 +152,63 @@ class MultimodalContentProcessor:
             elif media_type == MediaType.VIDEO and VideoUrl:
                 return VideoUrl(url=url)
             else:
-                if self.debug:
-                    print(f"Unsupported URL type for {url}: {media_type}")
-                return None
+                raise MultimodalURLError(url, "unsupported_format", f"Media type {media_type.value} not supported")
                 
+        except MultimodalURLError:
+            # Re-raise our specific errors
+            raise
         except Exception as e:
-            if self.debug:
-                print(f"Error creating URL content for {url}: {e}")
-            return None
+            raise MultimodalURLError(url, "network_error", str(e))
     
     def process_files(self, files: List[str]) -> List[Any]:
         """Process local files into content objects"""
         content_objects = []
+        errors = []
         
         for file_path in files:
             filepath = Path(file_path)
             
-            if not filepath.exists():
+            # Skip text files - they're handled separately
+            if not MediaTypeDetector.is_supported_media(filepath):
                 if self.debug:
-                    print(f"File not found: {filepath}")
+                    print(f"Skipping text file for multimodal processing: {filepath}")
                 continue
             
-            if MediaTypeDetector.is_supported_media(filepath):
+            try:
                 content_obj = self.create_binary_content(filepath)
                 if content_obj:
                     content_objects.append(content_obj)
-            elif self.debug:
-                print(f"Skipping text file for multimodal processing: {filepath}")
+            except MultimodalFileError as e:
+                # Collect errors but continue processing other files
+                errors.append(e)
+                if self.debug:
+                    print(f"Multimodal file error: {e}")
+        
+        # If we have errors but no successful content, raise the first error
+        if errors and not content_objects:
+            raise errors[0]
         
         return content_objects
     
     def process_urls(self, urls: List[str]) -> List[Any]:
         """Process URLs into content objects"""
         content_objects = []
+        errors = []
         
         for url in urls:
-            content_obj = self.create_url_content(url)
-            if content_obj:
-                content_objects.append(content_obj)
+            try:
+                content_obj = self.create_url_content(url)
+                if content_obj:
+                    content_objects.append(content_obj)
+            except MultimodalURLError as e:
+                # Collect errors but continue processing other URLs
+                errors.append(e)
+                if self.debug:
+                    print(f"Multimodal URL error: {e}")
+        
+        # If we have errors but no successful content, raise the first error
+        if errors and not content_objects:
+            raise errors[0]
         
         return content_objects
 
