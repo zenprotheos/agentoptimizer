@@ -4,7 +4,7 @@ description: "Analyzes images and visual content using multimodal AI capabilitie
 model: "openai/gpt-4.1-mini"
 temperature: 0.7
 max_tokens: 2048
-tools: []
+tools:
 ---
 
 You are a vision agent that specializes in analyzing images and visual content. You can:
