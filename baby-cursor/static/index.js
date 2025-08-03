@@ -9,6 +9,8 @@ class BabyCursor {
     this.isLoading = false;
     this.collapsedFolders = new Set();
     this.unsavedChanges = new Set();
+    this.selectedAgent = 'oneshot_agent'; // Default agent
+    this.monacoEditor = null;
   }
 
   async init() {
@@ -17,6 +19,8 @@ class BabyCursor {
     this.isLoading = true;
     
     try {
+      await this.initializeMonaco();
+      await this.loadAgents();
       await this.loadFileTree();
       this.setupEventListeners();
       console.log('Baby Cursor initialized successfully');
@@ -25,6 +29,70 @@ class BabyCursor {
       this.showToast('Failed to initialize application', 'error');
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async initializeMonaco() {
+    return new Promise((resolve) => {
+      require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+      require(['vs/editor/editor.main'], () => {
+        this.monacoEditor = monaco.editor.create(document.getElementById('editor'), {
+          value: '',
+          language: 'plaintext',
+          theme: 'vs-dark',
+          automaticLayout: true,
+          fontSize: 13,
+          fontFamily: 'SF Mono, Monaco, Inconsolata, "Roboto Mono", Consolas, "Courier New", monospace',
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+          tabSize: 2,
+          insertSpaces: true
+        });
+        
+        // Listen for content changes
+        this.monacoEditor.onDidChangeModelContent(() => {
+          if (this.activePath) {
+            this.unsavedChanges.add(this.activePath);
+            this.renderTabs();
+            this.renderFileTree();
+          }
+        });
+        
+        resolve();
+      });
+    });
+  }
+
+  async loadAgents() {
+    try {
+      console.log('Loading agents...');
+      const response = await fetch('/api/agents');
+      if (!response.ok) throw new Error(`Failed to fetch agents: ${response.status}`);
+      const agents = await response.json();
+      
+      const agentSelect = document.getElementById('agent-select');
+      if (agentSelect) {
+        // Clear existing options
+        agentSelect.innerHTML = '';
+        
+        // Add agents to dropdown
+        agents.forEach(agent => {
+          const option = document.createElement('option');
+          option.value = agent.value;
+          option.textContent = agent.label;
+          agentSelect.appendChild(option);
+        });
+        
+        // Set default selection
+        this.selectedAgent = agents.length > 0 ? agents[0].value : 'oneshot_agent';
+        agentSelect.value = this.selectedAgent;
+      }
+      
+      console.log('Agents loaded successfully:', agents.length);
+    } catch (error) {
+      console.error('Failed to load agents:', error);
+      this.showToast(`Failed to load agents: ${error.message}`, 'error');
     }
   }
 
@@ -95,7 +163,7 @@ class BabyCursor {
       return;
     }
     
-    treeContainer.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+    treeContainer.innerHTML = '<div style="color: var(--cursor-text-muted); font-size: 12px;">Loading...</div>';
     
     // Use setTimeout to prevent blocking the UI
     setTimeout(() => {
@@ -114,11 +182,15 @@ class BabyCursor {
             
             // Folder header
             const folderHeader = document.createElement('div');
-            folderHeader.className = 'cursor-pointer py-1 px-2 hover:bg-gray-700 rounded text-sm flex items-center';
+            folderHeader.className = 'cursor-pointer py-1 px-2 rounded text-sm flex items-center hover:bg-opacity-10 hover:bg-white';
             folderHeader.style.marginLeft = `${level * 12}px`;
+            folderHeader.style.color = 'var(--cursor-text-primary)';
             folderHeader.innerHTML = `
-              <span class="mr-1">${isCollapsed ? '▶' : '▼'}</span>
-              <span>📁 ${this.escapeHtml(folder.name)}</span>
+              <span class="mr-1" style="color: var(--cursor-text-secondary);">${isCollapsed ? '▶' : '▼'}</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="mr-1" style="color: var(--cursor-accent);">
+                <path d="M6.5 1h3l.5.5v1h3.5l.5.5v9l-.5.5h-11l-.5-.5v-10l.5-.5H6.5zM2 2v9h12V4H8.5l-.5-.5v-1H2z"/>
+              </svg>
+              <span>${this.escapeHtml(folder.name)}</span>
             `;
             folderHeader.onclick = () => this.toggleFolder(nodeId);
             
@@ -131,13 +203,16 @@ class BabyCursor {
             }
           } else if (file) {
             const fileEl = document.createElement('div');
-            fileEl.className = `cursor-pointer py-1 px-2 hover:bg-gray-700 rounded text-sm ${
-              this.unsavedChanges.has(file.path) ? 'text-yellow-400' : ''
-            }`;
+            const isUnsaved = this.unsavedChanges.has(file.path);
+            fileEl.className = 'cursor-pointer py-1 px-2 rounded text-sm flex items-center hover:bg-opacity-10 hover:bg-white';
             fileEl.style.marginLeft = `${level * 12}px`;
-            fileEl.innerHTML = `<span>📄 ${this.escapeHtml(file.path.split('/').pop())}${
-              this.unsavedChanges.has(file.path) ? ' •' : ''
-            }</span>`;
+            fileEl.style.color = isUnsaved ? 'var(--cursor-warning)' : 'var(--cursor-text-primary)';
+            
+            const fileIcon = this.getFileIcon(file.path);
+            fileEl.innerHTML = `
+              ${fileIcon}
+              <span>${this.escapeHtml(file.path.split('/').pop())}${isUnsaved ? ' •' : ''}</span>
+            `;
             fileEl.onclick = () => this.openFile(file.path);
             treeContainer.appendChild(fileEl);
           }
@@ -150,9 +225,27 @@ class BabyCursor {
         console.log('File tree rendered successfully');
       } catch (error) {
         console.error('Error rendering file tree:', error);
-        treeContainer.innerHTML = '<div class="text-red-400 text-sm">Error loading files</div>';
+        treeContainer.innerHTML = '<div style="color: var(--cursor-error); font-size: 12px;">Error loading files</div>';
       }
     }, 10);
+  }
+
+  getFileIcon(path) {
+    const ext = path.split('.').pop()?.toLowerCase();
+    const iconColor = 'var(--cursor-text-secondary)';
+    
+    switch (ext) {
+      case 'js':
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="${iconColor}" class="mr-1"><path d="M1 8.5c0-1.5.5-2.5 1.5-3s2-.5 3.5-.5h1v1H6c-1 0-1.5.5-1.5 1.5S5 9 6 9h1v1H6c-1.5 0-2.5-.5-3.5-1.5S1 10 1 8.5z"/></svg>`;
+      case 'py':
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="${iconColor}" class="mr-1"><path d="M8 1c3.9 0 7 3.1 7 7s-3.1 7-7 7-7-3.1-7-7 3.1-7 7-7z"/></svg>`;
+      case 'md':
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="${iconColor}" class="mr-1"><path d="M2 3h12v10H2V3zm1 1v8h10V4H3z"/></svg>`;
+      case 'json':
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="${iconColor}" class="mr-1"><path d="M6 2.5V2h-.5a1 1 0 0 0-1 1v.5a1 1 0 0 1-1 1H3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h.5a1 1 0 0 1 1 1v.5a1 1 0 0 0 1 1H6v-.5a1 1 0 0 1 1-1h.5a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H7a1 1 0 0 1-1-1z"/></svg>`;
+      default:
+        return `<svg width="16" height="16" viewBox="0 0 16 16" fill="${iconColor}" class="mr-1"><path d="M2 2h8l4 4v8H2V2zm8 0v4h4l-4-4z"/></svg>`;
+    }
   }
 
   escapeHtml(text) {
@@ -228,18 +321,21 @@ class BabyCursor {
     
     this.openTabs.forEach(path => {
       const tab = document.createElement('div');
-      tab.className = `px-3 py-2 cursor-pointer border-r border-gray-700 text-sm flex items-center ${
-        this.activePath === path ? 'bg-gray-700' : 'hover:bg-gray-700'
-      }`;
+      const isActive = this.activePath === path;
+      const hasUnsavedChanges = this.unsavedChanges.has(path);
+      
+      tab.className = `px-3 py-2 cursor-pointer text-sm flex items-center border-r`;
+      tab.style.borderColor = 'var(--cursor-border)';
+      tab.style.backgroundColor = isActive ? 'var(--cursor-bg-primary)' : 'var(--cursor-bg-secondary)';
+      tab.style.color = 'var(--cursor-text-primary)';
       
       const fileName = path.split('/').pop();
-      const hasUnsavedChanges = this.unsavedChanges.has(path);
       
       tab.innerHTML = `
         <span class="file-name ${hasUnsavedChanges ? 'text-yellow-400' : ''}" data-path="${path}">
           ${this.escapeHtml(fileName)}${hasUnsavedChanges ? ' •' : ''}
         </span>
-        <button class="close-tab ml-2 text-gray-400 hover:text-white text-xs" data-path="${path}">×</button>
+        <button class="close-tab ml-2 text-xs hover:bg-opacity-20 hover:bg-white rounded p-1" data-path="${path}" style="color: var(--cursor-text-secondary);">×</button>
       `;
       
       tabsContainer.appendChild(tab);
@@ -275,32 +371,60 @@ class BabyCursor {
 
   renderEditor() {
     const placeholder = document.getElementById('editor-placeholder');
-    const editor = document.getElementById('editor');
+    const editorContainer = document.getElementById('editor');
     
-    if (!placeholder || !editor) return;
+    if (!placeholder || !editorContainer || !this.monacoEditor) return;
     
     if (this.activePath && this.files.has(this.activePath)) {
       const file = this.files.get(this.activePath);
       placeholder.classList.add('hidden');
-      editor.classList.remove('hidden');
-      editor.value = file.content;
+      editorContainer.classList.remove('hidden');
+      
+      // Set content and language
+      this.monacoEditor.setValue(file.content);
+      const language = this.getLanguageFromPath(this.activePath);
+      monaco.editor.setModelLanguage(this.monacoEditor.getModel(), language);
       
       // Focus editor after a brief delay
-      setTimeout(() => editor.focus(), 50);
+      setTimeout(() => this.monacoEditor.focus(), 50);
     } else {
       placeholder.classList.remove('hidden');
-      editor.classList.add('hidden');
+      editorContainer.classList.add('hidden');
     }
+  }
+
+  getLanguageFromPath(path) {
+    const ext = path.split('.').pop()?.toLowerCase();
+    const languageMap = {
+      'py': 'python',
+      'js': 'javascript',
+      'ts': 'typescript',
+      'html': 'html',
+      'css': 'css',
+      'json': 'json',
+      'md': 'markdown',
+      'yml': 'yaml',
+      'yaml': 'yaml',
+      'xml': 'xml',
+      'sh': 'shell',
+      'bash': 'shell',
+      'sql': 'sql',
+      'php': 'php',
+      'cpp': 'cpp',
+      'c': 'c',
+      'java': 'java',
+      'go': 'go',
+      'rs': 'rust',
+      'rb': 'ruby'
+    };
+    return languageMap[ext] || 'plaintext';
   }
 
   async saveFile(path = null, showToast = true) {
     const targetPath = path || this.activePath;
-    if (!targetPath || this.isLoading) return;
+    if (!targetPath || this.isLoading || !this.monacoEditor) return;
     
-    const editor = document.getElementById('editor');
-    if (!editor) return;
-    
-    const content = editor.value;
+    const content = this.monacoEditor.getValue();
     this.isLoading = true;
     
     try {
@@ -333,18 +457,21 @@ class BabyCursor {
 
   async sendMessage() {
     const input = document.getElementById('message-input');
+    const agentSelect = document.getElementById('agent-select');
     if (!input || this.isLoading) return;
     
     const message = input.value.trim();
     if (!message) return;
 
+    this.selectedAgent = agentSelect?.value || 'oneshot_agent';
     this.addMessage('user', message);
     input.value = '';
     this.isLoading = true;
 
     try {
       const requestBody = {
-        message: message
+        message: message,
+        agent_name: this.selectedAgent
       };
       
       // Only include run_id if it exists
@@ -383,12 +510,73 @@ class BabyCursor {
     const messagesContainer = document.getElementById('messages');
     if (!messagesContainer) return;
     
-    const messageEl = document.createElement('div');
-    messageEl.className = `p-2 my-2 rounded text-sm ${
-      role === 'user' ? 'bg-blue-600 ml-4' : 'bg-gray-700 mr-4'
-    }`;
-    messageEl.textContent = content;
-    messagesContainer.appendChild(messageEl);
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'flex gap-3 mb-4';
+    
+    // Avatar
+    const avatar = document.createElement('div');
+    avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium';
+    
+    // Message content
+    const messageContent = document.createElement('div');
+    messageContent.className = 'flex-1 min-w-0';
+    
+    // Message header with role and timestamp
+    const messageHeader = document.createElement('div');
+    messageHeader.className = 'flex items-center gap-2 mb-1';
+    
+    const roleName = document.createElement('span');
+    roleName.className = 'text-sm font-medium';
+    roleName.style.color = 'var(--cursor-text-primary)';
+    
+    const timestamp = document.createElement('span');
+    timestamp.className = 'text-xs';
+    timestamp.style.color = 'var(--cursor-text-secondary)';
+    timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Message body
+    const messageBody = document.createElement('div');
+    messageBody.className = 'text-sm leading-relaxed';
+    messageBody.style.color = 'var(--cursor-text-primary)';
+    
+    if (role === 'user') {
+      avatar.style.backgroundColor = 'var(--cursor-accent)';
+      avatar.style.color = 'white';
+      avatar.textContent = 'You';
+      roleName.textContent = 'You';
+      
+      // User messages with slight background
+      messageBody.className += ' px-3 py-2 rounded-lg';
+      messageBody.style.backgroundColor = 'var(--cursor-bg-secondary)';
+      messageBody.style.border = '1px solid var(--cursor-border)';
+    } else {
+      avatar.style.backgroundColor = 'var(--cursor-bg-tertiary)';
+      avatar.style.color = 'var(--cursor-text-primary)';
+      avatar.style.border = '1px solid var(--cursor-border)';
+      avatar.innerHTML = '🤖';
+      roleName.textContent = this.selectedAgent ? this.selectedAgent.replace('_', ' ').toUpperCase() : 'ASSISTANT';
+      
+      // Assistant messages with markdown-like styling
+      messageBody.style.whiteSpace = 'pre-wrap';
+      messageBody.style.wordBreak = 'break-word';
+    }
+    
+    // Process content for basic markdown-like formatting
+    if (role === 'assistant') {
+      messageBody.innerHTML = this.formatAssistantMessage(content);
+    } else {
+      messageBody.textContent = content;
+    }
+    
+    // Assemble the message
+    messageHeader.appendChild(roleName);
+    messageHeader.appendChild(timestamp);
+    messageContent.appendChild(messageHeader);
+    messageContent.appendChild(messageBody);
+    messageWrapper.appendChild(avatar);
+    messageWrapper.appendChild(messageContent);
+    
+    messagesContainer.appendChild(messageWrapper);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
     // Limit message history
@@ -396,6 +584,33 @@ class BabyCursor {
     if (messages.length > 50) {
       messagesContainer.removeChild(messages[0]);
     }
+  }
+
+  formatAssistantMessage(content) {
+    // Basic markdown-like formatting
+    let formatted = this.escapeHtml(content);
+    
+    // Code blocks
+    formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      return `<div class="bg-gray-800 rounded-md p-3 my-2 text-sm font-mono overflow-x-auto">
+        ${lang ? `<div class="text-xs text-gray-400 mb-2">${lang}</div>` : ''}
+        <pre style="color: #e5e7eb; margin: 0;">${code.trim()}</pre>
+      </div>`;
+    });
+    
+    // Inline code
+    formatted = formatted.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded text-sm font-mono" style="background-color: var(--cursor-bg-tertiary); color: var(--cursor-accent);">$1</code>');
+    
+    // Bold text
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic text
+    formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    // Line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
   }
 
   setupEventListeners() {
@@ -436,14 +651,34 @@ class BabyCursor {
       sendBtn.addEventListener('click', () => this.sendMessage());
     }
     
-    // Enter to send message
+    // Enter to send message and auto-resize
     const messageInput = document.getElementById('message-input');
     if (messageInput) {
+      // Auto-resize functionality
+      const autoResize = () => {
+        messageInput.style.height = 'auto';
+        const newHeight = Math.min(messageInput.scrollHeight, 120); // Max height of 120px
+        messageInput.style.height = newHeight + 'px';
+      };
+
+      messageInput.addEventListener('input', autoResize);
       messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           this.sendMessage();
         }
+      });
+
+      // Initial resize
+      autoResize();
+    }
+
+    // Agent selection
+    const agentSelect = document.getElementById('agent-select');
+    if (agentSelect) {
+      agentSelect.addEventListener('change', (e) => {
+        this.selectedAgent = e.target.value;
+        console.log('Selected agent:', this.selectedAgent);
       });
     }
   }
@@ -453,9 +688,22 @@ class BabyCursor {
     document.querySelectorAll('.toast').forEach(t => t.remove());
     
     const toast = document.createElement('div');
-    toast.className = `toast fixed top-4 right-4 p-3 rounded shadow-lg z-50 text-sm ${
-      type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-blue-600'
-    } text-white max-w-xs`;
+    toast.className = 'toast fixed top-4 right-4 p-3 rounded shadow-lg z-50 text-sm max-w-xs';
+    
+    let bgColor;
+    switch (type) {
+      case 'error':
+        bgColor = 'var(--cursor-error)';
+        break;
+      case 'success':
+        bgColor = 'var(--cursor-success)';
+        break;
+      default:
+        bgColor = 'var(--cursor-accent)';
+    }
+    
+    toast.style.backgroundColor = bgColor;
+    toast.style.color = 'white';
     toast.textContent = message;
     document.body.appendChild(toast);
     

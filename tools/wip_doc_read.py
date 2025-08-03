@@ -1,36 +1,34 @@
 # tools/wip_doc_read.py
-# Tool for reading WIP (Work In Progress) documents and related operations
+# Tool for reading WIP (Work In Progress) documents
 
 from app.tool_services import *
+import xml.etree.ElementTree as ET
 
 TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "wip_doc_read",
-        "description": "Read Work-In-Progress (WIP) documents and perform read-only operations. Supports reading document content, listing all documents, viewing edit history, and finding documents. Can strip frontmatter for clean content when used in LLM prompts.",
+        "description": "Read Work-In-Progress (WIP) documents. Supports reading content, listing documents, and viewing history.",
         "parameters": {
             "type": "object",
             "properties": {
                 "action": {
                     "type": "string",
-                    "description": "The read action to perform: 'read' to view document content, 'list' to see all WIP documents, 'history' to view edit trail, or 'find' to search for documents by name pattern.",
-                    "enum": ["read", "list", "history", "find"]
+                    "description": "Action to perform: 'read', 'list', or 'history'",
+                    "enum": ["read", "list", "history"],
+                    "default": "read"
                 },
                 "file_path": {
                     "type": "string",
-                    "description": "Path to the WIP document file for 'read' and 'history' actions (e.g., 'wip_documents/research_plan.md')"
+                    "description": "Path to the WIP document file"
                 },
-                "document_name": {
+                "section_id": {
                     "type": "string",
-                    "description": "Document name for 'history' action when file_path is not provided"
+                    "description": "For XML docs: read only a specific section by ID"
                 },
-                "search_pattern": {
-                    "type": "string",
-                    "description": "Search pattern for 'find' action to match document names (supports partial matches)"
-                },
-                "strip_frontmatter": {
+                "content_only": {
                     "type": "boolean",
-                    "description": "Whether to strip YAML frontmatter and metadata from document content when reading. Useful when content will be used in LLM prompts.",
+                    "description": "For XML: return only the content without structure",
                     "default": False
                 }
             },
@@ -39,11 +37,12 @@ TOOL_METADATA = {
     }
 }
 
-def wip_doc_read(action: str, file_path: str = None, document_name: str = None, search_pattern: str = None, strip_frontmatter: bool = False) -> str:
-    """Read WIP documents and perform read-only operations"""
+def wip_doc_read(action: str, file_path: str = None, section_id: str = None, 
+                 content_only: bool = False) -> str:
+    """Read WIP documents"""
     
     try:
-        # Get run-aware artifacts directory (same as tool_services.py)
+        # Get artifacts directory
         current_run_id = get_run_id()
         if current_run_id:
             artifacts_dir = Path("artifacts") / current_run_id
@@ -52,35 +51,24 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
         
         if action == "read":
             if not file_path:
-                return json.dumps({
-                    "error": "file_path is required for read action"
-                }, indent=2)
+                return json.dumps({"error": "file_path required for read"}, indent=2)
             
             doc_path = Path(file_path)
             if not doc_path.exists():
-                return json.dumps({
-                    "error": f"WIP document not found at '{file_path}'"
-                }, indent=2)
+                return json.dumps({"error": f"Document not found: {file_path}"}, indent=2)
             
-            # Use tool_services read function
+            # Read document
             content = read(str(doc_path))
             
-            # Strip frontmatter and metadata if requested
-            if strip_frontmatter:
-                content = _strip_frontmatter_and_metadata(content)
+            # Handle XML documents
+            if doc_path.suffix.lower() == '.xml':
+                content = _process_xml_read(content, section_id, content_only)
+                if content is None:
+                    return json.dumps({"error": f"Section '{section_id}' not found"}, indent=2)
             
-            # Get document info from audit log if available
+            # Get status from audit log
             document_name = doc_path.stem
-            audit_path = doc_path.parent / f"{document_name}.json"
-            status = "unknown"
-            
-            if audit_path.exists():
-                # Use tool_services read function
-                audit_content = read(str(audit_path))
-                audit_wrapper = json.loads(audit_content)
-                # Extract data from tool_services JSON wrapper
-                audit_data = audit_wrapper.get("data", audit_wrapper)
-                status = audit_data.get("current_status", "unknown")
+            status = _get_document_status(doc_path.parent / f"{document_name}.json")
             
             return json.dumps({
                 "success": True,
@@ -88,201 +76,129 @@ def wip_doc_read(action: str, file_path: str = None, document_name: str = None, 
                 "file_path": str(doc_path),
                 "status": status,
                 "content": content,
-                "frontmatter_stripped": strip_frontmatter,
-                "summary": f"Successfully read WIP document '{document_name}'"
+                "section_id": section_id
             }, indent=2)
         
         elif action == "list":
-            if not artifacts_dir.exists():
-                return json.dumps({
-                    "success": True,
-                    "documents": [],
-                    "count": 0,
-                    "summary": "No WIP documents directory found"
-                }, indent=2)
-            
             documents = []
-            for md_file in artifacts_dir.glob("*.md"):
-                document_name = md_file.stem
-                audit_path = artifacts_dir / f"{document_name}.json"
-                
-                doc_info = {
-                    "document_name": document_name,
-                    "file_path": str(md_file),
-                    "status": "unknown",
-                    "created_at": None,
-                    "last_modified": datetime.fromtimestamp(md_file.stat().st_mtime).isoformat()
-                }
-                
-                # Get additional info from audit log
-                if audit_path.exists():
-                    try:
-                        # Use tool_services read function
-                        audit_content = read(str(audit_path))
-                        audit_wrapper = json.loads(audit_content)
-                        # Extract data from tool_services JSON wrapper
-                        audit_data = audit_wrapper.get("data", audit_wrapper)
-                        doc_info["status"] = audit_data.get("current_status", "unknown")
-                        doc_info["created_at"] = audit_data.get("created_at")
-                        doc_info["title"] = audit_data.get("title", document_name)
-                    except:
-                        pass
-                
-                documents.append(doc_info)
             
-            # Sort by creation date or last modified
-            documents.sort(key=lambda x: x.get("created_at") or x["last_modified"], reverse=True)
+            # Find all .md and .xml files
+            for doc_file in artifacts_dir.glob("*.[mx][dm]l"):
+                if doc_file.suffix in ['.md', '.xml']:
+                    document_name = doc_file.stem
+                    status = _get_document_status(artifacts_dir / f"{document_name}.json")
+                    
+                    documents.append({
+                        "name": document_name,
+                        "path": str(doc_file),
+                        "type": doc_file.suffix[1:],  # 'md' or 'xml'
+                        "status": status,
+                        "modified": datetime.fromtimestamp(doc_file.stat().st_mtime).isoformat()
+                    })
+            
+            documents.sort(key=lambda x: x["modified"], reverse=True)
             
             return json.dumps({
                 "success": True,
                 "documents": documents,
-                "count": len(documents),
-                "summary": f"Found {len(documents)} WIP documents"
+                "count": len(documents)
             }, indent=2)
         
         elif action == "history":
-            if file_path:
-                doc_path = Path(file_path)
-                document_name = doc_path.stem
-            elif document_name:
-                doc_path = artifacts_dir / f"{document_name}.md"
-            else:
-                return json.dumps({
-                    "error": "Either file_path or document_name is required for history action"
-                }, indent=2)
+            if not file_path:
+                return json.dumps({"error": "file_path required for history"}, indent=2)
             
+            doc_path = Path(file_path)
+            document_name = doc_path.stem
             audit_path = doc_path.parent / f"{document_name}.json"
             
             if not audit_path.exists():
-                return json.dumps({
-                    "error": f"No audit log found for document '{document_name}'"
-                }, indent=2)
+                return json.dumps({"error": f"No history for '{document_name}'"}, indent=2)
             
-            # Use tool_services read function
+            # Read audit log
             audit_content = read(str(audit_path))
-            audit_wrapper = json.loads(audit_content)
-            # Extract data from tool_services JSON wrapper
-            audit_data = audit_wrapper.get("data", audit_wrapper)
+            audit_data = json.loads(audit_content).get("data", {})
+            
+            # Simplify audit entries
+            history = []
+            for entry in audit_data.get("audit_log", []):
+                history.append({
+                    "timestamp": entry.get("timestamp"),
+                    "action": entry.get("action", entry.get("edit_type")),
+                    "target": entry.get("target", entry.get("section")),
+                    "notes": entry.get("notes")
+                })
             
             return json.dumps({
                 "success": True,
                 "document_name": document_name,
-                "title": audit_data.get("title", document_name),
-                "current_status": audit_data.get("current_status", "unknown"),
-                "created_at": audit_data.get("created_at"),
-                "audit_log": audit_data.get("audit_log", []),
-                "total_edits": len(audit_data.get("audit_log", [])),
-                "summary": f"Retrieved edit history for '{document_name}'"
-            }, indent=2)
-        
-        elif action == "find":
-            if not search_pattern:
-                return json.dumps({
-                    "error": "search_pattern is required for find action"
-                }, indent=2)
-            
-            if not artifacts_dir.exists():
-                return json.dumps({
-                    "success": True,
-                    "matches": [],
-                    "count": 0,
-                    "summary": "No WIP documents directory found"
-                }, indent=2)
-            
-            matches = []
-            pattern_lower = search_pattern.lower()
-            
-            for md_file in artifacts_dir.glob("*.md"):
-                document_name = md_file.stem
-                
-                # Check if pattern matches document name
-                if pattern_lower in document_name.lower():
-                    audit_path = artifacts_dir / f"{document_name}.json"
-                    
-                    match_info = {
-                        "document_name": document_name,
-                        "file_path": str(md_file),
-                        "status": "unknown",
-                        "created_at": None
-                    }
-                    
-                    # Get additional info from audit log
-                    if audit_path.exists():
-                        try:
-                            # Use tool_services read function
-                            audit_content = read(str(audit_path))
-                            audit_wrapper = json.loads(audit_content)
-                            # Extract data from tool_services JSON wrapper
-                            audit_data = audit_wrapper.get("data", audit_wrapper)
-                            match_info["status"] = audit_data.get("current_status", "unknown")
-                            match_info["created_at"] = audit_data.get("created_at")
-                            match_info["title"] = audit_data.get("title", document_name)
-                        except:
-                            pass
-                    
-                    matches.append(match_info)
-            
-            return json.dumps({
-                "success": True,
-                "search_pattern": search_pattern,
-                "matches": matches,
-                "count": len(matches),
-                "summary": f"Found {len(matches)} documents matching '{search_pattern}'"
+                "status": audit_data.get("current_status", "unknown"),
+                "created": audit_data.get("created_at"),
+                "history": history,
+                "edit_count": len(history)
             }, indent=2)
         
         else:
-            return json.dumps({
-                "error": f"Invalid action: {action}. Use 'read', 'list', 'history', or 'find'"
-            }, indent=2)
+            return json.dumps({"error": f"Invalid action: {action}"}, indent=2)
         
     except Exception as e:
-        return json.dumps({
-            "error": f"Failed to perform {action} operation: {str(e)}"
-        }, indent=2)
+        return json.dumps({"error": f"Read failed: {str(e)}"}, indent=2)
 
+def _process_xml_read(content: str, section_id: str = None, content_only: bool = False) -> str:
+    """Process XML document for reading"""
+    try:
+        root = ET.fromstring(content)
+        
+        # If section_id specified, find that section
+        if section_id:
+            section = root.find(f".//*[@id='{section_id}']")
+            if section is None:
+                return None
+            
+            if content_only:
+                # Return just the content text
+                content_elem = section.find("content")
+                return content_elem.text if content_elem is not None else ""
+            else:
+                # Return the whole section as XML
+                return ET.tostring(section, encoding='unicode')
+        
+        # Return full document
+        if content_only:
+            # Extract all content texts
+            contents = []
+            for elem in root.findall(".//content"):
+                if elem.text:
+                    contents.append(elem.text)
+            return "\n\n".join(contents)
+        
+        return content
+        
+    except:
+        # If XML parsing fails, return as-is
+        return content
 
-def _strip_frontmatter_and_metadata(content: str) -> str:
-    """Strip YAML frontmatter and document metadata from content"""
-    lines = content.split('\n')
-    
-    # Strip YAML frontmatter if present
-    if lines and lines[0].strip() == '---':
-        for i, line in enumerate(lines[1:], 1):
-            if line.strip() == '---':
-                lines = lines[i+1:]
-                break
-    
-    # Skip empty lines at the beginning
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    
-    # Skip the title line (first # heading)
-    if lines and lines[0].strip().startswith('#'):
-        lines.pop(0)
-    
-    # Skip metadata lines (Created:, Status:, etc.)
-    while lines and lines[0].strip().startswith('*') and (':' in lines[0]):
-        lines.pop(0)
-    
-    # Skip empty lines after metadata
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    
-    return '\n'.join(lines)
+def _get_document_status(audit_path: Path) -> str:
+    """Get document status from audit log"""
+    if audit_path.exists():
+        try:
+            audit_content = read(str(audit_path))
+            audit_data = json.loads(audit_content).get("data", {})
+            return audit_data.get("current_status", "unknown")
+        except:
+            pass
+    return "unknown"
 
-
-# Test the tool if run directly
+# Test
 if __name__ == "__main__":
-    # Test listing documents
-    result1 = wip_doc_read("list")
-    print("Test Result 1 (list):")
-    print(result1)
+    # Test listing
+    print("=== List Documents ===")
+    result = wip_doc_read("list")
+    print(result)
     
-    # Test reading a document if any exist
-    import json as json_lib
-    list_result = json_lib.loads(result1)
-    if list_result.get("success") and list_result.get("documents"):
-        first_doc = list_result["documents"][0]
-        result2 = wip_doc_read("read", file_path=first_doc["file_path"], strip_frontmatter=True)
-        print(f"\nTest Result 2 (read with frontmatter stripped):")
-        print(result2) 
+    # Test reading if documents exist
+    docs = json.loads(result).get("documents", [])
+    if docs:
+        print("\n=== Read First Document ===")
+        result = wip_doc_read("read", file_path=docs[0]["path"])
+        print(result)

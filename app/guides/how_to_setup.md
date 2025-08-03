@@ -1,3 +1,7 @@
+---
+name: "How to Setup"
+purpose: "Read this step-by-step setup guide for helping a user get the oneshot system running with dependencies, environment configuration, API keys, and MCP server setup"
+---
 
 Your job is to help get the user setup with as little pain as possible.
 
@@ -35,7 +39,7 @@ Logfire is platform for saving and viewing logs and diagnostics for Python appli
 1. Go to https://logfire.pydantic.dev/ and create a free account
 2. Create a new project. you can call is `oneshot`. Then go to the settings for that project. On the left hand side of the settings screen you'll see "Write Tokens" and "Read Tokens". you will need to create one of each.
 
-You can show/see a screenshot of this at docs/images/logfire_settings.jpg
+You can show/see a screenshot of this at app/guides/images/logfire_settings.jpg
 
 3. Copy and paste the Write token you just created to the .env file where you see LOGFIRE_WRITE_TOKEN=
 Paste it after the equals sign
@@ -63,7 +67,7 @@ Paste it after the equals sign
 3. The You Agent should now see a green dot icon next to each server to show that they are configured and working
 4. Ask cursor if it can see the logfire, context7 and oneshot mcp servers. If it says yes, then you are ready to roll
 
-You can show/see a screenshot of this at docs/images/mcp_settings.jpg
+You can show/see a screenshot of this at app/guides/images/mcp_settings.jpg
 
 # Run a test
 

@@ -10,9 +10,9 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # Import MCP functions from modular files
-from app.oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
-from app.oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
-from app.oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
+from oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
+from oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
+from oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
 
 # Create the MCP server
 mcp = FastMCP(
@@ -21,7 +21,7 @@ mcp = FastMCP(
 )
 
 # Get project root
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent
 
 @mcp.tool()
 def list_agents() -> str:
@@ -50,8 +50,10 @@ def read_instructions_for(guide_name: str) -> str:
     try:
         return read_doc(guide_name, project_root)
     except Exception as e:
-        available_docs = get_available_docs(project_root)
-        return f"Error reading guide '{guide_name}': {str(e)}\n\nAvailable guides: {', '.join(available_docs)}"
+        available_docs_json = get_available_docs(project_root)
+        available_docs_data = json.loads(available_docs_json)
+        available_names = [doc["name"] for doc in available_docs_data["docs"]]
+        return f"Error reading guide '{guide_name}': {str(e)}\n\nAvailable guides: {', '.join(available_names)}"
 
 @mcp.tool()
 def list_tools() -> str:
@@ -95,7 +97,7 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     """
     try:
         # Build command with appropriate flags
-        cmd = ["bash", str(project_root / "oneshot"), agent_name, message]
+        cmd = ["bash", str(project_root.parent / "oneshot"), agent_name, message]
         
         # Add files if provided
         if files:
@@ -114,7 +116,7 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
             cmd,
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root.parent
         )
         
         if result.returncode == 0:

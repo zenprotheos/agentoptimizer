@@ -1,52 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Baby Cursor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/index.css">
+    <!-- Monaco Editor -->
+    <script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <style>
+      :root {
+        --cursor-bg-primary: #1e1e1e;
+        --cursor-bg-secondary: #252526;
+        --cursor-bg-tertiary: #2d2d30;
+        --cursor-border: #3e3e42;
+        --cursor-text-primary: #cccccc;
+        --cursor-text-secondary: #969696;
+        --cursor-text-muted: #6a6a6a;
+        --cursor-accent: #007acc;
+        --cursor-accent-hover: #1177bb;
+        --cursor-success: #4ec9b0;
+        --cursor-warning: #ffcc02;
+        --cursor-error: #f44747;
+      }
+      
       html, body, #root {
         height: 100vh;
         margin: 0;
         padding: 0;
         overflow: hidden;
+        background-color: var(--cursor-bg-primary);
+        color: var(--cursor-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 13px;
       }
     </style>
   </head>
-  <body class="bg-gray-900 text-white">
+  <body>
     <div id="root" class="flex h-screen">
       <!-- Sidebar -->
-      <div id="sidebar" class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div class="p-4 border-b border-gray-700">
-          <h3 class="text-lg font-semibold">Files</h3>
+      <div id="sidebar" class="w-64 flex flex-col" style="background-color: var(--cursor-bg-secondary); border-right: 1px solid var(--cursor-border);">
+        <!-- Sidebar Header -->
+        <div class="p-3 flex items-center justify-between" style="border-bottom: 1px solid var(--cursor-border);">
+          <h3 class="text-sm font-medium" style="color: var(--cursor-text-primary);">Explorer</h3>
+          <div class="flex items-center gap-1">
+            <button class="p-1 rounded hover:bg-opacity-10 hover:bg-white" style="color: var(--cursor-text-secondary);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M14 7v1H8v6H7V8H1V7h6V1h1v6h6z"/>
+              </svg>
+            </button>
+            <button class="p-1 rounded hover:bg-opacity-10 hover:bg-white" style="color: var(--cursor-text-secondary);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M16 6l-8 5-8-5 8-5 8 5zM8 2L2.5 6 8 10l5.5-4L8 2z"/>
+              </svg>
+            </button>
+          </div>
         </div>
+        
+        <!-- File Tree -->
         <div id="file-tree" class="flex-1 p-2 overflow-y-auto"></div>
       </div>
       
       <!-- Main Editor Area -->
       <div class="flex-1 flex flex-col">
+        <!-- Title Bar -->
+        <div class="h-8 flex items-center px-3" style="background-color: var(--cursor-bg-secondary); border-bottom: 1px solid var(--cursor-border);">
+          <div class="flex items-center gap-2">
+            <button class="p-1 rounded hover:bg-opacity-10 hover:bg-white" style="color: var(--cursor-text-secondary);">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1l7 7-7 7V9H1V7h7V1z"/>
+              </svg>
+            </button>
+            <button class="p-1 rounded hover:bg-opacity-10 hover:bg-white" style="color: var(--cursor-text-secondary);">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15L1 8l7-7v6h7v2H8v6z"/>
+              </svg>
+            </button>
+            <span class="text-xs" style="color: var(--cursor-text-muted);">Baby Cursor</span>
+          </div>
+        </div>
+        
         <!-- Tabs -->
-        <div id="tabs" class="flex border-b border-gray-700 bg-gray-800 overflow-x-auto"></div>
+        <div id="tabs" class="flex overflow-x-auto" style="background-color: var(--cursor-bg-secondary); border-bottom: 1px solid var(--cursor-border);"></div>
         
         <!-- Editor -->
-        <div class="flex-1 bg-gray-900 p-4">
-          <div id="editor-placeholder" class="h-full flex items-center justify-center text-gray-400">
+        <div class="flex-1" style="background-color: var(--cursor-bg-primary);">
+          <div id="editor-placeholder" class="h-full flex items-center justify-center" style="color: var(--cursor-text-muted);">
             Select a file to open
           </div>
-          <textarea id="editor" class="hidden w-full h-full bg-gray-800 text-white p-4 border-none outline-none resize-none font-mono" placeholder="File content will appear here..."></textarea>
+          <div id="editor" class="hidden h-full"></div>
         </div>
       </div>
       
       <!-- Chat Sidebar -->
-      <div class="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
-        <div class="p-4 border-b border-gray-700">
-          <h3 class="text-lg font-semibold">Chat</h3>
+      <div class="w-80 flex flex-col" style="background-color: var(--cursor-bg-secondary); border-left: 1px solid var(--cursor-border);">
+        <!-- Chat Header -->
+        <div class="px-4 py-3 flex items-center justify-between" style="border-bottom: 1px solid var(--cursor-border);">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full" style="background-color: var(--cursor-accent);"></div>
+            <h3 class="text-sm font-medium" style="color: var(--cursor-text-primary);">Chat</h3>
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="p-1.5 rounded hover:bg-opacity-10 hover:bg-white transition-colors" style="color: var(--cursor-text-secondary);" title="New chat">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+              </svg>
+            </button>
+            <button class="p-1.5 rounded hover:bg-opacity-10 hover:bg-white transition-colors" style="color: var(--cursor-text-secondary);" title="Settings">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.292-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.292c.415.764-.42 1.6-1.185 1.184l-.292-.159a1.873 1.873 0 0 0-2.692 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.693-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.292A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
-        <div class="p-4 border-t border-gray-700">
-          <textarea id="message-input" class="w-full p-2 bg-gray-700 text-white rounded border-none outline-none resize-none" placeholder="Ask the agent..." rows="3"></textarea>
-          <button id="send-btn" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">Send</button>
+        
+        <!-- Agent Selection -->
+        <div class="px-4 py-3" style="border-bottom: 1px solid var(--cursor-border);">
+          <div class="flex items-center gap-2 mb-2">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="color: var(--cursor-text-secondary);">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </svg>
+            <label class="text-xs font-medium" style="color: var(--cursor-text-secondary);">Select Agent</label>
+          </div>
+          <select id="agent-select" class="w-full px-3 py-2 text-sm rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                  style="background-color: var(--cursor-bg-primary); border-color: var(--cursor-border); color: var(--cursor-text-primary);">
+            <option value="oneshot_agent">🤖 Oneshot Agent</option>
+            <option value="web_agent">🌐 Web Agent</option>
+            <option value="research_agent">🔍 Research Agent</option>
+            <option value="writing_agent">✍️ Writing Agent</option>
+            <option value="vision_agent">👁️ Vision Agent</option>
+            <option value="search_agent">🔎 Search Agent</option>
+            <option value="nrl_agent">🏉 NRL Agent</option>
+          </select>
+        </div>
+        
+        <!-- Messages -->
+        <div id="messages" class="flex-1 px-4 py-2 overflow-y-auto space-y-4" style="background-color: var(--cursor-bg-primary);"></div>
+        
+        <!-- Input Area -->
+        <div class="px-4 py-3" style="border-top: 1px solid var(--cursor-border); background-color: var(--cursor-bg-secondary);">
+          <div class="relative">
+            <textarea id="message-input" 
+                      class="w-full px-3 py-2 pr-24 text-sm rounded-lg border resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                      style="background-color: var(--cursor-bg-primary); border-color: var(--cursor-border); color: var(--cursor-text-primary); min-height: 40px; max-height: 120px;" 
+                      placeholder="Ask anything..." 
+                      rows="1"></textarea>
+            
+            <!-- Input Controls -->
+            <div class="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+              <button class="p-1.5 rounded hover:bg-opacity-10 hover:bg-white transition-colors" style="color: var(--cursor-text-secondary);" title="Attach file">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                </svg>
+              </button>
+              <button id="send-btn" 
+                      class="p-1.5 rounded transition-colors disabled:opacity-50" 
+                      style="background-color: var(--cursor-accent); color: white;"
+                      title="Send message">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M15.854.146a.5.5 0 0 1 .11.54L13.026 8.74a.5.5 0 0 1-.708.233L8.5 6.636v2.5a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-2.5L2.682 8.973a.5.5 0 0 1-.708-.233L.036.686a.5.5 0 0 1 .11-.54.5.5 0 0 1 .544-.11L8 2.636l7.31-2.6a.5.5 0 0 1 .544.11z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="flex items-center gap-2 mt-2 text-xs" style="color: var(--cursor-text-secondary);">
+            <button class="flex items-center gap-1 px-2 py-1 rounded hover:bg-opacity-10 hover:bg-white transition-colors">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+              </svg>
+              Examples
+            </button>
+            <button class="flex items-center gap-1 px-2 py-1 rounded hover:bg-opacity-10 hover:bg-white transition-colors">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+              </svg>
+              Help
+            </button>
+          </div>
         </div>
       </div>
     </div>

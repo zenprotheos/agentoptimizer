@@ -1,232 +1,483 @@
+---
+name: "Creating Agents"
+purpose: "Complete guide for creating effective specialist agents in the Oneshot system"
+companion_guides: ["How to Create Tools", "How to Use Tool Services"]
+---
 
+# Creating Agents: Complete Guide
 
-# Creating an Agent
+## Overview
 
-Create a new agent by adding a markdown file to the `/agents` directory. The file name is used as the agent name. Eg research_agent.md = `research_agent`
+This guide teaches you how to create powerful specialist agents in the Oneshot system. Agents are purpose-built AI assistants that excel at specific tasks through carefully crafted instructions and appropriate tool allocation.
 
-# Agent Definition: Configuration and Prompting
+## Quick Start
 
-An agent consists of two parts:
-1.  **YAML Frontmatter**: The technical configuration (model, tools, parameters).
-2.  **System Prompt**: The agent's "soul." This is where you define its identity, rules, and approach using the structured, tag-based format.
+To avoid creating duplicate agents, you can check to see the actual agents that already exist and are available, by using your `list_agents` oneshot mcp tool. 
 
-## 1. Agent Configuration (YAML Frontmatter)
+To create a new agent:
 
-The frontmatter defines the agent's technical parameters. While many are optional (and will fall back to `config.yaml` defaults), being explicit gives you precise control.
+1. Create a markdown file in `/agents/` directory (e.g., `research_agent.md`)
+2. Add YAML frontmatter with configuration
+3. Write system prompt instructions
+4. Test with various scenarios
+
+The filename becomes the agent name (e.g., `research_agent.md` → `research_agent`).
+
+## Agent Structure
+
+Every agent consists of two essential parts:
 
 ```markdown
 ---
-name: my_agent # should match name of file, eg agent_name.md
-description: "Brief description of what this agent does"
-model: openai/gpt-4.1-mini    # Optional: overrides config.yaml default
-tools:                      # Optional: list of tools this agent can use
-  - web_search
-  - web_read_page
+# YAML Frontmatter: Technical configuration
+name: agent_name
+description: "What this agent does"
+model: openai/gpt-4o-mini
+tools:
+  - tool_1
+  - tool_2
 ---
 
-{Agent instructions go here}
+# System Prompt: The agent's instructions
+You are [agent_name], a specialist agent...
 
+[Detailed instructions here]
 ```
 
-### Selecting & configuring the Agent's model
+## Part 1: YAML Frontmatter Configuration
 
-If no model params are selected, the Agent will use the defaults in config.yaml.
-
-The main params to consider are: model, temperature, max_tokens but if the user wants other model params included you can do so.
-
-#### Model name - can be overridden per agent
-
-Naming convention is provider_name/model_name
-`model: "openai/gpt-4.1-mini"`
-
-Pick the right model for the job:
-
-openai/gpt-4.1-mini: 
-
-
-
-
-temperature: 0.7          # 0.0 = deterministic, higher = more creative
-max_tokens: 2048          # Maximum tokens to generate
-
-
-
-### Allocating tools to agents
-
-An agent's capabilities are determined by the tools they have available. You allocate tools to an agent in the `tools` section of the agent config frontmatter.
+### Basic Configuration
 
 ```yaml
 ---
-name: research_agent
-description: "Deep research specialist that conducts comprehensive, iterative research using structured WIP document management"
-model: openai/gpt-4.1-mini
-tools:
-  - research_prompt_rewriter
-  - research_planner
-  - wip_doc_read
-  - wip_doc_create
-  - wip_doc_edit
+name: my_agent              # Must match filename (without .md)
+description: "Brief description of agent's purpose"
+model: openai/gpt-4o-mini   # Optional: overrides config.yaml
+tools:                      # Optional: list of available tools
   - web_search
-  - web_read_page
+  - save_to_file
 ---
 ```
 
-Each tool has rich tool metadata that describe what the tool does(tool description) and how to use it (parameter descriptions). 
+### Model Selection Guide
 
-Example: 
-```python
-TOOL_METADATA = {
-    "type": "function",
-    "function": {
-        "name": "read_file_contents",
-        "description": "Use this tool to read the full content of markdown or JSON files in the artifacts directory",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "filepath": {
-                    "type": "string",
-                    "description": "Path to the file in the artifacts directory (e.g., 'ec3aa3b5/20250725_083525_results.md' or '1910ea06/20250725_084543_results.json')"
-                },
-                "include_metadata": {
-                    "type": "boolean",
-                    "description": "Whether to include metadata, incl token count, about the file in the response (default: true)",
-                    "default": True
-                }
-            },
-            "required": ["filepath"]
-        }
-    }
-}
+Choose the right model for your agent's needs:
+
+#### Cost-Effective Models (Recommended for most agents)
+```yaml
+# Best overall value - recommended default
+model: openai/gpt-4o-mini
+# $0.40/M input | $1.60/M output
+
+# Alternative for large context windows
+model: google/gemini-2.0-flash
+# $0.30/M input | $2.50/M output
 ```
 
-#### How to decide which tools to allocate
+#### High-Performance Models (For complex tasks)
+```yaml
+# When you need maximum intelligence
+model: openai/gpt-4o
+# $2/M input | $8/M output
 
-Think step by step about what you are designing the agent for and only allocate the tools that it is going to need for completing its tasks successfully. The more tools you allocate, the more potential there is for confusion and the more context is used up.
-
-Before allocating tools, first call your `list_tools` mcp tool to see what tools are available and how they work.
-
-
-
-
-
-
-
-### Recommended models
-
-
-
-
-
-
-
-
-
-## 2. Agent Instructions (System Prompt)
-
-It is critical that we provide out agents with carefully constructed instructions that outline their role, goals, process, constraints, etc.
-
-This guide helps AI coding agents create effective specialist agents for knowledge work tasks like research, writing, and analysis.
-
-### 1. Identity & Purpose Block
-Start with clear identity. Best agents establish purpose immediately.
-
-**Example Pattern:**
+# For very large documents/context
+model: google/gemini-2.0-pro
+# $1.25/M input | $10/M output
 ```
+
+### Model Parameters
+
+```yaml
+temperature: 0.7      # 0.0 = deterministic, 1.0+ = creative
+max_tokens: 2048      # Increase for long outputs (e.g., 8192 for reports)
+```
+
+### Tool Allocation Strategy
+
+#### 1. List Available Tools First
+```bash
+# Use the MCP tool to see what's available
+oneshot mcp list_tools
+```
+
+#### 2. Allocate Only Necessary Tools
+```yaml
+tools:
+  # Core tools for this agent's purpose
+  - primary_tool_1
+  - primary_tool_2
+  
+  # Supporting tools if needed
+  - support_tool_1
+```
+
+#### 3. Consider Tool Categories
+
+**Research Agents:**
+```yaml
+tools:
+  - web_search
+  - web_fetch
+  - save_to_file
+  - read_file_contents
+```
+
+**Writing Agents:**
+```yaml
+tools:
+  - save_to_file
+  - read_file_contents
+  - wip_doc_create
+  - wip_doc_edit
+```
+
+**Analysis Agents:**
+```yaml
+tools:
+  - read_file_contents
+  - data_analyzer
+  - save_to_file
+```
+
+## Part 2: System Prompt Instructions
+
+The system prompt is the agent's "soul" - it defines personality, approach, and behavior.
+
+### Structure Template
+
+```markdown
+# 1. Identity & Purpose
 You are [agent_name], a specialist agent focused on [primary_task].
 
 You excel at:
-1. [Capability 1 - specific, measurable]
-2. [Capability 2 - specific, measurable]
-3. [Capability 3 - specific, measurable]
+- [Specific capability 1]
+- [Specific capability 2]
+- [Specific capability 3]
+
+# 2. Workflow Approach
+<workflow>
+Your approach to tasks:
+1. **Analyze**: [How you understand requirements]
+2. **Plan**: [How you break down tasks]
+3. **Execute**: [How you perform work]
+4. **Deliver**: [How you present results]
+</workflow>
+
+# 3. Agent Loop (Include via snippet)
+{% include "agent_loop.md" %}
+
+# 4. General Guidelines
+<general_guidelines>
+- NEVER expose tool names to users
+- ALWAYS save substantial outputs to files
+- DO NOT provide unnecessary explanations
+- MAINTAIN focus on your specialty
+</general_guidelines>
+
+# 5. Specific Instructions
+[Task-specific guidance here]
 ```
 
-### 2. Specific Goals Block
+### Key Instruction Patterns
 
-Define the specific approach to achieving the agent's goals, using proven patterns for that kind of agent.
-
-For example a research agent may include this speciic approach:
-
-```
-You operate through these steps:
-1. Analyze Request: Parse user needs, identify key requirements
-2. Plan Approach: Break down into subtasks, identify tools needed
-3. Execute: Gather information systematically using available tools
-4. Synthesize: Combine findings into coherent insights
-5. Deliver: Present results in requested format with clear structure
-6. Iterate: Refine based on feedback or additional requirements
-```
-
-Note, this is separate to the agent_loop block which is generic, and describes the overall control flow.
-
-### 3. Agent Loop Block
-
-The `agent_loop` block describes the control flow of the agent. It explains how the agent should orchestrate its tool calling in an iterative loop. For each loop the agent is analysing the current state, choosing one precise action, then responding to its result—rather than attempting to solve everything at once. This disciplined loop ensures that each decision is grounded in updated context and leads progressively toward task completion.
-
-The `agent_loop` block is provided below. You can include it as a snippet in the agent instructions, using: `{% include "agent_loop.md" %}`
-
+#### 1. Identity Block Pattern
 ```markdown
-<agent_loop>
-You operate in an iterative agent loop. Your job is to complete tasks effectively by making deliberate, accurate tool calls and reasoning through each step. Follow this cycle:
-1. Analyze Events: Interpret the message stream to determine the user's current needs and task state. Consider:
-   - Instructions from the Orchestrator Agent  
-   - Relevant content or artifacts provided to you 
-   - Results of prior tool calls  
-Maintain a working model of the task’s progress and outstanding requirements.
-1. Plan: Carefully plan your moves by considering what needs to be done and what tools you have to achieve that. Pay attention to the tool description and parameter description to understand its capabilities and calling requirements.
-2. Select Tools: Choose the tool/s that is most appropriate for executing your next step. Base your selection on:
-   - Your plan from step 2  
-   - The tool's capabilities and requirements  
-   - The current state of task data  
-Prepare clean, valid inputs. Be precise and minimal.
-1. Wait for Execution: Selected tool action will be executed in local sandbox environment with new tool response outputs added to the message stream.
-2. Reflect on the new output. Assess:
-   - Whether the last step succeeded  
-   - What new information has emerged  
-   - Whether your working plan needs to be revised  
-3. Iterate: Choose only one tool per iteration, patiently repeat above steps until task completion
-4. Submit Results: Once the task is complete, prepare your output. Include:
-   - Final artifacts (as file paths)
-   - A summary of how the task was solved, if useful  
-Send these to the Orchestrator Agent to signal task completion.
-</agent_loop>
+You are Research Specialist, an expert agent that conducts thorough, 
+evidence-based research on any topic.
+
+Your core strengths:
+- Systematic information gathering from multiple sources
+- Critical evaluation of source credibility
+- Synthesis of complex information into clear insights
+- Iterative refinement based on findings
 ```
 
+#### 2. Workflow Block Pattern
+```markdown
+<workflow>
+You follow this systematic approach:
 
-## `<general_guidelines>`: Set The Ground Rules
-Use this section for universal rules that apply to all tasks. Negative constraints (`NEVER`, `DO NOT`) are extremely powerful for preventing undesirable behavior.
+1. **Request Analysis**
+   - Parse the research question
+   - Identify key concepts and scope
+   - Determine required depth
 
-**Example combining best practices from `Cursor` and `Cluely`:**
+2. **Research Planning**
+   - Break into research subtasks
+   - Identify information sources
+   - Create search strategies
+
+3. **Information Gathering**
+   - Execute searches systematically
+   - Evaluate source quality
+   - Extract relevant information
+
+4. **Synthesis & Delivery**
+   - Organize findings logically
+   - Create comprehensive report
+   - Include citations and sources
+</workflow>
+```
+
+#### 3. Guidelines Block Pattern
 ```markdown
 <general_guidelines>
-- **NEVER refer to tool names when speaking to the USER.** For example, instead of saying 'I need to use the edit_file tool', just say 'I will edit your file'.
-- NEVER use meta-phrases (e.g., "let me help you", "I can see that").
-- NEVER lie or make up facts. If you are unsure, state your uncertainty.
-- ALWAYS use markdown formatting for clarity.
-- DO NOT add additional code explanation summary unless requested by the user. After working on a file, just stop, rather than providing an explanation of what you did.
+# Communication Rules
+- NEVER mention tool names (say "I'll search for that" not "I'll use web_search")
+- AVOID meta-commentary ("Let me help you with that")
+- BE direct and action-oriented
+
+# Quality Standards
+- ALWAYS verify information from multiple sources
+- CITE sources for all claims
+- ACKNOWLEDGE uncertainty when appropriate
+
+# Output Management
+- SAVE all substantial content to files
+- RETURN file paths, not full content
+- USE clear, descriptive filenames
 </general_guidelines>
 ```
 
+### Advanced Features
 
-## File Passing and Context Management
+#### Using Snippets
 
-### Overview
-The oneshot system is designed to have agents perform useful knowledge work for a user. They do that by generating valuable artifacts. Artifacts include documents like reports, analysis, project plans, emails, articles, posts, and more. In most cases these are files saved to the user's computer. Oneshot's default location for saving these outputs is the `artifacts` directory.
+Include reusable instruction blocks:
 
-Ordinarily an agent would have to generate very long user messages containing the content that it wants to provide to a given tool or sub-agent. The oneshot system, however, is designed to preserve an agent's context window wherever possible by passing files between agents, using filepaths.  Agents can then read those files or pass them into their tools without having to add them to the context window. This allows agents to keep their main thread context window clean while spinnging off tool and agents to process large blocks of content. This enables efficient multi-agent workflows and keeps a high signal to noise ratio in an agent's cotext window (ie the messages stream).
+```markdown
+# Include the standard agent loop
+{% include "agent_loop.md" %}
 
-Files should be passed using their absolute path. New file outputs from tools get saved to the artifacts dir.
+# For agents using todos
+{% include "todo_management.md" %}
 
+# For agents using WIP documents
+{% include "wip_document_management.md" %}
+```
 
-## Usage of snippets
+#### File Management Instructions
 
-There are other helpful agent instruction boilerplate snippets available in the `snippets` dir which you can include with the jinja2 format `{% include "snippet_name.md" %}`
+For agents that handle files:
 
+```markdown
+<file_management>
+# Output Strategy
+- Generate all substantial outputs as files in /artifacts
+- Use descriptive filenames: YYYYMMDD_HHMMSS_description.md
+- Include metadata in file frontmatter
 
+# File Passing
+- Accept file paths as input for processing
+- Pass file paths (not content) between tools
+- Read files only when necessary for processing
 
+# Context Preservation
+- Keep main context clean by using file references
+- Summarize file contents briefly when reporting
+- Use absolute paths for all file operations
+</file_management>
+```
 
-Usage of file passing
-Usage of sub agents
-Usage of wip documents
-Usage of todos
+#### WIP Document Instructions
 
-Using the tool_services
+For iterative document development:
+
+```markdown
+<wip_document_usage>
+You use WIP (Work-In-Progress) documents for complex, multi-stage writing:
+
+1. **Creation**: Start with document structure and metadata
+2. **Iteration**: Edit sections based on research/feedback
+3. **Tracking**: Maintain audit trail of changes
+4. **Guidance**: Use section briefs and acceptance criteria
+
+WIP documents enable:
+- Structured, iterative development
+- Clear section-by-section progress
+- Collaboration with other agents
+- Quality control through acceptance criteria
+</wip_document_usage>
+```
+
+## Common Agent Patterns
+
+### 1. Research Agent Pattern
+
+```yaml
+---
+name: research_specialist
+description: "Deep research agent for comprehensive topic investigation"
+model: openai/gpt-4o-mini
+tools:
+  - web_search
+  - web_fetch
+  - save_to_file
+  - read_file_contents
+---
+
+You are Research Specialist, focused on thorough, evidence-based research.
+
+{% include "agent_loop.md" %}
+
+<workflow>
+1. Parse research question → identify scope
+2. Create research plan → break into subtasks
+3. Gather information → evaluate sources
+4. Synthesize findings → create report
+5. Save comprehensive results → provide summary
+</workflow>
+
+<general_guidelines>
+- ALWAYS verify information from multiple sources
+- SAVE detailed findings to markdown files
+- RETURN concise summaries with file references
+</general_guidelines>
+```
+
+### 2. Writing Agent Pattern
+
+```yaml
+---
+name: content_writer
+description: "Professional content creation and editing"
+model: openai/gpt-4o-mini
+max_tokens: 8192
+tools:
+  - save_to_file
+  - read_file_contents
+  - wip_doc_create
+  - wip_doc_edit
+---
+
+You are Content Writer, specializing in clear, engaging content.
+
+{% include "agent_loop.md" %}
+{% include "wip_document_management.md" %}
+
+<workflow>
+1. Analyze content requirements
+2. Create outline/structure
+3. Draft content sections
+4. Refine and polish
+5. Deliver polished document
+</workflow>
+```
+
+### 3. Analysis Agent Pattern
+
+```yaml
+---
+name: data_analyst
+description: "Data analysis and insight generation"
+model: google/gemini-2.0-flash  # Good for large datasets
+tools:
+  - read_file_contents
+  - data_processor
+  - save_to_file
+  - create_visualization
+---
+
+You are Data Analyst, expert at extracting insights from data.
+
+{% include "agent_loop.md" %}
+
+<workflow>
+1. Load and examine data
+2. Identify patterns and anomalies
+3. Perform relevant analyses
+4. Generate visualizations
+5. Create insight report
+</workflow>
+```
+
+## Best Practices
+
+### 1. Agent Design Principles
+
+- **Single Responsibility**: Each agent should excel at one type of task
+- **Clear Boundaries**: Define what the agent does and doesn't do
+- **Tool Minimalism**: Only include necessary tools
+- **Output Focus**: Emphasize creating valuable artifacts
+
+### 2. Instruction Writing Tips
+
+- **Be Specific**: Vague instructions lead to inconsistent behavior
+- **Use Examples**: Show don't just tell
+- **Negative Constraints**: "NEVER" rules are powerful
+- **Test Iteratively**: Refine based on actual usage
+
+### 3. Common Pitfalls to Avoid
+
+- **Tool Overload**: Too many tools confuse the agent
+- **Vague Identity**: Unclear purpose leads to poor performance
+- **Missing Guidelines**: Agents need clear behavioral rules
+- **Context Waste**: Not using file passing effectively
+
+## Testing Your Agent
+
+### 1. Basic Functionality Test
+```bash
+./oneshot your_agent "Test basic task"
+```
+
+### 2. File Handling Test
+```bash
+./oneshot your_agent "Process this file" --files test.txt
+```
+
+### 3. Conversation Continuity Test
+```bash
+# First message
+./oneshot your_agent "Start a research project on AI" --json
+# Note the run_id from response
+
+# Continue conversation
+./oneshot your_agent "Add more details" --run-id [run_id]
+```
+
+### 4. Edge Case Testing
+- Test with minimal input
+- Test with complex, multi-part requests
+- Test error handling
+- Test tool coordination
+
+## Agent Examples Library
+
+You can see the actual agents that already exist and are available, by using your `list_agents` oneshot mcp tool. 
+
+### Research Agents
+- `research_specialist`: Comprehensive topic research
+- `market_researcher`: Market analysis and trends
+- `academic_researcher`: Scholarly research with citations
+
+### Writing Agents
+- `content_writer`: Blog posts and articles
+- `technical_writer`: Documentation and guides
+- `creative_writer`: Stories and creative content
+
+### Analysis Agents
+- `data_analyst`: Statistical analysis and insights
+- `business_analyst`: Business metrics and reporting
+- `sentiment_analyst`: Text sentiment and tone analysis
+
+### Utility Agents
+- `file_organizer`: File management and organization
+- `summarizer`: Document summarization
+- `translator`: Multi-language translation
+
+## Summary
+
+Creating effective agents requires:
+
+1. **Clear Configuration**: Choose appropriate model and tools
+2. **Strong Identity**: Define specific purpose and capabilities
+3. **Structured Instructions**: Use proven patterns and blocks
+4. **Appropriate Tools**: Allocate only what's needed
+5. **Iterative Refinement**: Test and improve based on usage
+
+Remember: The best agents are specialists, not generalists. Focus on doing one thing exceptionally well rather than many things adequately.
+
+For tool creation and usage, refer to:
+- **"How to Create Tools"**: Building custom tools
+- **"How to Use Tool Services"**: Leveraging the tool services system

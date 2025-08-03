@@ -25,6 +25,7 @@ class FileContent(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    agent_name: Optional[str] = None
     run_id: Optional[str] = None
     
     class Config:
@@ -141,12 +142,58 @@ async def write_file_content_endpoint(file_path: str, file_content: FileContent)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error writing file: {str(e)}")
 
+@app.get("/api/agents")
+async def get_agents():
+    """Get list of available agents."""
+    try:
+        # Get list of agent files from the agents directory
+        agents_dir = PROJECT_ROOT / "agents"
+        agents = []
+        
+        if agents_dir.exists():
+            for agent_file in agents_dir.glob("*.md"):
+                agent_name = agent_file.stem
+                # Skip template files or non-agent files
+                if agent_name not in ['template', 'example']:
+                    # Create display name with emoji
+                    display_name = agent_name.replace('_', ' ').title()
+                    
+                    # Add emoji based on agent type
+                    emoji = {
+                        'oneshot': '🤖',
+                        'web': '🌐', 
+                        'research': '🔍',
+                        'writing': '✍️',
+                        'vision': '👁️',
+                        'search': '🔎',
+                        'nrl': '🏉'
+                    }.get(agent_name.split('_')[0], '🤖')
+                    
+                    agents.append({
+                        'value': agent_name,
+                        'label': f"{emoji} {display_name}",
+                        'name': display_name
+                    })
+        
+        # Sort agents by name
+        agents.sort(key=lambda x: x['name'])
+        
+        # Ensure oneshot_agent is first if it exists
+        oneshot_agent = next((a for a in agents if a['value'] == 'oneshot_agent'), None)
+        if oneshot_agent:
+            agents.remove(oneshot_agent)
+            agents.insert(0, oneshot_agent)
+        
+        return JSONResponse(content=agents)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting agents: {str(e)}")
+
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     """Handle chat requests to the agent runner."""
     try:
         response = await runner.run_agent_async(
-            agent_name=None,  # Defaults to oneshot_agent
+            agent_name=request.agent_name,  # Use the selected agent or defaults to oneshot_agent
             message=request.message,
             run_id=request.run_id
         )

@@ -1,68 +1,134 @@
-# tools/read_howto_docs.py
-from app.tool_services import *
+#!/usr/bin/env python3
+"""
+Meta tool for Orchestration agents
+"""
+
+import os
+import yaml
+import json
+from pathlib import Path
 
 TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "read_howto_docs",
-        "description": "Read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more",
+        "description": "Read documentation files from the guides directory with frontmatter parsing",
         "parameters": {
             "type": "object",
             "properties": {
-                "guide_name": {
-                    "type": "string", 
-                    "description": "Name of the guide to read. Available guides: how_to_create_agents, how_to_create_tools, how_to_use_tool_services, how_oneshot_works, onboarding, how_to_setup"
-                }
+                "doc_name": {"type": "string", "description": "Name of the documentation file (without .md extension)"},
+                "project_root": {"type": "string", "description": "Root directory of the project", "default": "."}
             },
-            "required": ["guide_name"]
+            "required": ["doc_name"]
         }
     }
 }
 
-def read_howto_docs(guide_name: str) -> str:
-    """Read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more."""
+def read_howto_docs(doc_name: str, project_root: str = ".") -> str:
+    """Read a documentation file from the guides directory
+    
+    Args:
+        doc_name: Name of the documentation file (without .md extension)
+        project_root: Root directory of the project
+        
+    Returns:
+        str: Contents of the documentation file
+        
+    Raises:
+        FileNotFoundError: If the documentation file doesn't exist
+    """
+    docs_dir = Path(project_root) / "guides"
+    doc_path = docs_dir / f"{doc_name}.md"
+    
+    if not doc_path.exists():
+        # Get available docs with their metadata
+        available_docs_json = get_available_docs(project_root)
+        available_docs_data = json.loads(available_docs_json)
+        available_names = [doc["name"] for doc in available_docs_data["docs"]]
+        
+        raise FileNotFoundError(f"Documentation '{doc_name}' not found. Available docs: {', '.join(available_names)}")
     
     try:
-        # Get project root from tool_services
-        project_root = Path(__file__).parent.parent
-        docs_dir = project_root / "app" / "docs"
-        doc_path = docs_dir / f"{guide_name}.md"
-        
-        if not doc_path.exists():
-            # Get available docs
-            available_docs = [f.stem for f in docs_dir.glob("*.md")] if docs_dir.exists() else []
-            return json.dumps({
-                "error": f"Documentation '{guide_name}' not found. Available docs: {', '.join(available_docs)}",
-                "available_guides": available_docs
-            }, indent=2)
-        
-        # Use tool_services read function
-        doc_content = read(str(doc_path))
-        
-        # Save the documentation content for reference
-        saved_file = save(doc_content, f"Documentation: {guide_name}")
-        
-        return json.dumps({
-            "success": True,
-            "guide_name": guide_name,
-            "content": doc_content,
-            "filepath": saved_file["filepath"],
-            "tokens": saved_file["frontmatter"]["tokens"],
-            "run_id": saved_file["run_id"]
-        }, indent=2)
-        
+        with open(doc_path, 'r', encoding='utf-8') as f:
+            return f.read()
     except Exception as e:
-        return json.dumps({"error": f"Error reading documentation '{guide_name}': {str(e)}"}, indent=2)
+        raise Exception(f"Error reading documentation '{doc_name}': {str(e)}")
 
-def get_available_docs() -> list[str]:
-    """Get list of available documentation files
+def parse_frontmatter(content: str) -> dict:
+    """Parse YAML frontmatter from markdown content
     
+    Args:
+        content: Markdown content with optional YAML frontmatter
+        
     Returns:
-        list[str]: List of available documentation file names (without .md extension)
+        dict: Parsed frontmatter or empty dict if no frontmatter
     """
-    project_root = Path(__file__).parent.parent
-    docs_dir = project_root / "app" / "docs"
-    if not docs_dir.exists():
-        return []
+    lines = content.split('\n')
     
-    return [f.stem for f in docs_dir.glob("*.md")] 
+    # Check if content starts with frontmatter
+    if not lines or not lines[0].strip() == '---':
+        return {}
+    
+    frontmatter_lines = []
+    in_frontmatter = False
+    
+    for line in lines:
+        if line.strip() == '---':
+            if not in_frontmatter:
+                in_frontmatter = True
+            else:
+                # End of frontmatter
+                break
+        elif in_frontmatter:
+            frontmatter_lines.append(line)
+    
+    if not frontmatter_lines:
+        return {}
+    
+    try:
+        frontmatter_content = '\n'.join(frontmatter_lines)
+        return yaml.safe_load(frontmatter_content) or {}
+    except yaml.YAMLError:
+        return {}
+
+def get_available_docs(project_root: str = ".") -> str:
+    """Get list of available documentation files with their frontmatter metadata
+    
+    Args:
+        project_root: Root directory of the project
+        
+    Returns:
+        str: JSON string containing list of docs with their metadata
+    """
+    docs_dir = Path(project_root) / "guides"
+    if not docs_dir.exists():
+        return json.dumps({"docs": []})
+    
+    docs_info = []
+    
+    for doc_file in docs_dir.glob("*.md"):
+        try:
+            with open(doc_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            frontmatter = parse_frontmatter(content)
+            
+            doc_info = {
+                "filename": doc_file.name,
+                "name": doc_file.stem,
+                "frontmatter": frontmatter
+            }
+            
+            docs_info.append(doc_info)
+            
+        except Exception as e:
+            # If we can't read a file, include basic info
+            doc_info = {
+                "filename": doc_file.name,
+                "name": doc_file.stem,
+                "frontmatter": {},
+                "error": f"Could not read file: {str(e)}"
+            }
+            docs_info.append(doc_info)
+    
+    return json.dumps({"docs": docs_info}, indent=2) 

@@ -1,6 +1,11 @@
-# How the Oneshot System Works: A Technical Guide for AI Agents
+---
+name: "How Oneshot Works"
+purpose: "Comprehensive technical overview of the Oneshot system architecture for AI coding agents that are responsible for maintenance, extension, and troubleshooting"
+---
 
-This document provides a holistic technical overview of the Oneshot system architecture, intended for an AI agent responsible for its maintenance, extension, and troubleshooting. For detailed information about the core agent execution engine, refer to `how_agent_runner_works.md`.
+# How the Oneshot System Works: A Technical Guide for AI Coding Agents
+
+This document provides a holistic technical overview of the Oneshot system architecture, intended for an AI coding agent that is responsible for its maintenance, extension, and troubleshooting. For detailed information about the core agent execution engine, refer to `how_agent_runner_works.md`.
 
 ## System Philosophy
 
@@ -26,6 +31,7 @@ graph TB
     subgraph "Core Engine"
         AR[Agent Runner System<br/>4 modules]
         TS[Tool System<br/>/tools directory]
+        TSV[Tool Services<br/>app/tool_services.py]
         RP[Run Persistence<br/>/runs directory]
         TP[Template Processor<br/>Jinja2 engine]
     end
@@ -40,11 +46,13 @@ graph TB
         AD[Agent Definitions<br/>/agents directory]
         CF[Configuration<br/>config.yaml]
         MC[MCP Config<br/>.cursor/mcp.json]
+        AF[Artifacts<br/>/artifacts directory]
     end
     
     CLI --> AR
     MCP --> AR
     AR --> TS
+    TS --> TSV
     AR --> RP
     AR --> TP
     AR --> OR
@@ -53,8 +61,11 @@ graph TB
     AR --> AD
     AR --> CF
     AR --> MC
+    TSV --> AF
+    TSV --> RP
     
     style AR fill:#e1f5fe
+    style TSV fill:#c8e6c9
     style CLI fill:#f3e5f5
     style MCP fill:#f3e5f5
     style OR fill:#fff3e0
@@ -85,18 +96,49 @@ The heart of the system, responsible for agent execution. This is implemented as
 - **Metadata-Driven**: Each tool defines `TOOL_METADATA` for discovery
 - **Pydantic AI Integration**: Tools are bound to agents as callable functions
 - **Error Handling**: Graceful degradation when tools are unavailable
+- **Tool Services Integration**: Tools leverage the centralized `tool_services.py` module
 
-### 4. Run Persistence (`app/run_persistence.py`)
+### 4. Tool Services System (`app/tool_services.py`)
+A critical infrastructure component that eliminates boilerplate code in tools:
+
+- **LLM Integration**: Pre-configured Pydantic AI clients with automatic retry logic
+- **File Operations**: Smart file handling with run-aware organization and metadata
+- **API Integration**: HTTP requests with automatic authentication
+- **Template Engine**: Jinja2 templating with built-in variables
+- **Context Management**: Automatic run ID tracking for artifact organization
+
+**Key Features of Tool Services:**
+```python
+# Single import provides everything
+from app.tool_services import *
+
+# Available functions:
+- llm()              # Basic LLM calls
+- llm_json()         # JSON-returning LLM calls
+- llm_structured()   # Pydantic model validation
+- chain_prompts()    # Multi-step conversations
+- save()             # Smart file saving with metadata
+- save_json()        # JSON with metadata wrapper
+- read()             # File reading
+- api()              # HTTP requests with auth
+- template()         # Jinja2 templating
+```
+
+**📖 For complete documentation, see "How to Use Tool Services" and "How to Create Tools" guides.**
+
+### 5. Run Persistence (`app/run_persistence.py`)
 - **Conversation Continuity**: Maintains stateful conversations across stateless LLM calls
 - **Storage**: JSON-based storage in `/runs/{run_id}/` directories
 - **Message History**: Complete Pydantic AI message chains for context preservation
 - **Metadata Tracking**: Usage statistics, timestamps, and execution details
+- **Artifact Correlation**: Links with `/artifacts/{run_id}/` for generated files
 
-### 5. Template Processing (`app/agent_template_processor.py`)
+### 6. Template Processing (`app/agent_template_processor.py`)
 - **Dynamic Content**: Jinja2 templating for agent prompts
 - **File Injection**: `--files` content is injected into agent context
 - **Snippet System**: Reusable template components in `/snippets`
 - **Context Variables**: Rich template context for dynamic prompt generation
+- **Tool Services Integration**: Built-in variables available in all LLM calls
 
 ## Entry Points and Interfaces
 
@@ -216,12 +258,29 @@ flowchart LR
     style P fill:#e8f5e8
 ```
 
+### 4. Tool Services Flow
+```mermaid
+flowchart LR
+    T[Tool Function] --> TS[Tool Services]
+    TS --> LLM[LLM Operations]
+    TS --> FO[File Operations]
+    TS --> API[API Calls]
+    FO --> AF[/artifacts/{run_id}/]
+    LLM --> OR[OpenRouter]
+    API --> ES[External Services]
+    
+    style T fill:#f3e5f5
+    style TS fill:#c8e6c9
+    style AF fill:#e8f5e8
+```
+
 ## External Service Integration
 
 ```mermaid
 graph TB
     subgraph "Oneshot Core"
         AR[Agent Runner]
+        TS[Tool Services]
     end
     
     subgraph "LLM Services"
@@ -250,11 +309,13 @@ graph TB
     end
     
     AR --> OR
+    TS --> OR
     OR --> OAI
     OR --> ANT
     OR --> OTH
     
     AR --> LF
+    TS --> LF
     LF --> TR
     LF --> MT
     LF --> ER
@@ -265,6 +326,7 @@ graph TB
     AR --> MCPN
     
     style AR fill:#e1f5fe
+    style TS fill:#c8e6c9
     style OR fill:#fff3e0
     style LF fill:#e8f5e8
     style MCP1 fill:#f3e5f5
@@ -278,18 +340,44 @@ graph TB
 - **Authentication**: `OPENROUTER_API_KEY` environment variable
 - **Model Selection**: Agent-specific model configuration
 - **Error Handling**: Comprehensive API error management
+- **Tool Services Integration**: Automatic retry logic and error handling
 
 ### Logfire (Observability)
 - **Instrumentation**: Automatic Pydantic AI call tracing
 - **Metrics**: Performance, usage, and error tracking
 - **Debugging**: Detailed execution traces for troubleshooting
 - **Configuration**: Optional service with graceful degradation
+- **Tool Services Integration**: All tool operations are automatically instrumented
 
 ### MCP Servers (External Tools)
 - **Integration**: External service access via Model Context Protocol
 - **Examples**: Email (Zapier), Notion, Context7 documentation
 - **Management**: Dynamic loading and error handling
 - **Authentication**: Per-server credential management
+
+## Artifact Organization
+
+The system maintains a clear separation between conversation history and generated artifacts:
+
+### Directory Structure
+```
+/runs/{run_id}/              # Conversation history
+├── run.json                 # Complete conversation data
+├── messages.json            # Message history
+└── metadata.json            # Run summary
+
+/artifacts/{run_id}/         # Files generated during conversation
+├── analysis_report.md       # Tool-generated content
+├── summary.txt              # With YAML frontmatter
+└── data_results.json        # With metadata wrapper
+```
+
+### Artifact Features
+- **Run-Aware Organization**: Files automatically organized by conversation
+- **Metadata Rich**: All files include creation time, tokens, description
+- **Frontmatter System**: YAML metadata for markdown/text files
+- **JSON Wrapper**: Metadata structure for JSON files
+- **Educational Value**: Clear correlation between conversations and outputs
 
 ## Multimodal Capabilities
 
@@ -315,6 +403,7 @@ The system supports comprehensive multimodal input processing:
 - **Execution Errors**: Runtime failures with context-specific guidance
 - **External Service Errors**: API and network issues with troubleshooting steps
 - **Multimodal Errors**: File and URL processing with actionable feedback
+- **Tool Services Errors**: Comprehensive error handling in all helper functions
 
 ### User Experience Focus
 - **Specific Messages**: Clear identification of the problem
@@ -334,12 +423,26 @@ The system supports comprehensive multimodal input processing:
 1. Create Python file in `/tools` directory
 2. Define `TOOL_METADATA` dictionary
 3. Implement main function matching filename
-4. Handle errors gracefully with helpful messages
+4. **Use `tool_services.py` functions** instead of implementing from scratch
+5. Handle errors gracefully with helpful messages
+
+**Tool Creation Best Practice:**
+```python
+from app.tool_services import *
+import json
+
+def my_tool(param: str) -> str:
+    # Use tool_services functions
+    result = llm(f"Process: {param}")
+    saved = save(result, "Processing results")
+    return json.dumps({"filepath": saved["filepath"]})
+```
 
 ### Extending Error Handling
 - Add new error classes to `app/agent_errors.py`
 - Update component error handling to use specific classes
 - Provide helpful suggestions and troubleshooting steps
+- Tool services provides automatic error handling for common operations
 
 ## Troubleshooting Guide
 
@@ -357,24 +460,38 @@ The system supports comprehensive multimodal input processing:
 
 **File Context Not Working**: Ensure agent template includes `{% include "provided_content.md" %}`
 
+**Tool Services Issues**: Check that tools use `from app.tool_services import *` and follow patterns
+
+**Artifact Organization**: Verify run ID is set correctly for proper file organization
+
 ### Debug Mode
 Enable comprehensive debugging with `--debug` flag for detailed execution traces, configuration loading, and error context.
 
 ### Logfire Integration
-Use Logfire traces for deep debugging of agent execution, tool calls, and LLM interactions when `LOGFIRE_WRITE_TOKEN` is configured.
+Use Logfire traces for deep debugging of agent execution, tool calls, and LLM interactions when `LOGFIRE_WRITE_TOKEN` is configured. Tool services operations are automatically instrumented.
 
 ## System Maintenance
 
 ### Regular Tasks
 - Monitor `/runs` directory size and clean old conversations
+- Monitor `/artifacts` directory and archive old generated files
 - Update model configurations as new models become available
 - Review Logfire traces for performance optimization opportunities
 - Test agent configurations after system updates
+- Verify tool services functions are used consistently across tools
 
 ### Performance Considerations
 - **Token Usage**: Monitor and optimize prompt lengths
 - **Tool Selection**: Minimize unnecessary tool loading
 - **Conversation Length**: Implement conversation pruning for long runs
 - **File Processing**: Optimize multimodal content handling
+- **Tool Services**: Leverage caching and efficient file operations
 
-This architecture provides a robust foundation for specialized AI agent orchestration while maintaining flexibility for extension and customization.
+### Tool Services Benefits
+- **Reduced Boilerplate**: 80% less code in typical tools
+- **Consistent Error Handling**: Automatic retry logic and graceful failures
+- **Performance Optimization**: Built-in caching and efficient operations
+- **Automatic Instrumentation**: All operations logged to Logfire
+- **Run-Aware Organization**: Files automatically organized by conversation
+
+This architecture provides a robust foundation for specialized AI agent orchestration while maintaining flexibility for extension and customization. The tool services system ensures consistent, efficient tool implementation across the entire framework.

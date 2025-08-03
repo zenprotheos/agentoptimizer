@@ -1,3 +1,8 @@
+---
+name: "How to Create Agents"
+purpose: "Step-by-step guide for creating new agents in the oneshot system with proper file structure, configuration options, and best practices"
+---
+
 # Agent Creation Guide
 
 ## Background
@@ -86,12 +91,7 @@ def my_tool():
 
 ## Available Tools
 
-Current tools in the framework:
-- `web_search`: Search the web using DuckDuckGo API
-- `web_read_page`: Read and extract content from web pages
-- `agent_caller`: Call other agents (supports file passing for multi-agent workflows)
-- `file_creator`: Create and save files with metadata
-- Various analysis and processing tools
+(it can use its own list_tools function to see what tools are available)
 
 ## File Passing and Context Management
 

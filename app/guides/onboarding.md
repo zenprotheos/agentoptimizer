@@ -1,10 +1,15 @@
+---
+name: "Onboarding Guide"
+purpose: "This is essential reading for AI coding agents working on the oneshot repository. It provides valuable context that will help coding agents understand the diagnostic methodology and safe contribution guidelines to prevent breaking the core system"
+
+---
 
 # Oneshot Agent System - Coding Agent Onboarding Guide
 
 ## Required Reading Before Making Code Changes
 
 1. **This document** - Learn the workflow and diagnostic approach for the oneshot repo
-2. **app/docs/how_oneshot_works.md** - Understand the oneshot system architecture and codebase
+2. **/guides/how_oneshot_works.md** - Understand the oneshot system architecture and codebase
 
 **DO NOT modify code until you've read both documents.** Most issues are likely configuration or environment problems, not bugs in the core system.
 
@@ -111,10 +116,14 @@ Important Note: any changes to an mcp server require it to be toggled on and off
 
 ## Safe Contribution Guidelines
 
-### Creating New Agents and Tools
-1.  **Avoid Duplication**: Check for existing agents and tools first.
-2.  **Follow Patterns**: Examine existing files in `/agents` and `/tools`.
-3.  **Test Incrementally**: Test your changes in small, verifiable steps.
+### Creating New Agents
+
+Before creating a new agent, you MUST read the `how_to_create_agents.md` guide to understand agent design and best practices.
+
+
+### Creating New Tools
+
+Before creating a new tool, you MUST read the `how_to_create_tools.md` guide to understand tool design and best practices.
 
 ### Modifying Core Application (`/app`)
 **DO NOT** modify the core application code unless you have:

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Web search tool for the AI Agent framework
+Web image search tool for the AI Agent framework
+
+To test this tool from command line:
+    PYTHONPATH=. python3 tools/web_image_search.py "your search query"
 """
 
 from app.tool_services import *
@@ -9,8 +12,8 @@ from app.tool_services import *
 TOOL_METADATA = {
     "type": "function",
     "function": {
-        "name": "web_search",
-        "description": "Search the web for information using a search query",
+        "name": "web_image_search",
+        "description": "Search for images using a search query",
         "parameters": {
             "type": "object",
             "properties": {
@@ -20,8 +23,8 @@ TOOL_METADATA = {
                 },
                 "num_results": {
                     "type": "integer",
-                    "description": "Number of search results to return",
-                    "default": 5
+                    "description": "Number of image results to return",
+                    "default": 10
                 }
             },
             "required": ["query"]
@@ -30,16 +33,16 @@ TOOL_METADATA = {
 }
 
 
-def web_search(query: str, num_results: int = 5) -> str:
+def web_image_search(query: str, num_results: int = 10) -> str:
     """
-    Search the web for information using Brave Search API
+    Search for images using Brave Images API
     
     Args:
         query: The search query to execute
-        num_results: Number of search results to return (default: 5)
+        num_results: Number of image results to return (default: 10)
     
     Returns:
-        JSON string containing search results
+        JSON string containing image search results
     """
     try:
         # Check for Brave API key
@@ -47,17 +50,16 @@ def web_search(query: str, num_results: int = 5) -> str:
         if not brave_api_key:
             return json.dumps({"error": "BRAVE_API_KEY not found in environment variables"}, indent=2)
         
-        # Brave Search API endpoint
-        url = "https://api.search.brave.com/res/v1/web/search"
+        # Brave Images API endpoint
+        url = "https://api.search.brave.com/res/v1/images/search"
         
         # Parameters for the search
         params = {
             "q": query,
             "count": min(num_results, 20),  # Brave API allows max 20 results
+            "country": "us",
             "search_lang": "en",
-            "country": "US",
-            "safesearch": "moderate",
-            "freshness": "all"
+            "spellcheck": 1
         }
         
         # Use tool_services api() function with custom headers
@@ -72,20 +74,18 @@ def web_search(query: str, num_results: int = 5) -> str:
         
         # Extract and format results
         results = []
-        if "web" in data and "results" in data["web"]:
-            for result in data["web"]["results"][:num_results]:
+        if "results" in data:
+            for result in data["results"][:num_results]:
                 results.append({
                     "title": result.get("title", ""),
                     "url": result.get("url", ""),
-                    "snippet": result.get("description", ""),
-                    "published": result.get("age", "")
+                    "image_url": result.get("image", ""),
+                    "thumbnail": result.get("thumbnail", ""),
+                    "width": result.get("width", ""),
+                    "height": result.get("height", ""),
+                    "source": result.get("source", ""),
+                    "age": result.get("age", "")
                 })
-        
-        formatted_results = {
-            "query": query,
-            "total_results": len(results),
-            "results": results
-        }
         
         return json.dumps({
             "success": True,
@@ -95,7 +95,7 @@ def web_search(query: str, num_results: int = 5) -> str:
         }, indent=2)
         
     except Exception as e:
-        return json.dumps({"error": f"Search failed: {str(e)}"}, indent=2)
+        return json.dumps({"error": f"Image search failed: {str(e)}"}, indent=2)
 
 
 if __name__ == "__main__":
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         query = " ".join(sys.argv[1:])
-        result = web_search(query)
+        result = web_image_search(query)
         print(result)
     else:
-        print("Usage: python web_search.py <search query>") 
+        print("Usage: python web_image_search.py <search query>") 

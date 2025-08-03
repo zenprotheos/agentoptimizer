@@ -1,3 +1,9 @@
+---
+name: "How Agent Runner Works"
+purpose: "Deep technical analysis of the agent runner system - the core orchestrator for the Oneshot agent framework with modular components and execution flow"
+topics: ["agent runner architecture", "component relationships", "module breakdown", "execution flow", "configuration hierarchy", "error handling strategy", "CLI interface", "integration points", "performance and observability", "best practices", "troubleshooting"]
+---
+
 # How Agent Runner Works: Technical Deep Dive
 
 This document provides a comprehensive technical analysis of the agent runner system, which serves as the core orchestrator for the Oneshot agent framework. The system is built with modular components that work together to provide robust agent execution capabilities.
