@@ -1,6 +1,8 @@
 # Oneshot: Vibe Code Your Own AI Agent System
 
-Create powerful, specialised AI agents with just markdown files. No complex infrastructure, no deep technical knowledge—just ideas and experimentation.
+Oneshot was built to give friends and people in the Peregian Digital Hub network a powerful but approachable way to "vibe code" their own AI agent systems. There's something magical about creating your own specialised AI assistants, and we wanted to make that accessible to everyone—not just experienced developers.
+
+This framework lets you create and orchestrate specialist AI agents without needing to understand complex infrastructure. You write a simple markdown file, and you have a working agent. You issue instructions to Cursor or Claude Code, and they orchestrate those specialised agents to perform useful knowledge work for you.
 
 <div>
     <a href="https://www.loom.com/share/b434737c295c4b2483b375217d051339">
@@ -36,10 +38,10 @@ Simply ask your AI assistant (Cursor/Claude) to delegate tasks to one of the exa
 Write a markdown file, get a working agent:
 
 ```markdown
-# agents/my_agent.md
+# eg agents/content_agent.md
 ---
-name: content_creator
-model: openai/gpt-4o-mini
+name: content_agent
+model: openai/gpt-4.1-mini
 tools: 
   - web_search
   - save_to_file
@@ -52,35 +54,37 @@ Research the topic thoroughly, then write in a conversational tone.
 
 That's it. Your agent is ready.
 
+Want to create your own? Just ask Cursor: *"Create an agent that summarises YouTube videos"*
+
+
 ## Why Oneshot?
 
-### Transparent AI
-Most AI systems are black boxes. Oneshot shows you everything:
-- Watch agents make decisions in real-time
-- See exactly which tools they use and why
-- Debug when things go sideways
-- Learn by observing the "thought process"
+### Managing Token Costs Intelligently
+Tools like Cursor and Claude Code that use the Claude models are getting expensive—$200 is the new $20. What if we could use cheaper models to do useful work for us and save those expensive tokens for high-value software development tasks?
 
-### Cost-Effective
-Use Cursor on Auto mode **for free** to orchestrate your agents, while running specialist work on cheaper models. Save your expensive Claude/GPT-4 tokens for high-value coding tasks.
+Oneshot gives you access to pretty much all the models available via the OpenRouter gateway. You can use workhorses like GPT-4o-mini to do the grunt work and powerful models like Gemini-2.0-flash or reasoning models from OpenAI and DeepSeek for more complex tasks. Importantly, you can use Cursor on Auto mode for free to do your agent orchestration work, keeping your expensive credits for actual coding.
 
-### Learn by Building
-The best way to understand AI agents is to build them. Start simple, grow complex:
-- Basic agents → multi-agent workflows
-- Built-in tools → custom integrations
-- Single tasks → complex automation
+### Learn by Building, Not Just Using
+The Oneshot system is designed to make building agents a breeze. Create a markdown file in `/agents` with some frontmatter to specify the model, allocate a few tools, give it a system instruction, and you're off to the races. Better still, you can ask Cursor or Claude Code to create a new agent for you, and they'll read the instructions and do that in one shot without you having to lift a finger.
 
-### Novel Context Management
-Agents create and pass files (artifacts) instead of cramming everything into chat. This keeps conversations focused and enables clean agent-to-agent collaboration without context window chaos.
+Most AI systems are black boxes—you see the magic but not how it works. Oneshot is transparent. You can watch agents make decisions in real-time, see exactly which tools they use and why, understand the conversation flow, and debug when things go sideways. Through the Logfire integration, you get a window into the agent's "thought process"—it's both educational and fascinating.
+
+### Novel Context Engineering
+Oneshot uses a novel context management approach where agents produce artifacts (files) and pass these files to each other to perform work. This allows for more accurate agent orchestration because the context window doesn't get crowded with voluminous tool output responses.
+
+This lends itself to the orchestrator → sub-agent pattern, where an orchestrator agent (like Cursor or Claude Code) delegates tasks to specialist agents. The specialist agents perform the detailed work, which may involve many tool calls and lots of context processing, but they respond back with only the artifact they produced from that process. This keeps the main thread—the orchestrator's context window—clean and focused.
 
 ## Key Features
 
-### Self-Describing System
-Oneshot teaches Cursor and Claude Code how to work with it. They can:
-- Create new agents for you
-- Build custom tools on demand
-- Troubleshoot problems
-- Extend the system intelligently
+### Self-Aware and Vibecoding-Friendly
+This is somewhat meta, but one of the goals of Oneshot is to make it vibecoding-friendly. Inspired by projects like Manus, Cursor itself, v0, and Lovable, the Oneshot system has built-in instructions and guides that help it help you. The system is self-describing to tools like Cursor and Claude Code, which means they know immediately how it works and can create agents and tools, or troubleshoot when things go wrong.
+
+If you're curious, you can inspect these instructions in the `.cursor/rules` directory and the `app/guides` directory. The system has access to the Logfire MCP server for inspecting its own logs and the context7 MCP server for troubleshooting core technologies like PydanticAI and OpenRouter.
+
+### All About Artifacts
+Another design goal for this system is artifact creation. Whereas Claude Code, Cursor, Lovable, and v0 are all primarily designed to produce code as the primary artifact, there isn't really a "Cursor for knowledge work." The Oneshot system aims to let you develop agents and tools that can do knowledge work for you and create artifacts like emails written in your voice, reports in your company letterhead, blog posts that are on brand, slides with your company template.
+
+The tool system is set up for creating these kinds of artifacts, and you can easily create agents that have multi-step workflows with tools that generate useful outputs for real work.
 
 ### Model Flexibility
 Access hundreds of models through OpenRouter:
@@ -90,10 +94,14 @@ Access hundreds of models through OpenRouter:
 - **Claude-3.5-Sonnet**: Nuanced writing and analysis
 - Plus many specialized models
 
-### MCP Integration
-- **Use as MCP Server**: Other agents can call Oneshot agents
-- **Use MCP Clients**: Agents can call your existing MCP servers
-- **Build MCP Servers**: System creates new integrations on demand
+### Learning About MCP Servers
+The Oneshot system also provides a useful playground for learning about MCP servers, which is increasingly important as the ecosystem develops.
+
+First, the system itself can be used as an MCP server. When Cursor or Claude Code call a specialist agent to do a task, they do that by calling the Oneshot MCP server. You can add the Oneshot MCP server to your global Cursor/Claude Code settings so you can use it in any repo or project.
+
+Second, Oneshot agents act as MCP clients. This means they can call native tools and MCP servers—both local and remote. If you have an MCP server listed in your mcp.json file, you can allocate it to an agent. The system doesn't yet support MCP servers that use OAuth, but it's very handy for giving your agents access to things like your email, Notion, HubSpot, and more.
+
+Finally, the Oneshot system knows how to build MCP servers for you. If you want it to build an MCP server that integrates with an external API, give it the link to the API docs, add the auth token to your .env file, and it should do the rest for you. Local MCP servers are saved in `/tools/local_mcp_servers`.
 
 ### Complete Visibility
 With Logfire integration:
@@ -131,8 +139,8 @@ Unlike code-focused tools, Oneshot creates knowledge work artifacts:
 - Presentations with your branding
 - Analysis with your methodology
 
-### Lightweight Collaboration
-Share agents and tools via simple file sharing. Copy-paste a markdown file, and someone else has your agent working in their system.
+### Lightweight Collaboration Philosophy
+One of the principles for the Oneshot system is to enable very lightweight collaboration. If you create a useful agent or tool, you can share it via gist, and someone else using Oneshot can copy and paste it into a new markdown file in the `/agents` directory or a new python file in the `/tools` directory. No complex deployment, no package management—just sharing and experimenting.
 
 ## Examples in Action
 
@@ -170,17 +178,15 @@ Share agents and tools via simple file sharing. Copy-paste a markdown file, and 
 - **Logfire**: Real-time observability and debugging
 - **MCP Protocol**: Interoperability with other AI tools
 
-## Philosophy
+## Philosophy and Vision
 
-Oneshot was built for the Peregian Digital Hub community—a place where people experiment with emerging technologies. The core principles:
+The term "one shot" refers to an AI getting the right outcome the first time—from a single prompt, a coding agent creates perfect working software in one shot, without the need for correction and further "shots" to get it working. If you're working in AI, you're constantly in pursuit of a oneshot machine—a system that produces valuable outputs reliably, every time.
 
-1. **Accessibility**: You shouldn't need a CS degree to build useful AI
-2. **Transparency**: See how agents actually work, don't just use them
-3. **Experimentation**: Fast iteration cycles, low barrier to trying new ideas
-4. **Collaboration**: Easy sharing of agents and tools
-5. **Practical Value**: Build things that solve real problems
+This project won't get it right in one shot every time, but that's the inspiration for it. There are a lot of behind-the-scenes prompts and instructions intended to have coding agents like Cursor and Claude Code be able to use this system and build things with it for you in one shot, without mistakes.
 
-The name "oneshot" reflects the goal: AI that gets it right the first time. While we're not there yet, the system includes extensive prompting and context management designed to help Cursor and Claude Code work with it effectively—often succeeding in one attempt.
+Oneshot was built for the Peregian Digital Hub community—a place where people experiment with emerging technologies. The core principles are accessibility (you shouldn't need a CS degree to build useful AI), transparency (see how agents actually work, don't just use them), experimentation (fast iteration cycles, low barrier to trying new ideas), collaboration (easy sharing of agents and tools), and practical value (build things that solve real problems).
+
+Within a couple of hours, you'll have built out multiple agents with a growing portfolio of tools at their disposal. The goal is to demystify agentic systems and expose what goes into building them, while making the process genuinely enjoyable.
 
 ## Getting Deeper
 
