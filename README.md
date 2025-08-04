@@ -88,11 +88,13 @@ The tool system is set up for creating these kinds of artifacts, and you can eas
 
 ### Model Flexibility
 Access hundreds of models through OpenRouter:
-- **GPT-4o-mini**: Reliable workhorse for most tasks
-- **Gemini-2.0-flash**: Fast and capable for general work
-- **DeepSeek-R1**: Advanced reasoning for complex problems
-- **Claude-3.5-Sonnet**: Nuanced writing and analysis
-- Plus many specialized models
+- openai/gpt-4.1-mini: Reliable workhorse for most tasks
+- google/gemini-2.5-flash: Fast and capable for general work
+- deepseek/deepseek-r1-0528: Advanced reasoning for complex problems
+- anthropic/claude-sonnet-4: Nuanced writing and coding
+- Plus many other specialised models
+
+Visit the [Openrouter models page](https://openrouter.ai/models) to browse available models
 
 ### Learning About MCP Servers
 The Oneshot system also provides a useful playground for learning about MCP servers, which is increasingly important as the ecosystem develops.
@@ -107,7 +109,7 @@ Finally, the Oneshot system knows how to build MCP servers for you. If you want 
 With Logfire integration:
 - Real-time agent decision tracking
 - Token usage monitoring
-- Performance optimization insights
+- Performance optimisation insights
 - Educational debugging experience
 
 ## Project Structure
@@ -141,35 +143,6 @@ Unlike code-focused tools, Oneshot creates knowledge work artifacts:
 
 ### Lightweight Collaboration Philosophy
 One of the principles for the Oneshot system is to enable very lightweight collaboration. If you create a useful agent or tool, you can share it via gist, and someone else using Oneshot can copy and paste it into a new markdown file in the `/agents` directory or a new python file in the `/tools` directory. No complex deployment, no package management—just sharing and experimenting.
-
-## Examples in Action
-
-**Research Pipeline**
-```bash
-# Deep research with citations
-./oneshot research_agent "Competitive landscape for AI coding tools"
-
-# Generate executive summary
-./oneshot summary_agent "Summarize research_output.md for C-suite audience"
-```
-
-**Content Creation**
-```bash
-# Create blog post
-./oneshot content_creator "Write about the future of remote work"
-
-# Generate social media variants  
-./oneshot social_agent "Create LinkedIn and Twitter versions of blog_post.md"
-```
-
-**Data Analysis**
-```bash
-# Process dataset
-./oneshot data_analyst "Analyze trends in sales_data.csv"
-
-# Create presentation
-./oneshot presenter "Turn analysis into executive slides"
-```
 
 ## Built on Proven Stack
 
