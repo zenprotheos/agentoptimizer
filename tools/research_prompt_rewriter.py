@@ -1,4 +1,16 @@
 # tools/research_prompt_rewriter.py
+"""
+Tool: research_prompt_rewriter
+Description: Rewrite a user's initial research prompt into a detailed, comprehensive research brief and save it to the artifacts directory.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.research_prompt_rewriter import research_prompt_rewriter
+result = research_prompt_rewriter('Research the impact of AI on education')
+print(result)
+"
+"""
 from app.tool_services import *
 
 TOOL_METADATA = {

@@ -1,4 +1,17 @@
 # tools/generate_pdf.py
+"""
+Tool: generate_pdf
+Description: Generate a PDF from a markdown (.md) or HTML (.html) file
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.generate_pdf import generate_pdf
+result = generate_pdf('test_data/sample.md')
+print(result)
+"
+"""
+
 from app.tool_services import *
 import subprocess
 

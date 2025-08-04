@@ -1,4 +1,17 @@
 # tools/structured_search.py
+"""
+Tool: structured_search
+Description: Perform a web search via an AI search agent (OpenAI's GPT-4o-search) to return structured data matching a JSON schema you define.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.structured_search import structured_search
+schema = '{"headline": "Example headline", "url": "https://example.com"}'
+result = structured_search('latest AI news', schema)
+print(result)
+"
+"""
 # Structured search tool using OpenAI GPT-4o-mini-search-preview model
 
 from app.tool_services import *
@@ -32,8 +45,29 @@ def structured_search(query: str, schema: str) -> str:
     try:
         # Handle JSONC schema (JSON with comments) by removing comments
         schema_clean = schema
-        # Remove single-line comments
-        schema_clean = '\n'.join([line.split('//')[0].rstrip() for line in schema_clean.split('\n')])
+        # Remove single-line comments (but preserve URLs)
+        lines = []
+        for line in schema_clean.split('\n'):
+            # Only split on // if it's not inside a string
+            if '"' in line:
+                # Find the position of // relative to quotes
+                quote_positions = [i for i, char in enumerate(line) if char == '"']
+                comment_pos = line.find('//')
+                if comment_pos != -1:
+                    # Check if // is inside quotes
+                    inside_quotes = False
+                    for i in range(0, len(quote_positions), 2):
+                        if i + 1 < len(quote_positions):
+                            if quote_positions[i] < comment_pos < quote_positions[i + 1]:
+                                inside_quotes = True
+                                break
+                    if not inside_quotes:
+                        line = line.split('//')[0].rstrip()
+            else:
+                # No quotes, safe to split on //
+                line = line.split('//')[0].rstrip()
+            lines.append(line)
+        schema_clean = '\n'.join(lines)
         # Remove multi-line comments (basic handling)
         schema_clean = schema_clean.replace('/*', '').replace('*/', '')
         

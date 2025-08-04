@@ -39,9 +39,10 @@ Logfire is platform for saving and viewing logs and diagnostics for Python appli
 1. Go to https://logfire.pydantic.dev/ and create a free account
 2. Create a new project. you can call is `oneshot`. Then go to the settings for that project. On the left hand side of the settings screen you'll see "Write Tokens" and "Read Tokens". you will need to create one of each.
 
-You can show/see a screenshot of this at app/guides/images/logfire_settings.jpg
 
-3. Copy and paste the Write token you just created to the .env file where you see LOGFIRE_WRITE_TOKEN=
+**📸 Reference Screenshot**: [View Logfire Settings](./app/guides/images/logfire_settings.jpg) - share filepath with user so they can click on it and see the screenshot
+
+1. Copy and paste the Write token you just created to the .env file where you see LOGFIRE_WRITE_TOKEN=
 Paste it after the equals sign
 1. Copy and paste the Read token you just created to the .env file where you see LOGFIRE_READ_TOKEN=
 Paste it after the equals sign
@@ -52,7 +53,7 @@ Paste it after the equals sign
 (The Cursor Agent should do this step for the user)
 
 1. Look in the .cursor folder and find mcp_example.json. Rename it to mcp.json and open the file
-2. The You Agent should see mcp server config details for the context7, logfire and the oneshot system.
+2. You should see mcp server config details for the context7, logfire and the oneshot system.
 3. Add the logfire READ token from the previous step to the part of the logfire mcp server config where it says PASTE_YOUR_LOGFIRE_READ_TOKEN_HERE
 
 # Switch on MCP Servers
@@ -67,7 +68,8 @@ Paste it after the equals sign
 3. The You Agent should now see a green dot icon next to each server to show that they are configured and working
 4. Ask cursor if it can see the logfire, context7 and oneshot mcp servers. If it says yes, then you are ready to roll
 
-You can show/see a screenshot of this at app/guides/images/mcp_settings.jpg
+
+**📸 Reference Screenshot**: [View MCP Settings Interface](./app/guides/images/mcp_settings.jpg) - share filepath with user so they can click on it and see the screenshot
 
 # Run a test
 

@@ -421,12 +421,138 @@ def context_tool(query: str) -> str:
 
 ## Testing Your Tools
 
+All tools should be testable via CLI. Include a standard docstring at the top of each tool file showing how to test it:
+
 ```python
+"""
+Tool: text_analyzer
+Description: Analyze text content with AI
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.text_analyzer import text_analyzer
+result = text_analyzer('Sample text to analyze', 'sentiment')
+print(result)
+"
+"""
+```
+
+### Standard Tool File Structure
+
+```python
+"""
+Tool: your_tool_name
+Description: Brief description of what the tool does
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.your_tool_name import your_tool_name
+result = your_tool_name('test_param1', 'test_param2')
+print(result)
+"
+"""
+
+from app.tool_services import *
+import json
+
+TOOL_METADATA = {
+    # ... metadata here
+}
+
+def your_tool_name(param1: str, param2: str = "default") -> str:
+    """Tool function with clear docstring"""
+    
+    # Your tool logic here
+    
+    return json.dumps({"success": True, "result": "your_result"}, indent=2)
+
 if __name__ == "__main__":
-    # Test directly
+    # Direct testing
     result = your_tool_name("test input")
     print(result)
 ```
+
+### Why CLI Testing Matters
+
+1. **Immediate Validation**: Test tools without running the full system
+2. **Debugging**: Isolate issues in individual tools
+3. **Development Workflow**: Quick iteration during tool creation
+4. **Documentation**: Shows exactly how to use the tool
+5. **Agent Context**: AI agents can test tools before using them
+
+### Testing Best Practices
+
+1. **Use the docstring pattern** above for every tool
+2. **Test with realistic data** that matches expected usage
+3. **Include error cases** in your testing
+4. **Verify file outputs** if your tool creates files
+5. **Test from the oneshot root directory** to ensure proper imports
+
+## Managing Dependencies
+
+When creating tools that require new Python packages not in `requirements.txt`, follow this workflow:
+
+### 1. Identify New Dependencies
+
+If your tool imports packages not in the current requirements:
+
+```python
+# Example: Your tool needs a new package
+import requests  # ✅ Already in requirements.txt
+import pandas   # ❌ Not in requirements.txt - needs to be added
+import beautifulsoup4   # ❌ Not in requirements.txt - needs to be added
+```
+
+### 2. Add to Requirements.txt
+
+Add the new dependencies to `requirements.txt`:
+
+```bash
+# Add the package to requirements.txt
+echo "pandas>=2.0.0" >> requirements.txt
+echo "beautifulsoup4>=4.12.0" >> requirements.txt
+```
+
+### 3. Install Dependencies
+
+Install the new requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Test Your Tool
+
+After installing dependencies, test your tool:
+
+```python
+if __name__ == "__main__":
+    # Test with new dependencies
+    result = your_tool_name("test input")
+    print(result)
+```
+
+### 5. Document Dependencies
+
+Consider adding a comment in your tool about why the dependency is needed:
+
+```python
+# tools/data_analysis_tool.py
+import pandas as pd  # Required for data processing functionality
+
+def data_analysis_tool(data: str) -> str:
+    """Analyze data using pandas"""
+    # Tool logic here...
+```
+
+### Dependency Best Practices
+
+1. **Specify Versions**: Use `package>=version` format for stability
+2. **Minimize Dependencies**: Only add what's absolutely necessary
+3. **Test Installation**: Always test after adding new dependencies
+4. **Document Purpose**: Comment why each new dependency is needed
 
 ## Quick Reference
 
@@ -438,6 +564,17 @@ if __name__ == "__main__":
 | Advanced patterns | "How to Use Tool Services" guide |
 | Tool structure | This guide |
 | Best practices | Both guides |
+
+## MCP Server Creation for Agents
+
+When a user requests that an MCP server should be created for an agent, the Cursor agent should:
+
+1. **Read the MCP Server Guide**: Use the `mcp.oneshot.read_instructions_for` tool to read the "how_to_create_mcp_servers" guide for detailed instructions
+2. **Follow MCP Patterns**: MCP servers use different patterns than regular tools - they require FastMCP framework and stdio communication
+3. **Configure Properly**: MCP servers need to be added to the local `.cursor/mcp.json` configuration
+4. **Enable in Cursor**: Guide the user to enable the MCP server in Cursor Settings → Tools & Integrations
+
+**Important**: MCP server creation is distinct from regular tool creation. Always refer to the dedicated MCP server guide for proper implementation patterns.
 
 ## Summary
 

@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """
-Todo read tool for the AI Agent framework - reads the current todo list for the session
+Tool: todo_read
+Description: Read the current todo list for the session
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.todo_read import todo_read
+result = todo_read()
+print(result)
+"
 """
 
 from app.tool_services import *

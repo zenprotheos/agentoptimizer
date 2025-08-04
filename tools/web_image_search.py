@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-Web image search tool for the AI Agent framework
+Tool: web_image_search
+Description: Search for images using Brave Images API
 
-To test this tool from command line:
-    PYTHONPATH=. python3 tools/web_image_search.py "your search query"
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.web_image_search import web_image_search
+result = web_image_search('sunset landscape', 5)
+print(result)
+"
 """
 
 from app.tool_services import *

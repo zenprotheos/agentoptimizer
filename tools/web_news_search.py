@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Tool: web_search
-Description: Search the web for information using Brave Search API
+Tool: web_news_search
+Description: Search for news using Brave News API
 
 CLI Test:
     cd /path/to/oneshot
     python3 -c "
-from tools.web_search import web_search
-result = web_search('artificial intelligence news', 3)
+from tools.web_news_search import web_news_search
+result = web_news_search('british lions', 5)
 print(result)
 "
 """
@@ -18,8 +18,8 @@ from app.tool_services import *
 TOOL_METADATA = {
     "type": "function",
     "function": {
-        "name": "web_search",
-        "description": "Search the web for information using a search query",
+        "name": "web_news_search",
+        "description": "Search for news articles using a search query",
         "parameters": {
             "type": "object",
             "properties": {
@@ -29,8 +29,8 @@ TOOL_METADATA = {
                 },
                 "num_results": {
                     "type": "integer",
-                    "description": "Number of search results to return",
-                    "default": 5
+                    "description": "Number of news results to return",
+                    "default": 10
                 }
             },
             "required": ["query"]
@@ -39,16 +39,16 @@ TOOL_METADATA = {
 }
 
 
-def web_search(query: str, num_results: int = 5) -> str:
+def web_news_search(query: str, num_results: int = 10) -> str:
     """
-    Search the web for information using Brave Search API
+    Search for news articles using Brave News API
     
     Args:
         query: The search query to execute
-        num_results: Number of search results to return (default: 5)
+        num_results: Number of news results to return (default: 10)
     
     Returns:
-        JSON string containing search results
+        JSON string containing news search results
     """
     try:
         # Check for Brave API key
@@ -56,17 +56,16 @@ def web_search(query: str, num_results: int = 5) -> str:
         if not brave_api_key:
             return json.dumps({"error": "BRAVE_API_KEY not found in environment variables"}, indent=2)
         
-        # Brave Search API endpoint
-        url = "https://api.search.brave.com/res/v1/web/search"
+        # Brave News API endpoint
+        url = "https://api.search.brave.com/res/v1/news/search"
         
         # Parameters for the search
         params = {
             "q": query,
             "count": min(num_results, 20),  # Brave API allows max 20 results
+            "country": "us",
             "search_lang": "en",
-            "country": "US",
-            "safesearch": "moderate",
-            "freshness": "all"
+            "spellcheck": 1
         }
         
         # Use tool_services api() function with custom headers
@@ -81,20 +80,17 @@ def web_search(query: str, num_results: int = 5) -> str:
         
         # Extract and format results
         results = []
-        if "web" in data and "results" in data["web"]:
-            for result in data["web"]["results"][:num_results]:
+        if "results" in data:
+            for result in data["results"][:num_results]:
                 results.append({
                     "title": result.get("title", ""),
                     "url": result.get("url", ""),
-                    "snippet": result.get("description", ""),
-                    "published": result.get("age", "")
+                    "description": result.get("description", ""),
+                    "age": result.get("age", ""),
+                    "page_age": result.get("page_age", ""),
+                    "meta_url": result.get("meta_url", {}),
+                    "thumbnail": result.get("thumbnail", {})
                 })
-        
-        formatted_results = {
-            "query": query,
-            "total_results": len(results),
-            "results": results
-        }
         
         return json.dumps({
             "success": True,
@@ -104,7 +100,7 @@ def web_search(query: str, num_results: int = 5) -> str:
         }, indent=2)
         
     except Exception as e:
-        return json.dumps({"error": f"Search failed: {str(e)}"}, indent=2)
+        return json.dumps({"error": f"News search failed: {str(e)}"}, indent=2)
 
 
 if __name__ == "__main__":
@@ -112,7 +108,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         query = " ".join(sys.argv[1:])
-        result = web_search(query)
+        result = web_news_search(query)
         print(result)
     else:
-        print("Usage: python web_search.py <search query>") 
+        print("Usage: python web_news_search.py <search query>") 

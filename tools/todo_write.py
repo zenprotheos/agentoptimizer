@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 """
-Todo write tool for the AI Agent framework - updates the todo list for the current session
+Tool: todo_write
+Description: Update the todo list for the current session
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.todo_write import todo_write
+result = todo_write([
+    {'content': 'Test task', 'status': 'pending', 'id': 'test1', 'priority': 'medium'}
+], merge=True)
+print(result)
+"
 """
 
 from app.tool_services import *

@@ -47,6 +47,7 @@ def read_instructions_for(guide_name: str) -> str:
             - "how_to_create_agents": Use this guide for creating new agents
             - "how_to_create_tools": Use this guide for creating new tools
             - "how_to_use_tool_services": Guide for understanding how to use the tool_services in new tools
+            - "how_to_create_mcp_servers": Guide for creating local stdio MCP servers
 
     
     Returns:

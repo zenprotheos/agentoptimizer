@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-File Creator Tool - Demonstrates run-organized file saving
+Tool: file_creator
+Description: Create and save files with content, automatically organized by conversation run
 
-This tool creates files using the updated tool_services that automatically
-organizes files by run ID in /artifacts/{run_id}/ directories.
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.file_creator import file_creator
+result = file_creator('Hello world!', 'Test file', 'test_file.txt')
+print(result)
+"
 """
 
 from app.tool_services import ai

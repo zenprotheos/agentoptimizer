@@ -1,4 +1,16 @@
 # tools/generate_screenshot.py
+"""
+Tool: generate_screenshot
+Description: Generate a PNG screenshot from a markdown (.md) or HTML (.html) file using Puppeteer-based bash scripts.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.generate_screenshot import generate_screenshot
+result = generate_screenshot('test_data/sample.md', visible_only=False)
+print(result)
+"
+"""
 from app.tool_services import *
 import subprocess
 

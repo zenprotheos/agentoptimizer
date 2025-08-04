@@ -15,7 +15,7 @@ TOOL_METADATA = {
             "properties": {
                 "match_description": {
                     "type": "string", 
-                    "description": "Description of the match (e.g. 'Cowboys vs Dragons, 25 July 2025')"
+                    "description": "Use this to describe which match you want the match report generated for. This must be in the format: Team 1 vs Team 2 on date of the match (e.g. 'Cowboys vs Dragons, 25 July 2025')"
                 },
                 "model": {
                     "type": "string",

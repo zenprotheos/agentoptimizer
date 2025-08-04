@@ -1,4 +1,17 @@
 # tools/list_agents.py
+"""
+Tool: list_agents
+Description: List all available agents in the core agents directory with their names, descriptions, models, and tools
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.list_agents import list_agents
+result = list_agents()
+print(result)
+"
+"""
+
 from app.tool_services import *
 
 TOOL_METADATA = {

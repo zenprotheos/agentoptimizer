@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+Tool: read_file_metadata
+Description: Read metadata from markdown or JSON files in the artifacts directory
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.read_file_metadata import read_file_metadata
+result = read_file_metadata('test_data/sample.md')
+print(result)
+"
+"""
+
 # tools/read_file_metadata.py
 # Tool to read metadata from markdown or JSON files in the artifacts directory
 
@@ -80,6 +94,9 @@ def read_file_metadata(filepath: str) -> str:
                     frontmatter_text = parts[1].strip()
                     try:
                         metadata = yaml.safe_load(frontmatter_text) or {}
+                        # Convert datetime objects to strings for JSON serialization
+                        from datetime import datetime
+                        metadata = {k: v.isoformat() if isinstance(v, datetime) else v for k, v in metadata.items()}
                     except yaml.YAMLError:
                         # If YAML parsing fails, try to extract basic metadata manually
                         metadata = {}

@@ -1,5 +1,16 @@
 # tools/read_file_contents.py
-# Tool to read full content from markdown or JSON files in the artifacts directory
+"""
+Tool: read_file_contents
+Description: Read full content from markdown or JSON files in the artifacts directory
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.read_file_contents import read_file_contents
+result = read_file_contents('test_data/sample.md')
+print(result)
+"
+"""
 
 from app.tool_services import *
 
@@ -94,6 +105,9 @@ def read_file_contents(filepath: str, include_metadata: bool = True) -> str:
                         import yaml
                         try:
                             metadata = yaml.safe_load(frontmatter_text) or {}
+                            # Convert datetime objects to strings for JSON serialization
+                            from datetime import datetime
+                            metadata = {k: v.isoformat() if isinstance(v, datetime) else v for k, v in metadata.items()}
                         except yaml.YAMLError:
                             # If YAML parsing fails, try to extract basic metadata manually
                             metadata = {}

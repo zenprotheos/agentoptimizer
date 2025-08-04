@@ -1,4 +1,16 @@
 # tools/agent_caller.py
+"""
+Tool: agent_caller
+Description: Call another agent from within an agent. Allows for agent-to-agent communication and delegation of tasks.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.agent_caller import agent_caller
+result = agent_caller('web_agent', 'Find the latest news about AI')
+print(result)
+"
+"""
 # Tool that allows agents to call other agents using the existing infrastructure
 
 import subprocess

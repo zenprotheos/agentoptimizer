@@ -211,3 +211,6 @@ z_temp/
 !app/tests/
 !app/tests/*
 !agents/test_agent.md.logfire/
+
+/baby-cursor
+roadmap_ideas.md

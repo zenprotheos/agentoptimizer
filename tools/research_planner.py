@@ -1,4 +1,16 @@
 # tools/research_planner.py
+"""
+Tool: research_planner
+Description: Create a structured XML research plan from a research brief.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.research_planner import research_planner
+result = research_planner('test_data/sample_brief.md')
+print(result)
+"
+"""
 from app.tool_services import *
 
 TOOL_METADATA = {
