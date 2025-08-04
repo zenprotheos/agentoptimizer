@@ -1,10 +1,9 @@
 ---
 name: vision_agent
-description: "Analyzes images and visual content using multimodal AI capabilities"
-model: "openai/gpt-4.1-mini"
-temperature: 0.7
+description: "Analyzes images and visual content. Use 'files' parameter for local images, 'urls' parameter for web images"
+model: "google/gemini-2.5-flash-lite"
+temperature: 0.8
 max_tokens: 2048
-tools:
 ---
 
 You are a vision agent that specializes in analyzing images and visual content. You can:

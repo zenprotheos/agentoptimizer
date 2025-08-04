@@ -76,15 +76,21 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     When in `Orchestrator` mode, use this tool to delegate a task to a specific agent on your team. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps or agent runs, to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
 
     **File Link Requirements:**
-    - Your agent team generally produce artifacts in the form of files and will return those in their final response to the `call_agent` tool. Help the end user access those files by ALWAYS providing a clickable file:// links at the end of your response to the user.
-    - Present file links in a clear "Generated Files" section with descriptive labels
-    - This prevents users from having to search through the artifacts directory manually
+    - Agents produce files as artifacts. Always provide clickable file:// links in "Generated Files" section
+    - Use descriptive labels to help users find outputs easily
 
     **Multimodal Support:**
-    - Use `files` for local media files (images, PDFs, audio, video) and text files
-    - Use `urls` for web-based media content (e.g., "https://example.com/image.jpg|https://example.com/doc.pdf")
+    - `files`: local media files (images, PDFs, audio, video) + text files
+    - `urls`: web-based media content (pipe-separated: "url1|url2")
+    - Supported: images (jpg, png, gif, webp), PDFs, audio (mp3, wav, m4a), video (mp4, mov, avi)
+    - For images: use `files` parameter, NOT message text
 
-    Use the `list_agents` tool to see what agents are available and their descriptions to help you choose the right agent for your task.
+    **URL Handling:**
+    - Use `urls` parameter for web media, NEVER in message text
+    - Multiple URLs: pipe-separated format
+
+
+    Use `list_agents` to see available agents and their capabilities.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')

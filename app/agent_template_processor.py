@@ -172,8 +172,12 @@ class AgentTemplateProcessor:
         
         for filepath in files:
             try:
-                content = self.tool_services.read(filepath)
-                file_contents[filepath] = content
+                # Check if this is a binary file (image, etc.)
+                if self._is_binary_file(filepath):
+                    file_contents[filepath] = f"[Binary file: {Path(filepath).suffix.upper()} image/media content]"
+                else:
+                    content = self.tool_services.read(filepath)
+                    file_contents[filepath] = content
                 file_paths.append(filepath)
             except Exception as e:
                 file_contents[filepath] = f"[ERROR READING FILE: {e}]"
@@ -199,6 +203,28 @@ class AgentTemplateProcessor:
             'provided_filepaths': file_paths,
             'provided_files_summary': summary
         }
+    
+    def _is_binary_file(self, filepath: str) -> bool:
+        """Check if a file is likely binary (image, video, audio, etc.)"""
+        binary_extensions = {
+            # Images
+            '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico',
+            # Video
+            '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v',
+            # Audio
+            '.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a',
+            # Documents
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+            # Archives
+            '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2',
+            # Executables
+            '.exe', '.dll', '.so', '.dylib', '.app',
+            # Other binary
+            '.bin', '.dat', '.db', '.sqlite'
+        }
+        
+        file_ext = Path(filepath).suffix.lower()
+        return file_ext in binary_extensions
     
     def _get_builtin_variables(self) -> Dict[str, Any]:
         """Generate built-in template variables available to all agents"""

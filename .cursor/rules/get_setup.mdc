@@ -1,5 +1,5 @@
 ---
-description: Apply this rule when the user is asking for help to set up the repo
+description: Apply this rule if the user is asking for help to set up the repo
 alwaysApply: false
 ---
 <set_up_check>

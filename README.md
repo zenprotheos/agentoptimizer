@@ -1,346 +1,320 @@
-# Simple AI Agent Framework
 
-A minimal but robust AI Agent framework using Pydantic AI and OpenRouter for your friends to easily create and run AI agents.
+# Background
 
-## Features
 
-- **Simple agent creation**: Just add a markdown file to `/agents`
-- **Flexible tool system**: Python scripts in `/tools` with OpenAI tools spec and tool_services module with lots of handy helpers so that your tools need minimal boilerplate
-- **Pydantic AI integration**: Built on the modern Pydantic AI framework
-- **OpenRouter support**: Use any model available on OpenRouter
-- **Logfire integration**: Built-in observability and monitoring with Logfire
-- **Focus on Artifacts**: Designed for the production of useful artifacts from multi-step/multi-agent workflows
-- **Self-aware repo**: Built in rules for Cursor/Claude Code to insruct them on how to set up this repo and troubleshoot as well as how to create agents and tools, etc.
+## Purpose
 
-## Quick Start
+Oneshot was built to give friends and people in the Peregian Digital Hub network a powerful but approachable way to "vibe code" their own AI agent system that can do useful knowledge work for them. 
 
-1. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+There's something magical about creating your own specialised AI assistants, and we wanted to make that accessible to everyone - not just experienced developers.
 
-2. **Set up your API keys**:
-   
-   Either set them as environment variables:
-   ```bash
-   export OPENROUTER_API_KEY="your-openrouter-api-key-here"
-   export LOGFIRE_WRITE_TOKEN="your-logfire-token-here"  # Optional: for Logfire logging
-   ```
-   
-   Or create a `.env` file in the project root:
-   ```
-   OPENROUTER_API_KEY=your-openrouter-api-key-here
-   LOGFIRE_WRITE_TOKEN=your-logfire-token-here  # Optional: for Logfire logging
-   ENVIRONMENT=development  # Optional: environment name for Logfire
-   ```
+## How it works
 
-3. **Run an agent**:
-   ```bash
-   python3 app/agent_runner.py web_agent "Search for information about Pydantic AI"
-   ```
+This framework lets you create and orchestrate specialist AI agents without needing to understand complex infrastructure. You write a simple markdown file, and you have a working agent. You issue instructions to Cursor or Claude Code and they will orchestrate those specialised agents, to perform useful work for you.
 
-   Or get structured JSON output:
-   ```bash
-   python3 app/agent_runner.py web_agent "Search for information about Pydantic AI" --json
-   ```
+The Oneshot system is self-describing to the likes of Cursor and Claude Code, which means they know immediately how it works and can do things like create agents and tools, in oneshot, or troubleshoot when things go wrong.
 
-   Or get detailed debug output:
-   ```bash
-   python3 app/agent_runner.py web_agent "Search for information about Pydantic AI" --debug
-   ```
+## Why Oneshot
 
-## Creating Agents
+The term "one shot" refers to an AI getting the right outcome the first time. Eg from a single prompt, a coding agent creates perfect working software, in one shot, without the need for correction and further "shots" to get it working.
 
-Create a new agent by adding a markdown file to the `/agents` directory. The file should have this structure:
+If you're working in AI, you're constantly in pursuit of a oneshot machine - a system that produces valuable outputs in one shot, every time. 
+
+This project won't get it right in one shot every time but that's the inspiration for it. There are a lot of behind the scenes prompts and instructions that are intended to have the coding agents like Cursor/Claude Code etc be able to use this and build things with it for you, in one shot, without mistakes.
+
+# Benefits of the Oneshot system
+
+## Managing Token Costs
+
+Tools like Cursor and Claude Code that use the Claude models, are getting expensive $200 is the new $20. What if we could use cheaper models to do useful work for us and save those expensive tokens for high value software dev tasks. 
+
+Oneshot gives you access to pretty much all the models available, via the openrouter gateway. You can use workhorses like gpt-4.1-mini to do the grunt work and powerful models like gemini-2.5-pro , gpt-4.1 to do more complex agent work, and reasoning models from openai, deepseek and others for planning and other high-IQ steps.
+
+Importantly, you can use Cursor on Auto mode **for free** to do your agent orchestration work. It very reliably figures out which of your agents to invoke and does a good job of passing around files etc. This lets you keep your Cursor/Claude credits for higher value coding tasks and use these cheap models for day to day knowledge work.
+
+## Learn by building
+
+The Oneshot system is intended to make building agents a breeze. Create a md file in /agents with some frontmatter to specify the model, allocate a few tools and give it a system instruction and you're off to the races. Beter still, you can ask Cursor or Claude code to create a new agent for you and they'll read the instructions and do that in one shot without you having to lift a finger.
+
+This lets you quickly create new agents just with markdown files and try out different models via the built in openrouter integration. 
+
+## Auto Tool Creation
+
+The Oneshot project also teaches the Orchestrator agent (Claude Code/Cursor agent) how to make tools, in one shot. Vibe code new tools by telling them what you want the tool to do and they will read instructions on how to create a tool, and how to use the built-in tool_services module (to reduce boilerplate) and it will likely work in one shot. You may have to add an api key or token to the env file but that's about it.
+
+Within a couple of hours you'll have built out multiple agents with a growing portfolio of tools at their disposal. 
+
+## Learn about Context Management
+
+An important aspect of Oneshot is to demystify agentic systems and expose what goes into building them. 
+
+Agents are effectively LLM chat prompts (with tools) running in a loop. The LLM receives the prompt, determines whether to call a tool, we execute the tool locally and respond back with tool response and we do this in a loop until the LLM determines that the task has been completed.
+
+Most AI systems are black boxes - you see the magic but not how it works. Oneshot is transparent:
+
+- Watch agents make decisions in real-time
+- See exactly which tools they use and why
+- Understand the conversation flow
+- Debug when things go sideways
+
+Through the Logfire integration, you get a window into the agent's "thought process" - it's both educational and fascinating.
+
+The Oneshot repo comes with some handy examples to get you started with and a few useful tools that will be helpful for your agents. You can read the agent prompts, tool descriptions etc to get good examples of how to provide the right context to agents. 
+
+## Novel Context Engineering approach
+
+Oneshot uses a novel context management approach whereby agents produce artifacts (files) and pass these files to each other to perform work on. This allows for more accurate agent orchestration because the context window does not get crowded with voluminous tool output responses. 
+
+This lends itself to the orchestrator -> sub agent pattern, where an Orchestrator agent (eg Cursor agent, Claude code agent or other) delegates tasks to specialist agents. The specialist agents perform the detailed work, which may involve many tools calls and lots of context processing, but they respond back to the agent with only the artifact they produced from that process. This allows the main thread (ie, the Orchestrator's context window) to remain "clean". 
+
+Oneshot is built on the open source PydanticAI library which has lots of extensibility and you are free to evolve this repo to try more optimised context management strategies.
+
+## Learn about MCP servers
+
+The Oneshot system also provides a useful playground for learning about MCP servers.
+
+Firstly, the system itself can be used as an MCP server. Yes, when Cursor or Claude Code call a specialist agent to do a task, they do that by calling the Oneshot MCP server. You can of course add the Oneshot MCP server to your global Cursor/Claude Code settings so that you can use it in any repo/project.
+
+Secondly, Oneshot agents act as MCP clients. This means they can call native tools and mcp servers - both local and remote. If you have an mcp server listed in your mcp.json file, you can allocate it to an agent. The system does not yet support MCP servers that use oauth. This is very handy for giving your agents access to things like your email Notion, Hubspot etc.
+
+Lastly, the Oneshot system knows how to build MCP servers for you. if you want it to build an MCP server that integrates with an external API, give it the link to the api docs and add the auth token to your .env file, and it should do the rest for you. Local MCP servers are saved in /tools/local_mcp_servers
+
+
+## Collaboration
+
+One of the principles for the Oneshot system is to enable very lightweight collaboration. If you create a useful agent or tool, you can share it via gist and someone else using Oneshot can copy and paste it into a new markdown file in the /agents directory or a new python file in the /tools directory.
+
+
+## Self-aware system
+
+This is somewhat meta but one of the goals of Oneshot is to make it vibecoding-friendly. inspired by other great projects like Manus, Cursor itself, v0, Lovable, etc the Oneshot system has built-in instructions and guides that help it help you.
+
+If you are curious, you can inspect these instructions and guides in the .cursor/rules directory and the app/guides directory. The system has access to the Logfire MCP server for inspecting its own logs and the context7 MCP server for troubleshooting core technologies like PydanticAI, Openrouter etc.
+
+There are guides for creating agents, creating tools, setting the repo up, making mcp servers, troubleshooting and more. When you start a fresh chat with Cursor/Claude Code, they immediately know how to get the context they need to perform whatever task you ask them to do without you having to onboard them in each chat. If you make major changes to this repo, update the guides and it will evolve with you.
+
+## All about Artifacts
+
+Another design goal for this system is artifact creation. Whereas Claude Code, Cursor, Lovable, v0 are all primarily designed to produce code as the primary artifact. There isn't really a Cursor for knowledge work. The Oneshot system aims to let you develop agents and tools that can do knowledgework for you, and create artifacts like emails written in your voice, reports in your company letterhead, blog posts that are on brand, slides with your company template, etc.
+
+The tool system is set up for creating these kinds of artifacts. And you can easily create agents that have multi-step workflows with tools that generate these kinds of useful artifacts.
+
+## Use the stack that openai uses
+
+**PydanticAI:** for the LLM API integration and basic context management
+**Openrouter:** for acess to hundreds of LLM models through a single interface
+**Logfire:** for realtime insights into what your agents are doing and how they are using tools and context.
+
+
+# Context management features
+
+Rules: The rules in the `/.cursor/rules` directory tell the main orchestrator agent (ie the Cursor agent) how to behave.
+
+Snippets: save bits of reusable text in md files in the `/snippets` directory for use in prompts, agents and tools
+
+Artifacts: the tool system is designed to create useful artifacts (ie files), in the `/artifacts` directory. Eg reports, email drafts, posts, etc
+
+Templates: html and other templates get used by tools for generating finished artifacts. They get stored in the `/templates` directory.
+
+Runs: the state of a given agent session is stored in the `/runs` directory and allows for run continuation and multi-agent collaboration.
+
+
+---------
+
+
+# Oneshot: A Beginner-Friendly Framework for Building AI Agents
+
+## Background
+
+I built Oneshot to give friends and people in our hub network a powerful but approachable way to experiment with AI agents. There's something magical about creating your own specialised AI assistants, and I wanted to make that accessible to everyone - not just experienced developers.
+
+This framework lets you create and orchestrate specialist AI agents without needing to understand complex infrastructure. You write a simple markdown file, and you have a working agent. It's that straightforward.
+
+## Why Oneshot?
+
+### Learn By Building
+
+The best way to understand AI agents is to build them. Oneshot makes this incredibly simple:
+1. Create a markdown file
+2. Tell the agent what it should do
+3. Give it some tools
+4. Watch it work
+
+No complex setup, no deep technical knowledge required. Just ideas and experimentation.
+
+### See How Agents Actually Work
+
+Most AI systems are black boxes - you see the magic but not how it works. Oneshot is transparent:
+- Watch agents make decisions in real-time
+- See exactly which tools they use and why
+- Understand the conversation flow
+- Debug when things go sideways
+
+Through the Logfire integration, you get a window into the agent's "thought process" - it's both educational and fascinating.
+
+### Build Real, Useful Things
+
+These aren't toy examples. You can create agents that:
+- Research topics and write comprehensive reports
+- Analyze data and generate insights
+- Create content based on your specifications
+- Automate repetitive knowledge work
+- Whatever you can imagine
+
+### Start Simple, Grow Complex
+
+Begin with a basic agent that does one thing well. As you get comfortable, you can:
+- Create teams of specialised agents
+- Build custom tools
+- Design multi-step workflows
+- Connect to external services
+
+The system grows with your skills and ambitions.
+
+## How It Works
+
+### Creating Your First Agent
+
+Here's a complete agent in just a few lines:
 
 ```markdown
+# agents/research_assistant.md
 ---
-name: my_agent
-description: "Description of what this agent does"
-model: openai/gpt-4.1-mini-mini    # Optional: overrides config.yaml default
-temperature: 0.7             # Optional: overrides config.yaml default
-max_tokens: 2048            # Optional: overrides config.yaml default
-tools:
-  - web_search
-  - web_read_page
+name: research_assistant
+description: "Researches topics and creates summaries"
+model: openai/gpt-4o-mini
+tools: [web_search, save_to_file]
 ---
 
-# ABOUT YOU
+You are Research Assistant, focused on finding accurate information
+and creating clear, well-structured summaries.
 
-You are a helpful assistant...
-
-## YOUR APPROACH
-
-Your system prompt goes here...
+When given a topic, you:
+1. Search for relevant information
+2. Verify facts from multiple sources
+3. Create a comprehensive summary
+4. Save it as a clean markdown file
 ```
 
-## Logfire Integration
-
-The framework includes built-in [Logfire](https://logfire.pydantic.dev/) integration for comprehensive observability and monitoring of your AI agents.
-
-### Features
-
-- **Agent execution tracking**: Monitor when agents start, complete, or fail
-- **Tool call logging**: Track all tool calls with arguments and results
-- **Usage statistics**: Monitor token usage and request counts
-- **Error tracking**: Capture and analyze failures
-- **Performance monitoring**: Track execution times and resource usage
-
-### Setup
-
-1. **Get a Logfire account**: Sign up at [logfire.pydantic.dev](https://logfire.pydantic.dev/)
-2. **Get your write token**: From your Logfire dashboard
-3. **Set the environment variable**:
-   ```bash
-   export LOGFIRE_WRITE_TOKEN="your-logfire-token-here"
-   ```
-
-### Configuration
-
-Logfire settings can be configured in `config.yaml`:
-
-```yaml
-logfire:
-  # Enable/disable Logfire logging
-  enabled: true
-  
-  # Service name for Logfire (appears in the dashboard)
-  service_name: "ai-agent-framework"
-  
-  # Log level (DEBUG, INFO, WARNING, ERROR)
-  log_level: "INFO"
-  
-  # Whether to log tool calls and their results
-  log_tool_calls: true
-  
-  # Whether to log token usage statistics
-  log_usage: true
-  
-  # Whether to log agent execution details
-  log_agent_execution: true
-```
-
-### What Gets Logged
-
-- **Agent Starts**: When an agent begins execution
-- **Tool Calls**: Each tool call with arguments and result metadata
-- **Usage Statistics**: Token counts, request counts, execution success/failure
-- **Errors**: Detailed error information when agents fail
-- **Performance**: Execution timing and resource usage
-
-The framework automatically handles Logfire initialization and will gracefully disable logging if the token is not provided.
-
-## Configuration
-
-The framework supports global configuration via `config.yaml`:
-
-```yaml
-# Default model settings (can be overridden per agent)
-model_settings:
-  model: "openai:gpt-4.1-mini-mini"
-  temperature: 0.7
-  max_tokens: 2048
-  top_p: null
-  presence_penalty: null
-  frequency_penalty: null
-  parallel_tool_calls: true
-  seed: null
-  stop_sequences: null
-  timeout: 30.0
-
-# Agent defaults
-agent_defaults:
-  retries: 1
-  output_retries: 1
-  end_strategy: "early"
-
-# Usage limits to prevent infinite loops and control costs
-usage_limits:
-  request_limit: 50              # Max requests per agent run (prevents infinite loops)
-  request_tokens_limit: null     # Max tokens in requests (null = no limit)
-  response_tokens_limit: null    # Max tokens in responses (null = no limit)
-  total_tokens_limit: null       # Max total tokens (null = no limit)
-```
-
-## Creating Tools
-
-Create tools by adding Python scripts to the `/tools` directory. Each tool must have:
-
-1. **TOOL_METADATA**: A dict conforming to OpenAI tools spec
-2. **Function with same name as file**: The function that implements the tool
-
-Example tool structure:
-
-```python
-#!/usr/bin/env python3
-
-# OpenAI tools spec compliant metadata
-TOOL_METADATA = {
-    "type": "function",
-    "function": {
-        "name": "my_tool",
-        "description": "What this tool does",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "param1": {
-                    "type": "string",
-                    "description": "Description of param1"
-                }
-            },
-            "required": ["param1"]
-        }
-    }
-}
-
-def my_tool(param1: str) -> str:
-    """Tool implementation"""
-    return f"Result: {param1}"
-```
-
-**Important**: The function name must match the filename (e.g., `my_tool.py` contains `def my_tool(...)`).
-
-## Directory Structure
-
-```
-basic/
-├── agents/           # Agent definitions (.md files)
-│   └── web_agent.md
-├── tools/            # Tool implementations (.py files)
-│   ├── web_search.py
-│   └── web_read_page.py
-├── app/
-│   └── agent_runner.py
-├── requirements.txt
-└── README.md
-```
-
-## Output Formats
-
-The framework supports three output formats:
-
-### 1. Clean Output (Default)
-Returns clean markdown with the agent's response and concise usage statistics:
+That's it. Your agent is ready to use:
 ```bash
-python3 app/agent_runner.py web_agent "What is the weather like today?"
-```
-Output:
-```
-The weather in Brisbane today is partly cloudy with light winds...
-
----
-**Usage:** 3 requests, 2,879 tokens
-**Tools used:** web_read_page, web_search
+./oneshot research_assistant "Tell me about vertical farming"
 ```
 
-### 2. Debug Output
-Returns detailed information including tool calls, token breakdown, and execution details:
-```bash
-python3 app/agent_runner.py web_agent "What is the weather like today?" --debug
+### The Tool System
+
+Agents become powerful when they can use tools. Oneshot includes tools for:
+- Web searching and reading
+- File operations
+- Data analysis
+- Document creation
+- Much more
+
+Want a custom tool? Just describe what you need:
+> "Create a tool that gets weather forecasts"
+
+The system will build it for you.
+
+### Context Management Made Simple
+
+One innovation in Oneshot is how agents share information. Instead of passing huge blocks of text back and forth (expensive and confusing), agents:
+- Create files (artifacts) with their work
+- Pass file references to each other
+- Keep conversations focused and clear
+
+This means you can chain agents together for complex tasks without things getting messy.
+
+## Getting Started
+
+### Quick Setup
+
+1. Create a new Cursor window and select "Clone Repo". Paste in this repo url https://github.com/chrisboden/onshot
+
+2. Rename the .env_example file to .env
+3. Add in your Openrouter API key
+
+
+### Try Out an Agent
+
+
+
+## Project Structure
+
 ```
-Additional debug information includes:
-- Detailed token usage (request/response breakdown)
-- Complete tool call history with arguments and results
-- Model-specific details (caching, reasoning tokens, etc.)
-
-### 3. JSON Output
-Returns structured data for programmatic use:
-```bash
-python3 app/agent_runner.py web_agent "What is the weather like today?" --json
-```
-
-## Usage Examples
-
-### Command Line Usage
-
-```bash
-# Basic usage - returns clean markdown output with usage statistics
-python3 app/agent_runner.py web_agent "What is the weather like today?"
-
-# JSON output - returns structured data
-python3 app/agent_runner.py web_agent "What is the weather like today?" --json
-
-# Debug output - returns detailed information including tool calls
-python3 app/agent_runner.py web_agent "What is the weather like today?" --debug
-```
-
-### Programmatic Usage
-
-```python
-from app.agent_runner import AgentRunner, AgentResponse
-
-runner = AgentRunner()
-
-# Get structured response with usage stats and tool calls
-result = runner.run_agent("web_agent", "Search for Python tutorials")
-
-if isinstance(result, AgentResponse):
-    print(f"Output: {result.output}")
-    print(f"Success: {result.success}")
-    print(f"Usage: {result.usage.requests} requests, {result.usage.total_tokens} tokens")
-    print(f"Tool calls: {len(result.tool_calls)}")
-    
-    # Access individual tool calls
-    for tool_call in result.tool_calls:
-        print(f"Tool: {tool_call.tool_name}")
-        print(f"Arguments: {tool_call.arguments}")
-        print(f"Result: {tool_call.result}")
-
-# Get JSON string response
-json_result = runner.run_agent_json("web_agent", "Search for Python tutorials")
-print(json_result)
+oneshot/
+├── agents/          # Your AI agents (simple markdown files)
+├── tools/           # Python tools agents can use
+├── artifacts/       # Files created by agents (reports, analyses, etc.)
+├── runs/            # Conversation history
+├── snippets/        # Reusable text blocks
+└── templates/       # Output templates
 ```
 
-### Response Structure
+## Examples to Get You Started
 
-The `AgentResponse` object contains:
+Ask Cusor/Claude Code what agents are available and what they can do then give them a task. Example: ask Cursor to create a report on the latest NRL game involving the Broncos.
 
-- `output`: The agent's response text
-- `usage`: Token and request usage statistics
-  - `requests`: Number of API requests made
-  - `request_tokens`: Tokens used in requests
-  - `response_tokens`: Tokens used in responses
-  - `total_tokens`: Total tokens used
-  - `details`: Additional model-specific details
-- `tool_calls`: List of tool calls made during execution
-  - `tool_name`: Name of the tool called
-  - `call_id`: Unique identifier for the tool call
-  - `arguments`: Arguments passed to the tool
-  - `result`: Result returned by the tool
-- `success`: Boolean indicating if execution was successful
-- `error`: Error message if execution failed (null if successful)
+### Multi-Agent Workflows
+The real power comes from combining agents:
+- Research Agent gathers information
+- Analyst processes and finds patterns
+- Writer creates the final report
+- Editor polishes the output
 
-## Available Tools
+## Key Features for Experimenters
 
-- **web_search**: Search the web using DuckDuckGo API
-- **web_read_page**: Read and extract content from web pages
+### Self-Documenting System
+- The system knows how to explain itself
+- It can create new agents for you
+- It can troubleshoot problems
+- Built-in examples show best practices
 
-## Models
 
-The framework supports any model available on OpenRouter. Popular choices:
+### Model Flexibility
+Experiment with different AI models:
+- GPT-4.1-mini for quick tasks
+- Deepseek for reasoning
+- Claude for nuanced writing
+- Gemini for large documents
+- Specialised models for specific needs
 
-- `openai/gpt-4.1-mini-mini` (fast, cheap)
-- `openai/gpt-4.1-mini` (most capable)
-- `anthropic/claude-3.5-sonnet` (excellent reasoning)
-- `google/gemini-pro` (good performance)
+All through one simple configuration.
 
-## Error Handling
+### Complete Visibility
+With Logfire integration, you can:
+- Watch agents think through problems
+- See exact token usage
+- Debug issues easily
+- Learn how agents make decisions
 
-The framework includes comprehensive error handling:
+## Tips for Getting Started
 
-- Agent file parsing errors
-- Tool loading errors
-- Model execution errors
-- Network request failures
+1. **Start with the examples** - Copy and modify existing agents
+2. **Keep it simple** - Your first agent should do one thing well
+3. **Use the orchestrator** - Let Cursor coordinate multiple agents
+4. **Experiment freely** - You can't break anything
+5. **Share your creations** - Others can learn from what you build
 
-All errors are returned as descriptive strings rather than exceptions.
+## Common Questions
 
-## Contributing
+**Q: Do I need to know Python?**
+A: Not really! You can create agents with just markdown. If you want custom tools, the system can create them for you.
 
-1. Add new tools to `/tools` following the OpenAI tools spec
-2. Create new agents in `/agents` with proper YAML frontmatter
-3. Test your changes with the provided examples
+**Q: What models should I use?**
+A: Start with GPT-4.1-mini - it's capable and affordable. Experiment with others as you learn.
 
-## License
+**Q: Can agents work together?**
+A: Yes! That's where the magic happens. Each agent can specialise while working as a team.
 
-MIT License - feel free to use and modify for your projects! 
+**Q: Is this production-ready?**
+A: It's perfect for experimentation and personal use. For production, you'd want additional safeguards.
+
+## Next Steps
+
+1. Create your first agent for something you do regularly
+2. Watch it work using the debug flag: `--debug`
+3. Check the Logfire dashboard to see what happened
+4. Iterate and improve
+5. Share what you build!
+
+The goal is to demystify AI agents and make them accessible. Every agent you build teaches you something new about what's possible.

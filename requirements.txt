@@ -7,3 +7,8 @@ yt-dlp
 openai
 requests
 pathlib2
+fastmcp
+beautifulsoup4
+fastapi
+pydantic
+pydantic-core

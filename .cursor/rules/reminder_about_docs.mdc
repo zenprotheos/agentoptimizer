@@ -1,6 +1,4 @@
 ---
-globs: *agent*,*tool*,*tools*,*agents*
 alwaysApply: false
 ---
-
 If the user is asking you to create/change tools or agents, make sure to use your `mcp.oneshot.read_instructions_for` mcp tool to learn how to do that effectively.

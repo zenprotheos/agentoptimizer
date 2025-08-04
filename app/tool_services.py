@@ -515,6 +515,18 @@ class ToolHelper:
             artifacts_dir = self.artifacts_base_dir / "no_run_id"
         
         artifacts_dir.mkdir(exist_ok=True)
+        
+        # Create/update 'latest' symlink to current run for easy access
+        if self._current_run_id:
+            latest_link = self.artifacts_base_dir / "latest"
+            try:
+                if latest_link.exists() or latest_link.is_symlink():
+                    latest_link.unlink()
+                latest_link.symlink_to(self._current_run_id)
+            except (OSError, FileNotFoundError):
+                # Ignore symlink errors (e.g., on Windows without admin rights)
+                pass
+        
         return artifacts_dir
     
     # ULTRA-MINIMAL FILE OPERATIONS
