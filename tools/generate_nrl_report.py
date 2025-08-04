@@ -134,7 +134,7 @@ Remember, You MUST reply in JSON format per the provided schema."""
                 "structured_data": json_file["filepath"]
             },
             "run_id": run_id,
-            "artifacts_dir": artifacts_dir,
+            "artifacts_dir": str(artifacts_dir),
             "teams": f"{match_data.get('teams', {}).get('home', {}).get('name', 'Team 1')} vs {match_data.get('teams', {}).get('away', {}).get('name', 'Team 2')}",
             "final_score": f"{match_data.get('teams', {}).get('home', {}).get('score', 0)}-{match_data.get('teams', {}).get('away', {}).get('score', 0)}",
             "note": "PDF has been automatically opened. All artifacts are organized in the run directory."
