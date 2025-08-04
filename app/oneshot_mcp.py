@@ -105,7 +105,7 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     """
     try:
         # Build command with appropriate flags
-        cmd = ["bash", str(project_root / "oneshot"), agent_name, message]
+        cmd = ["bash", str(project_root / "app" / "oneshot"), agent_name, message]
 
         
         # Add files if provided
