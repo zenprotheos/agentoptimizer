@@ -191,7 +191,6 @@ Temporary Items
 /.qwen
 /.gemini
 mcp.json
-AGENT.md
 
 # Logs & temp files
 *.log

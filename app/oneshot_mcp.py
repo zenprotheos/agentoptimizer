@@ -30,7 +30,7 @@ project_root = Path(__file__).parent.parent
 
 @mcp.tool()
 def list_agents() -> str:
-    """When in `Orchestrator` modese this to list the agents that you have available, to orchestrate. Returns agent names and descriptions to help you choose which agent to use for a specific task.
+    """When in `Orchestrator` mode, use this tool to list the agents that you have available, to delegate tasks to. Returns agent names and descriptions to help you choose which agent to use for a specific task.
     
     Returns:
         str: JSON formatted list of available agents with their descriptions
@@ -39,7 +39,7 @@ def list_agents() -> str:
 
 @mcp.tool()
 def read_instructions_for(guide_name: str) -> str:
-    """When in `Designer` mode, use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
+    """When in `Designer` mode, use this tool to read comprehensive instructions and examples for how to perform important tasks in this project like creating agents, tools, and more.
     
     Args:
         guide_name: Name of the guide to read. Available guides:
