@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import os
+from pathlib import Path
 
 TOOL_METADATA = {
     "type": "function",
@@ -32,7 +33,9 @@ def generate_nrl_report(match_description: str, model: str = "openai/gpt-4o-mini
     
     try:
         run_id = get_run_id()
-        artifacts_dir = f"/Users/chrisboden/Dropbox/AI/oneshot/artifacts/{run_id}" if run_id else "/Users/chrisboden/Dropbox/AI/oneshot/artifacts/standalone"
+        # Get the project root directory dynamically
+        project_root = Path(__file__).parent.parent
+        artifacts_dir = project_root / "artifacts" / (run_id if run_id else "standalone")
         
         # Ensure artifacts directory exists
         os.makedirs(artifacts_dir, exist_ok=True)

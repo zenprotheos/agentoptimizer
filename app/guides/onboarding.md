@@ -9,7 +9,7 @@ purpose: "This is essential reading for AI coding agents working on the oneshot 
 ## Required Reading Before Making Code Changes
 
 1. **This document** - Learn the workflow and diagnostic approach for the oneshot repo
-2. **/guides/how_oneshot_works.md** - Understand the oneshot system architecture and codebase
+2. **app/guides/how_oneshot_works.md** - Understand the oneshot system architecture and codebase
 
 **DO NOT modify code until you've read both documents.** Most issues are likely configuration or environment problems, not bugs in the core system.
 
@@ -24,7 +24,7 @@ purpose: "This is essential reading for AI coding agents working on the oneshot 
 
 ## System Overview
 
-The Oneshot system is a Pydantic AI-based agent runner. It is designed to be robust and observable. For a detailed technical breakdown of the architecture, including how the agent runner, run persistence, and context processing works, refer to the **`how_oneshot_works.md`** document.
+The Oneshot system is a Pydantic AI-based agent runner. It is designed to be robust and observable. For a detailed technical breakdown of the architecture, including how the agent runner, run persistence, and context processing works, refer to the **`app/guides/how_oneshot_works.md`** document.
 
 Your primary goal is to interact with and troubleshoot this system on behalf of a user, using the provided diagnostic tools.
 
@@ -38,7 +38,7 @@ Before investigating specific issues, verify basic system health:
 ./oneshot web_agent "hello"
 
 # Test MCP server functionality
-python3 -c "from app.oneshot_mcp_tools.agents import list_agents; print(list_agents('.'))"
+python3 -c "from app.oneshot_mcp_tools.list_agents import list_agents; import os; print(list_agents(os.getcwd()))"
 
 # Test run persistence
 python3 -c "from app.run_persistence import RunPersistence; rp = RunPersistence(); print('Run persistence OK')"
@@ -71,7 +71,7 @@ print("Logfire Token:", "✓" if os.getenv("LOGFIRE_TOKEN") else "✗ MISSING")
 ```
 
 ### Step 4: Access Documentation When Needed
-For deeper understanding of Pydantic AI or other libraries, use the Context7 MCP server. To understand the Oneshot system's internal workings, read `how_oneshot_works.md`.
+For deeper understanding of Pydantic AI or other libraries, use the Context7 MCP server. To understand the Oneshot system's internal workings, read `app/guides/how_oneshot_works.md`.
 
 ```python
 # Get Pydantic AI documentation
@@ -118,17 +118,17 @@ Important Note: any changes to an mcp server require it to be toggled on and off
 
 ### Creating New Agents
 
-Before creating a new agent, you MUST read the `how_to_create_agents.md` guide to understand agent design and best practices.
+Before creating a new agent, you MUST read the `app/guides/how_to_create_agents.md` guide to understand agent design and best practices.
 
 
 ### Creating New Tools
 
-Before creating a new tool, you MUST read the `how_to_create_tools.md` guide to understand tool design and best practices.
+Before creating a new tool, you MUST read the `app/guides/how_to_create_tools.md` guide to understand tool design and best practices.
 
 ### Modifying Core Application (`/app`)
 **DO NOT** modify the core application code unless you have:
 1.  Confirmed the issue is in the core logic by using the diagnostic tools.
-2.  Read and understood the relevant sections of `how_oneshot_works.md`.
+2.  Read and understood the relevant sections of `app/guides/how_oneshot_works.md`.
 3.  A clear plan to fix the issue with minimal changes.
 
 ## Emergency Recovery
@@ -145,11 +145,11 @@ If you break the application:
 2.  **Logfire is your primary tool**.
 3.  **Most issues are environmental or configuration-related**.
 4.  **The core app is stable**. Assume it works correctly until you can prove otherwise.
-5.  **Consult `how_oneshot_works.md`** for technical details.
+5.  **Consult `app/guides/how_oneshot_works.md`** for technical details.
 
 # IMPORTANT REMINDER
 
 **Before touching any code**: 
 - Read this document → Learn the diagnostic workflow
-- Read `how_oneshot_works.md` → Understand the architecture
+- Read `app/guides/how_oneshot_works.md` → Understand the architecture
 - Only then are you sufficiently knowledgeable about the system to make changes.

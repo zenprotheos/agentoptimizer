@@ -6,8 +6,8 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Change to the script directory
-cd "$SCRIPT_DIR"
+# Change to the project root directory (parent of app)
+cd "$SCRIPT_DIR/.."
 
 # Call the agent runner with all arguments
-bash app/oneshot "$@"
+python3 app/agent_runner.py "$@"

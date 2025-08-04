@@ -5,14 +5,12 @@ A minimal but robust AI Agent framework using Pydantic AI and OpenRouter for you
 ## Features
 
 - **Simple agent creation**: Just add a markdown file to `/agents`
-- **Flexible tool system**: Python scripts in `/tools` with OpenAI tools spec
+- **Flexible tool system**: Python scripts in `/tools` with OpenAI tools spec and tool_services module with lots of handy helpers so that your tools need minimal boilerplate
 - **Pydantic AI integration**: Built on the modern Pydantic AI framework
 - **OpenRouter support**: Use any model available on OpenRouter
-- **Robust error handling**: Comprehensive error handling and validation
-- **Clean output by default**: Returns clean markdown with usage statistics
-- **Debug mode**: Detailed tool call information available with `--debug` flag
-- **Structured responses**: JSON output with detailed execution metadata
 - **Logfire integration**: Built-in observability and monitoring with Logfire
+- **Focus on Artifacts**: Designed for the production of useful artifacts from multi-step/multi-agent workflows
+- **Self-aware repo**: Built in rules for Cursor/Claude Code to insruct them on how to set up this repo and troubleshoot as well as how to create agents and tools, etc.
 
 ## Quick Start
 

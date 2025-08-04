@@ -24,8 +24,8 @@ Oneshot is designed as a **specialist agent orchestration framework** that enabl
 ```mermaid
 graph TB
     subgraph "Entry Points"
-        CLI[CLI Interface<br/>oneshot script]
-        MCP[MCP Server<br/>oneshot_mcp.py]
+        CLI[CLI Interface<br/>app/oneshot bash script]
+        MCP[MCP Server<br/>app/oneshot_mcp.py]
     end
     
     subgraph "Core Engine"
@@ -151,8 +151,8 @@ graph LR
     end
     
     subgraph "Entry Points"
-        CLI[CLI Interface<br/>./oneshot script]
-        MCP[MCP Server<br/>oneshot_mcp.py]
+        CLI[CLI Interface<br/>./oneshot script in app dir]
+        MCP[MCP Server<br/>app/oneshot_mcp.py]
     end
     
     subgraph "Interface Features"
@@ -191,7 +191,7 @@ graph LR
 - **Protocol**: Model Context Protocol for AI agent integration
 - **Endpoints**: `call_agent`, `list_agents`, `list_tools`, etc.
 - **Integration**: Allows other AI systems to use Oneshot agents
-- **Cursor Integration**: Exposed as MCP server for Cursor IDE integration
+- **Cursor/CLI Integration**: Exposed as MCP server for Cursor IDE, or Claude Code CLI integration
 
 ## Configuration System
 

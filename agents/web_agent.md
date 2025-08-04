@@ -5,11 +5,8 @@ model: "openai/gpt-4.1-mini"
 
 tools:
   - structured_search
-
-mcp:
-  - zapier-email
-  - zapier-notion
-
+  - web_search
+  - web_read_page
 
 ---
 

@@ -18,7 +18,7 @@
       "command": "python3",
       "type": "stdio",
       "args": [
-        "/Users/PATH_TO_ONESHOT_REPO/oneshot/oneshot_mcp.py"
+        "/Users/PATH_TO_ONESHOT_REPO/oneshot/app/oneshot_mcp.py"
       ]
     }
   }

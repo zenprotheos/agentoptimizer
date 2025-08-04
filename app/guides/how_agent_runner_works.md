@@ -1,7 +1,6 @@
 ---
 name: "How Agent Runner Works"
 purpose: "Deep technical analysis of the agent runner system - the core orchestrator for the Oneshot agent framework with modular components and execution flow"
-topics: ["agent runner architecture", "component relationships", "module breakdown", "execution flow", "configuration hierarchy", "error handling strategy", "CLI interface", "integration points", "performance and observability", "best practices", "troubleshooting"]
 ---
 
 # How Agent Runner Works: Technical Deep Dive
@@ -467,7 +466,7 @@ except AgentConfigError as e:
 The module provides a command-line interface through the `main()` function:
 
 ```bash
-python agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--run-id <run_id>] [--json] [--debug]
+python3 agent_runner.py <agent_name> <message> [--files <file1|file2|...>] [--run-id <run_id>] [--json] [--debug]
 ```
 
 **Arguments**:

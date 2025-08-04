@@ -208,6 +208,7 @@ z_temp/
 *test*.md
 *test*/
 
-
-# Apps
-
+!tools/test_tool.py
+!app/tests/
+!app/tests/*
+!agents/test_agent.md.logfire/

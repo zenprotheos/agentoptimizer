@@ -4,15 +4,20 @@
 This is the oneshot MCP Server which provides the entry point for coding agents like cursor and claude code to orchestrate specialised agents (when in `orchestrator` role) and learn how tocreate agents and tools (when in `developer` role).
 """
 
+import sys
+import os
 import subprocess
 import json
 from pathlib import Path
 from fastmcp import FastMCP
 
+# Add the parent directory to the Python path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Import MCP functions from modular files
-from oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
-from oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
-from oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
+from app.oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
+from app.oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
+from app.oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
 
 # Create the MCP server
 mcp = FastMCP(
@@ -25,7 +30,7 @@ project_root = Path(__file__).parent.parent
 
 @mcp.tool()
 def list_agents() -> str:
-    """Use this to list all available agents in the core agents directory. Returns agent names and descriptions to help you choose which agent to use for a specific task.
+    """When in `Orchestrator` modese this to list the agents that you have available, to orchestrate. Returns agent names and descriptions to help you choose which agent to use for a specific task.
     
     Returns:
         str: JSON formatted list of available agents with their descriptions
@@ -34,7 +39,7 @@ def list_agents() -> str:
 
 @mcp.tool()
 def read_instructions_for(guide_name: str) -> str:
-    """When in developer mode, use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
+    """When in `Designer` mode, use this tool to read comprehensive instructions and examples for how to perform specific tasks in this project like creating agents, tools, and more.
     
     Args:
         guide_name: Name of the guide to read. Available guides:
@@ -57,7 +62,7 @@ def read_instructions_for(guide_name: str) -> str:
 
 @mcp.tool()
 def list_tools() -> str:
-    """Use this to list all available tools with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.
+    """When in `Designer` mode, use this to tool to list all available agent tools, with their complete metadata including descriptions, parameters, and capabilities. This provides you with a complete catalog of tools that can be assigned to agents and helps you avoid creating duplicate tools.
     
     Returns:
         str: JSON formatted list of all native tools and MCP servers with full metadata
@@ -67,22 +72,18 @@ def list_tools() -> str:
 @mcp.tool()
 def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", run_id: str = "", debug: bool = False) -> str:
     """
-    Call an agent by name with a message using the `oneshot` bash script. Use this tool to delegate tasks to specialist agents. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
+    When in `Orchestrator` mode, use this tool to delegate a task to a specific agent on your team. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps or agent runs, to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
 
     **File Link Requirements:**
-    - When an agent generates or saves files, ALWAYS provide clickable file:// links at the end of your response
-    - Parse the agent's response for any file paths mentioned (look for patterns like `/artifacts/`, `.md`, `.json`, etc.)
-    - Convert absolute file paths to clickable file:// URLs (e.g., `file:///Users/chrisboden/Dropbox/AI/oneshot/artifacts/...`)
+    - Your agent team generally produce artifacts in the form of files and will return those in their final response to the `call_agent` tool. Help the end user access those files by ALWAYS providing a clickable file:// links at the end of your response to the user.
     - Present file links in a clear "Generated Files" section with descriptive labels
     - This prevents users from having to search through the artifacts directory manually
 
     **Multimodal Support:**
     - Use `files` for local media files (images, PDFs, audio, video) and text files
     - Use `urls` for web-based media content (e.g., "https://example.com/image.jpg|https://example.com/doc.pdf")
-    - Agents with multimodal-capable models (like gpt-4o) can process images, documents, audio, and video
-    - Text files are processed through the existing template system, media files are passed directly to the LLM
 
-    Use the `list_agents` tool first to see what agents are available and their descriptions to help you choose the right agent for your task.
+    Use the `list_agents` tool to see what agents are available and their descriptions to help you choose the right agent for your task.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
@@ -97,7 +98,8 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     """
     try:
         # Build command with appropriate flags
-        cmd = ["bash", str(project_root.parent / "oneshot"), agent_name, message]
+        cmd = ["bash", str(project_root / "oneshot"), agent_name, message]
+
         
         # Add files if provided
         if files:
@@ -116,7 +118,7 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
             cmd,
             capture_output=True,
             text=True,
-            cwd=project_root.parent
+            cwd=project_root
         )
         
         if result.returncode == 0:
