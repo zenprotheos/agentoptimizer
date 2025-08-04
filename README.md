@@ -62,7 +62,7 @@ Want to create your own? Just ask Cursor: *"Create an agent that summarises YouT
 ### Managing Token Costs Intelligently
 Tools like Cursor and Claude Code that use the Claude models are getting expensive—$200 is the new $20. What if we could use cheaper models to do useful work for us and save those expensive tokens for high-value software development tasks?
 
-Oneshot gives you access to pretty much all the models available via the OpenRouter gateway. You can use workhorses like GPT-4o-mini to do the grunt work and powerful models like Gemini-2.0-flash or reasoning models from OpenAI and DeepSeek for more complex tasks. Importantly, you can use Cursor on Auto mode for free to do your agent orchestration work, keeping your expensive credits for actual coding.
+Oneshot gives you access to pretty much all the models available via the OpenRouter gateway. You can use workhorses like GPT-4.1-mini to do the grunt work and powerful models like Gemini-2.5-flash or reasoning models from OpenAI and DeepSeek for more complex tasks. Importantly, you can use Cursor on Auto mode for free to do your agent orchestration work, keeping your expensive credits for actual coding.
 
 ### Learn by Building, Not Just Using
 The Oneshot system is designed to make building agents a breeze. Create a markdown file in `/agents` with some frontmatter to specify the model, allocate a few tools, give it a system instruction, and you're off to the races. Better still, you can ask Cursor or Claude Code to create a new agent for you, and they'll read the instructions and do that in one shot without you having to lift a finger.
@@ -72,12 +72,12 @@ Most AI systems are black boxes—you see the magic but not how it works. Onesho
 ### Novel Context Engineering
 Oneshot uses a novel context management approach where agents produce artifacts (files) and pass these files to each other to perform work. This allows for more accurate agent orchestration because the context window doesn't get crowded with voluminous tool output responses.
 
-This lends itself to the orchestrator → sub-agent pattern, where an orchestrator agent (like Cursor or Claude Code) delegates tasks to specialist agents. The specialist agents perform the detailed work, which may involve many tool calls and lots of context processing, but they respond back with only the artifact they produced from that process. This keeps the main thread—the orchestrator's context window—clean and focused.
+This lends itself to the orchestrator → sub-agent pattern, where an orchestrator agent (like Cursor or Claude Code) delegates tasks to specialist agents. The specialist agents perform the detailed work, which may involve many tool calls and lots of context processing, but they respond back with only the artifact they produced from that process. They agents can, in turn call other agents or sub agents to complete tasks. See the research agent for an example of how it uses a search analyst to perform discrete web search tasks. This keeps the main thread—the orchestrator's context window—clean and focused.
 
 ## Key Features
 
 ### Self-Aware and Vibecoding-Friendly
-This is somewhat meta, but one of the goals of Oneshot is to make it vibecoding-friendly. Inspired by projects like Manus, Cursor itself, v0, and Lovable, the Oneshot system has built-in instructions and guides that help it help you. The system is self-describing to tools like Cursor and Claude Code, which means they know immediately how it works and can create agents and tools, or troubleshoot when things go wrong.
+One of the goals of Oneshot is to make it vibecoding-friendly. Inspired by projects like Manus, Cursor itself, v0, and Lovable, the Oneshot system has built-in instructions and guides that help it help you. The system is self-describing to coding agents like Cursor and Claude Code, which means they know immediately how it works and can create agents and tools, or troubleshoot when things go wrong.
 
 If you're curious, you can inspect these instructions in the `.cursor/rules` directory and the `app/guides` directory. The system has access to the Logfire MCP server for inspecting its own logs and the context7 MCP server for troubleshooting core technologies like PydanticAI and OpenRouter.
 
