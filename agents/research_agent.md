@@ -14,7 +14,7 @@ tools:
   - web_search
   - web_read_page
   - search_analyst
-  - generate_pdf
+  - export_as_pdf
 ---
 
 # ABOUT YOU

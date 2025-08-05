@@ -10,6 +10,7 @@ tools:
   - agent_caller
   - read_file_metadata
   - read_file_contents
+  - file_creator
 
 ---
 

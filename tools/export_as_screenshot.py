@@ -1,13 +1,13 @@
-# tools/generate_screenshot.py
+# tools/export_as_screenshot.py
 """
-Tool: generate_screenshot
+Tool: export_as_screenshot
 Description: Generate a PNG screenshot from a markdown (.md) or HTML (.html) file using Puppeteer-based bash scripts.
 
 CLI Test:
     cd /path/to/oneshot
     python3 -c "
-from tools.generate_screenshot import generate_screenshot
-result = generate_screenshot('test_data/sample.md', visible_only=False)
+from tools.export_as_screenshot import export_as_screenshot
+result = export_as_screenshot('test_data/sample.md', visible_only=False)
 print(result)
 "
 """
@@ -37,8 +37,8 @@ TOOL_METADATA = {
     }
 }
 
-def generate_screenshot(file_path: str, visible_only: bool = False) -> str:
-    """Generate a PNG screenshot from a markdown or HTML file using the existing bash scripts"""
+def export_as_screenshot(file_path: str, visible_only: bool = False) -> str:
+    """Use this tool to generate a PNG screenshot from a markdown (.md) or HTML (.html) file. The screenshot will be created in the same artifacts directory as the input file and automatically opened for the user to view."""
     
     try:
         # Validate file path
@@ -52,9 +52,9 @@ def generate_screenshot(file_path: str, visible_only: bool = False) -> str:
         file_extension = input_path.suffix.lower()
         
         if file_extension == '.md':
-            script_name = "generate_screenshot_from_markdown"
+            script_name = "export_as_screenshot_from_markdown"
         elif file_extension == '.html':
-            script_name = "generate_screenshot_from_html"
+            script_name = "export_as_screenshot_from_html"
         else:
             return json.dumps({
                 "error": f"Unsupported file type: {file_extension}. Only .md and .html files are supported."

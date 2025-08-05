@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# pdf_from_html - Convert HTML file to PDF and open it
-# Usage: ./generate_pdf_from_html <path_to_html_file>
+# export_as_pdf_from_html - Convert HTML file to PDF and open it
+# Usage: ./export_as_pdf_from_html <path_to_html_file>
 
 set -e  # Exit on any error
 

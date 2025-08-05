@@ -1,31 +1,19 @@
 #!/bin/bash
 
-# generate_screenshot_from_markdown - Convert Markdown file to PNG screenshot via HTML rendering
-# Usage: ./generate_screenshot_from_markdown <path_to_markdown_file> [--visible-only]
+# export_as_pdf_from_markdown - Convert Markdown file to PDF via HTML rendering
+# Usage: ./export_as_pdf_from_markdown <path_to_markdown_file>
 
 set -e  # Exit on any error
 
-# Default to full page screenshot
-VISIBLE_ONLY=false
-
 # Check if argument is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <path_to_markdown_file> [--visible-only]"
+    echo "Usage: $0 <path_to_markdown_file>"
     echo "Example: $0 /path/to/document.md"
-    echo "         $0 ./README.md --visible-only"
-    echo ""
-    echo "Options:"
-    echo "  --visible-only    Capture only the visible viewport (100vh)"
-    echo "  (default)         Capture the entire page length"
+    echo "         $0 ./README.md"
     exit 1
 fi
 
 MARKDOWN_FILE="$1"
-
-# Check for visible-only flag
-if [ "$2" = "--visible-only" ]; then
-    VISIBLE_ONLY=true
-fi
 
 # Check if markdown file exists
 if [ ! -f "$MARKDOWN_FILE" ]; then
@@ -43,21 +31,12 @@ MARKDOWN_BASENAME=$(basename "$MARKDOWN_FILE" .md)
 # Temporary HTML file path
 HTML_TEMP_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME-temp.html"
 
-# Output PNG path
-if [ "$VISIBLE_ONLY" = true ]; then
-    PNG_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME-viewport.png"
-else
-    PNG_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME-fullpage.png"
-fi
+# Output PDF path
+PDF_PATH="$MARKDOWN_DIR/$MARKDOWN_BASENAME.pdf"
 
-echo "📝 Converting Markdown to PNG screenshot..."
+echo "📝 Converting Markdown to PDF..."
 echo "📄 Input:  $MARKDOWN_ABS_PATH"
-echo "🖼️  Output: $PNG_PATH"
-if [ "$VISIBLE_ONLY" = true ]; then
-    echo "📐 Mode:   Visible viewport only (100vh)"
-else
-    echo "📐 Mode:   Full page length (default)"
-fi
+echo "📑 Output: $PDF_PATH"
 
 # Ensure marked (markdown parser) is installed
 if [ ! -d "node_modules/marked" ]; then
@@ -73,7 +52,7 @@ fi
 
 echo "🔄 Converting Markdown to HTML..."
 
-# Create the markdown to HTML converter script (same as PDF version)
+# Create the markdown to HTML converter script
 cat > markdown_to_html_temp.js << 'EOF'
 const fs = require('fs');
 
@@ -291,25 +270,24 @@ node markdown_to_html_temp.js "$MARKDOWN_ABS_PATH" "$HTML_TEMP_PATH"
 # Clean up the markdown converter script
 rm markdown_to_html_temp.js
 
-echo "🔄 Converting HTML to PNG screenshot..."
+echo "🔄 Converting HTML to PDF..."
 
-# Create the screenshot generator script
-cat > screenshot_generator_temp.js << 'EOF'
+# Create the PDF generator script
+cat > pdf_generator_temp.js << 'EOF'
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 
-async function generateScreenshot() {
+async function generatePDF() {
     const htmlPath = process.argv[2];
-    const pngPath = process.argv[3];
-    const visibleOnly = process.argv[4] === 'true';
+    const pdfPath = process.argv[3];
     
     if (!fs.existsSync(htmlPath)) {
         console.error('❌ Error: HTML file not found:', htmlPath);
         process.exit(1);
     }
     
-    console.log('🚀 Starting screenshot generation...');
+    console.log('🚀 Starting PDF generation...');
     
     let browser;
     try {
@@ -319,13 +297,6 @@ async function generateScreenshot() {
         });
         
         const page = await browser.newPage();
-        
-        // Set viewport size
-        await page.setViewport({
-            width: 1920,
-            height: 1080,
-            deviceScaleFactor: 1
-        });
         
         // Load the HTML file
         const fileUrl = `file://${htmlPath}`;
@@ -338,42 +309,33 @@ async function generateScreenshot() {
         
         // Wait for dynamic content and fonts to load
         console.log('⏳ Waiting for content to load...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        console.log('📸 Taking screenshot...');
+        console.log('🖨️  Generating PDF...');
         
-        // Take screenshot with appropriate settings
-        const screenshotOptions = {
-            path: pngPath,
-            type: 'png'
-        };
+        // Generate PDF with optimized settings for markdown
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            },
+            printBackground: true,
+            preferCSSPageSize: false,
+            displayHeaderFooter: false,
+            scale: 1.0
+        });
         
-        if (visibleOnly) {
-            // Capture only the visible viewport
-            screenshotOptions.clip = {
-                x: 0,
-                y: 0,
-                width: 1920,
-                height: 1080
-            };
-            console.log('📐 Capturing visible viewport only...');
-        } else {
-            // Capture the full page
-            screenshotOptions.fullPage = true;
-            console.log('📐 Capturing full page length...');
-        }
+        // Save PDF
+        fs.writeFileSync(pdfPath, pdfBuffer);
         
-        await page.screenshot(screenshotOptions);
-        
-        // Get file size
-        const stats = fs.statSync(pngPath);
-        const fileSizeInMB = (stats.size / 1024 / 1024).toFixed(2);
-        
-        console.log(`✅ Screenshot generated successfully!`);
-        console.log(`📊 File size: ${fileSizeInMB} MB`);
+        console.log(`✅ PDF generated successfully!`);
+        console.log(`📊 File size: ${(pdfBuffer.length / 1024 / 1024).toFixed(2)} MB`);
         
     } catch (error) {
-        console.error('❌ Error generating screenshot:', error.message);
+        console.error('❌ Error generating PDF:', error.message);
         process.exit(1);
     } finally {
         if (browser) {
@@ -393,41 +355,40 @@ process.on('SIGTERM', () => {
     process.exit(1);
 });
 
-generateScreenshot().catch(error => {
+generatePDF().catch(error => {
     console.error('❌ Fatal error:', error.message);
     process.exit(1);
 });
 EOF
 
-# Run the screenshot generation
-echo "🔧 Running screenshot conversion..."
-node screenshot_generator_temp.js "$HTML_TEMP_PATH" "$PNG_PATH" "$VISIBLE_ONLY"
+# Run the PDF generation
+node pdf_generator_temp.js "$HTML_TEMP_PATH" "$PDF_PATH"
 
 # Clean up temporary files
-rm screenshot_generator_temp.js
+rm pdf_generator_temp.js
 rm "$HTML_TEMP_PATH"
 
-# Check if PNG was created successfully
-if [ -f "$PNG_PATH" ]; then
-    echo "🎉 Success! Screenshot created at: $PNG_PATH"
+# Check if PDF was created successfully
+if [ -f "$PDF_PATH" ]; then
+    echo "🎉 Success! PDF created at: $PDF_PATH"
     
-    # Open the PNG
-    echo "🖼️  Opening screenshot..."
+    # Open the PDF
+    echo "📱 Opening PDF..."
     if command -v open > /dev/null 2>&1; then
         # macOS
-        open "$PNG_PATH"
+        open "$PDF_PATH"
     elif command -v xdg-open > /dev/null 2>&1; then
         # Linux
-        xdg-open "$PNG_PATH"
+        xdg-open "$PDF_PATH"
     elif command -v start > /dev/null 2>&1; then
         # Windows (Git Bash/WSL)
-        start "$PNG_PATH"
+        start "$PDF_PATH"
     else
-        echo "📋 Screenshot ready at: $PNG_PATH"
+        echo "📋 PDF ready at: $PDF_PATH"
         echo "   (Unable to auto-open - please open manually)"
     fi
 else
-    echo "❌ Error: Screenshot was not created"
+    echo "❌ Error: PDF was not created"
     exit 1
 fi
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# generate_screenshot_from_html - Convert HTML file to PNG screenshot and open it
-# Usage: ./generate_screenshot_from_html <path_to_html_file> [--visible-only]
+# export_as_screenshot_from_html - Convert HTML file to PNG screenshot and open it
+# Usage: ./export_as_screenshot_from_html <path_to_html_file> [--visible-only]
 
 set -e  # Exit on any error
 

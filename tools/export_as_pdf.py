@@ -1,13 +1,13 @@
-# tools/generate_pdf.py
+# tools/export_as_pdf.py
 """
-Tool: generate_pdf
-Description: Generate a PDF from a markdown (.md) or HTML (.html) file
+Tool: export_as_pdf
+Description: Use this tool to export a markdown (.md) or HTML (.html) file as a PDF. The PDF will be created in the same artifacts directory as the input file and automatically opened for the user to view.
 
 CLI Test:
     cd /path/to/oneshot
     python3 -c "
-from tools.generate_pdf import generate_pdf
-result = generate_pdf('test_data/sample.md')
+from tools.export_as_pdf import export_as_pdf
+result = export_as_pdf('test_data/sample.md')
 print(result)
 "
 """
@@ -18,7 +18,7 @@ import subprocess
 TOOL_METADATA = {
     "type": "function",
     "function": {
-        "name": "generate_pdf",
+        "name": "export_as_pdf",
         "description": "Use this tool to generate a PDF from a markdown (.md) or HTML (.html) file. The PDF will be created in the same artifacts directory as the input file and automatically opened for the user to view.",
         "parameters": {
             "type": "object",
@@ -33,8 +33,8 @@ TOOL_METADATA = {
     }
 }
 
-def generate_pdf(file_path: str) -> str:
-    """Generate a PDF from a markdown or HTML file using the existing bash scripts"""
+def export_as_pdf(file_path: str) -> str:
+    """Use this tool to export a markdown (.md) or HTML (.html) file as a PDF. The PDF will be created in the same artifacts directory as the input file and automatically opened for the user to view."""
     
     try:
         # Validate file path
@@ -48,9 +48,9 @@ def generate_pdf(file_path: str) -> str:
         file_extension = input_path.suffix.lower()
         
         if file_extension == '.md':
-            script_name = "generate_pdf_from_markdown"
+            script_name = "export_as_pdf_from_markdown"
         elif file_extension == '.html':
-            script_name = "generate_pdf_from_html"
+            script_name = "export_as_pdf_from_html"
         else:
             return json.dumps({
                 "error": f"Unsupported file type: {file_extension}. Only .md and .html files are supported."
