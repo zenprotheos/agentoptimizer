@@ -22,10 +22,11 @@ This framework lets you create and orchestrate specialist AI agents without need
 Manual steps are:
 
 1. Rename `.env_example` to `.env`
-2. Add your [OpenRouter API key](https://openrouter.ai/keys) to .env
-3. Open .cursor directory and rename mcp_example.json to mcp.json
-4. In the mcp config json simply update the path you see there, ie `/Users/PATH/TO/oneshot/app/oneshot_mcp.py` to the where you actually have the oneshot repo on your computer.
-5. Enable the oneshot mcp server in Cursor>Settings>Cursor Settings>Tools & Integrations
+2. Add your [OpenRouter API key](https://openrouter.ai/keys) to `.env`
+3. Run `pip install -r requirements.txt`
+4. Open .cursor directory and rename mcp_example.json to mcp.json
+5. In the mcp config json simply update the path you see there, ie `/Users/PATH/TO/oneshot/app/oneshot_mcp.py` to the where you actually have the oneshot repo on your computer.
+6. Enable the oneshot mcp server in Cursor>Settings>Cursor Settings>Tools & Integrations
 
 Optional but recommended:
 
@@ -124,6 +125,28 @@ With Logfire integration:
 - Performance optimisation insights
 - Educational debugging experience
 
+### Flexible use
+
+You can use the oneshot system in a few different modes depending on your preference.
+
+#### MCP Server Mode
+
+Open the repo in Cursor or other AI-enabled IDE and the oneshot system becomes available as an MCP server to the coding agent (Cursor Agent, Cline, Roo, etc). In this mode, the coding agent does the orchestrating by using the oneshot mcp server to call your agents.
+
+#### Terminal
+
+Run oneshot in the terminal 
+
+```bash
+   cd app
+   ./oneshot "please generate a report for the latest nrl game involving the Broncos"
+```
+
+#### Claude Code and other CLI's
+
+Add oneshot as an mcp server either at project or global level. See included `CLAUDE.md` file which tells Claude how to use the oneshot system. Rename to `AGENTS.md` if you use Gemini or other coding CLI.
+
+
 ## Project Structure
 
 ```
@@ -132,8 +155,8 @@ oneshot/
 ├── tools/           # Python tools agents can use
 ├── artifacts/       # Agent-generated files
 ├── runs/            # Conversation histories
-├── templates/       # Output templates
-└── snippets/        # Reusable text blocks
+├── templates/       # Templates for creating formatted artifacts
+└── snippets/        # Reusable text blocks for use in agent prompts
 ```
 
 ## Advanced Patterns
@@ -172,6 +195,22 @@ This project won't get it right in one shot every time, but that's the inspirati
 Oneshot was built for the Peregian Digital Hub community—a place where people experiment with emerging technologies. The core principles are accessibility (you shouldn't need a CS degree to build useful AI), transparency (see how agents actually work, don't just use them), experimentation (fast iteration cycles, low barrier to trying new ideas), collaboration (easy sharing of agents and tools), and practical value (build things that solve real problems).
 
 Within a couple of hours, you'll have built out multiple agents with a growing portfolio of tools at their disposal. The goal is to demystify agentic systems and expose what goes into building them, while making the process genuinely enjoyable.
+
+### Starter Tools for Immediate Productivity
+The oneshot repo comes with a collection of starter tools that can be used in common knowledge work tasks. These include a todo system which allows agents to make plans and track progress (`todo_read`/`todo_write` tools); document management systemfor iterative document creation (`wip_doc_create`, `wip_doc_read`, `wip_doc_edit`); web search capabilities (`web_search`, `web_news_search`,`structured_search`, `web_image_search`- you'll need a free Brave Search API key); file operations (`file_creator`, `read_file_contents`, `export_as_pdf`, `export_as_screenshot`), and some research-specific tools like `research_planner`, `search_analyst`. 
+
+We provide these starter tools because they represent the foundational building blocks that most knowledge work agents need—whether you're researching topics, managing documents, or creating reports. Having these tools ready-to-use means you can start building productive agents immediately without having to create basic infrastructure first.
+
+The starter tools also serve as practical examples of how to build effective tools for the oneshot system. Each tool demonstrates proper error handling, clear parameter definitions, and useful output formatting. By studying these examples, you can quickly understand the patterns for creating your own tools. The tools are designed to be composable—you can chain them together in agents to create sophisticated workflows. For instance, the `research_agent` uses `web_search` to gather information, `search_analyst` to process the results, and `file_creator` to save the findings. This modular approach means you can focus on building specialized agents rather than reinventing common functionality.
+
+Note: You do not have to use these - adapt or delete as you please.
+
+### Starter Agents for Common Use Cases
+The oneshot repo includes several pre-built agents that demonstrate different patterns and capabilities. The `research_agent` shows how to create agents that can perform comprehensive research tasks using multiple tools and sub-agents. The `vision_agent` demonstrates image and PDF analysis workflows, while the `nrl_agent` showcases structured report generation with specific formatting requirements. The `web_agent` shows how to build agents that can browse the web and extract information from web pages. These starter agents cover the most common knowledge work scenarios you're likely to encounter.
+
+We provide these starter agents because they serve as both working examples and starting points for your own agent development. Each agent demonstrates different patterns for tool selection, prompt engineering, and workflow design. By studying these agents, you can quickly understand how to structure effective prompts, allocate appropriate tools, and design agents that produce useful outputs. The agents are designed to be easily customizable—you can modify their prompts, change their tool allocations, or use them as templates for creating new agents. For instance, you might use the `research_agent` as a base to create a specialized market research agent, or adapt the `nel_agent` to create an agent that generates consistent structured reports in your company's templates.
+
+Note: You do not have to use these - adapt or delete as you please.
 
 ## Getting Deeper
 
