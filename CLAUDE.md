@@ -141,6 +141,27 @@ Ensure these MCP servers are configured:
 
 Configuration location: `.cursor/mcp_example.json`
 
+## Setup
+
+Apply this rule if the user is asking for help to set up the repo
+
+<set_up_check>
+
+Of course, before we can do anything useful with this repo, we need to check if it is set up. 
+
+<how_to_check_if_repo_is_already_setup>
+You will know it is properly set up if you see the oneshot mcp server with its call_agent tool (mcp_oneshot_call_agent).
+
+Preferably, you should also see the logfire mcp server with its arbitrary_query tool (mcp_logfire_arbitrary_query) in your tools. Logfire is not essential but strongly recommended.
+</how_to_check_if_repo_is_already_setup>
+<how_to_start_setup>
+You MUST read app/guides/how_to_setup.md and guide the user through setup, doing the tasks you can and helping the user through the manual steps. Once successfully setup, come back and remove this URGENT & IMPORTANT SETUP section of this onboarding document. That will ensure that you don't unnecessarily repeat the setup steps in future.
+</how_to_start_setup>
+<final_setup_check>
+CRITICAL: Ask yourself, is the oneshot system setup based on the guide above? If yes, delete this section and then continue with your task.
+</final_setup_check>
+</set_up_check>
+
 ## Error Handling
 
 If you encounter issues:
@@ -167,3 +188,4 @@ If you encounter issues:
 ---
 
 Remember: Your effectiveness depends on correctly identifying your role and following the appropriate initialization protocol. When in doubt, ask the user for clarification.
+

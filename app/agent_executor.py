@@ -119,6 +119,28 @@ class AgentExecutor:
         
         return list(set(tool_calls))  # Unique tool names used
     
+    def _append_files_to_message(self, message: str, files: List[str] = None, urls: List[str] = None) -> str:
+        """Append file information to message when agent has no template-based file handling"""
+        if not files and not urls:
+            return message
+        
+        # Build the file list
+        file_list = []
+        if files:
+            file_list.extend(files)
+        if urls:
+            file_list.extend(urls)
+        
+        if not file_list:
+            return message
+        
+        # Append file information to the message
+        appended_message = message + "\n\nProvided files:\n"
+        for filepath in file_list:
+            appended_message += f"- {filepath}\n"
+        
+        return appended_message
+    
     def _handle_execution_error(self, e: Exception, run_id: str = None) -> Dict[str, Any]:
         """Handle execution errors with specific messaging"""
         from pydantic_ai.exceptions import UsageLimitExceeded
@@ -235,10 +257,17 @@ class AgentExecutor:
             # Set run ID in tool helper for file organization
             tool_services.set_run_id(run_id)
             
+            # Handle message appending for agents without template-based file handling
+            final_message = message
+            if config.template_strategy == 'message_append' and (files or urls):
+                final_message = self._append_files_to_message(message, files, urls)
+                if self.debug:
+                    print(f"Agent has no file template variables, appending files to message")
+            
             # Run the agent with message history
             if is_multimodal:
                 # Use multimodal message construction
-                message_parts = multimodal_result.create_message_parts(message)
+                message_parts = multimodal_result.create_message_parts(final_message)
                 if mcp_servers:
                     async with agent.run_mcp_servers():
                         result = await agent.run(message_parts, message_history=message_history, usage_limits=usage_limits)
@@ -248,9 +277,9 @@ class AgentExecutor:
                 # Use existing text-based flow
                 if mcp_servers:
                     async with agent.run_mcp_servers():
-                        result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+                        result = await agent.run(final_message, message_history=message_history, usage_limits=usage_limits)
                 else:
-                    result = await agent.run(message, message_history=message_history, usage_limits=usage_limits)
+                    result = await agent.run(final_message, message_history=message_history, usage_limits=usage_limits)
             
             # Prepare response data
             response_data = {

@@ -1,11 +1,20 @@
 {
   "mcpServers": {
-    "bmi_calculator": {
+    "oneshot": {
       "command": "python3",
       "type": "stdio",
+      "args": ["/Users/PATH/TO/oneshot/app/oneshot_mcp.py"]
+    },
+    "context7": {
+      "command": "npx",
       "args": [
-        "/Users/PATH_TO_FILE/bmi_mcp.py"
+        "-y",
+        "@upstash/context7-mcp"
       ]
+    },
+    "logfire": {
+      "command": "uvx",
+      "args": ["logfire-mcp@latest", "--read-token=LOGFIRE_READ_TOKEN_GOES_HERE"]
     }
   }
 }

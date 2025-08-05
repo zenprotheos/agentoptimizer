@@ -12,7 +12,7 @@ from app.agent_errors import AgentConfigError
 
 class AgentConfig:
     """Simplified agent configuration - just parse what we need"""
-    def __init__(self, config_data: Dict[str, Any]):
+    def __init__(self, config_data: Dict[str, Any], template_strategy: str = None):
         self.name = config_data['name']
         self.description = config_data['description']
         self.model = config_data['model']
@@ -27,6 +27,7 @@ class AgentConfig:
         self.mcp = config_data.get('mcp', [])
         self.system_prompt = config_data['system_prompt']
         self.request_limit = config_data.get('request_limit')  # Per-agent override for usage limits
+        self.template_strategy = template_strategy or 'message_append'  # Default fallback strategy
 
 
 class AgentConfigManager:
@@ -75,7 +76,7 @@ class AgentConfigManager:
                 if key not in config_data:
                     config_data[key] = default_value
             
-            return AgentConfig(config_data)
+            return AgentConfig(config_data, template_result['template_strategy'])
         except AgentConfigError:
             # Re-raise agent config errors as-is (they have helpful messages)
             raise

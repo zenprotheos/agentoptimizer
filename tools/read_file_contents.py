@@ -1,7 +1,7 @@
 # tools/read_file_contents.py
 """
 Tool: read_file_contents
-Description: Read full content from markdown or JSON files in the artifacts directory
+Description: Read the full content of markdown or JSON files in the artifacts directory
 
 CLI Test:
     cd /path/to/oneshot

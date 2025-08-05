@@ -140,6 +140,265 @@ from app.tool_services import *
 - **Context Variables**: Rich template context for dynamic prompt generation
 - **Tool Services Integration**: Built-in variables available in all LLM calls
 
+## File Handling Architecture
+
+The oneshot system provides sophisticated file handling capabilities that integrate seamlessly with the template system and multimodal processing. Understanding this architecture is crucial for debugging, extending, and troubleshooting file-related issues.
+
+### File Processing Pipeline
+
+```mermaid
+flowchart TB
+    FI[Files Input] --> TP[Template Processor]
+    FI --> MP[Multimodal Processor]
+    
+    subgraph "Template Processing"
+        TP --> BD[Binary Detection]
+        BD --> TC[Text Content Reading]
+        BD --> BP[Binary Placeholder]
+        TC --> CTX[Template Context Creation]
+        BP --> CTX
+        CTX --> TR[Template Rendering]
+    end
+    
+    subgraph "Multimodal Processing"
+        MP --> MD[Media Detection]
+        MD --> BC[Binary Content Objects]
+        MD --> UC[URL Content Objects]
+        BC --> MM[Multimodal Messages]
+        UC --> MM
+    end
+    
+    TR --> SP[System Prompt]
+    MM --> AP[Agent Processing]
+    SP --> AP
+    
+    style TP fill:#e1f5fe
+    style MP fill:#f3e5f5
+    style AP fill:#e8f5e8
+```
+
+### Template Context Variables
+
+The `AgentTemplateProcessor._process_files_context()` method creates three distinct template variables from file inputs:
+
+#### 1. `provided_files` (Dict[str, str])
+- **Purpose**: Full file contents for template injection
+- **Structure**: `{filepath: content}`
+- **Usage**: When agents need complete file contents in system prompt
+- **Memory Impact**: High - stores full content of all files
+- **Binary Handling**: Binary files get placeholder text: `"[Binary file: {EXT} image/media content]"`
+
+```python
+# Example content:
+{
+    "/path/to/report.md": "# Analysis Report\nDetailed content...",
+    "/path/to/image.jpg": "[Binary file: JPG image/media content]"
+}
+```
+
+#### 2. `provided_filepaths` (List[str])
+- **Purpose**: File path references for lightweight context
+- **Structure**: `[filepath1, filepath2, ...]`
+- **Usage**: When agents need file awareness without content bloat
+- **Memory Impact**: Minimal - only stores paths
+- **Use Case**: Agents that will read files selectively using tools
+
+```python
+# Example content:
+["/path/to/report.md", "/path/to/data.json", "/path/to/image.jpg"]
+```
+
+#### 3. `provided_files_summary` (str)
+- **Purpose**: AI-generated summary of provided files
+- **Structure**: Simple string description
+- **Usage**: Balanced approach between awareness and performance
+- **Generation**: Concatenates readable files for summary creation
+- **Fallback**: "No readable files provided" if no text files found
+
+### Template Strategy Detection
+
+The system automatically detects which file handling strategy to use based on template content:
+
+```python
+def _detect_template_strategy(self, system_prompt: str) -> str:
+    if '<$provided_files$>' in system_prompt:
+        return 'full_content'           # Legacy tag support
+    elif '<$provided_filepaths$>' in system_prompt:
+        return 'file_paths_only'        # Legacy tag support
+    elif '<$provided_files_summary$>' in system_prompt:
+        return 'summary_only'           # Legacy tag support
+    elif 'provided_files' in system_prompt or 'provided_filepaths' in system_prompt:
+        return 'template_variables'     # Modern Jinja2 templates
+    else:
+        return 'message_append'         # Fallback: append to message
+```
+
+### Message Append Fallback Strategy
+
+When an agent has **no file handling template variables** but receives files via the `--files` parameter, the system automatically falls back to the `message_append` strategy:
+
+#### Implementation
+```python
+def _append_files_to_message(self, message: str, files: List[str] = None, urls: List[str] = None) -> str:
+    """Append file information to message when agent has no template-based file handling"""
+    if not files and not urls:
+        return message
+    
+    # Build combined file list
+    file_list = []
+    if files:
+        file_list.extend(files)
+    if urls:
+        file_list.extend(urls)
+    
+    # Append file information to the message
+    appended_message = message + "\n\nProvided files:\n"
+    for filepath in file_list:
+        appended_message += f"- {filepath}\n"
+    
+    return appended_message
+```
+
+#### Message Format
+The agent receives the original message with file paths appended:
+
+```
+[Original user message]
+
+Provided files:
+- /path/to/file1.txt
+- /path/to/file2.md
+- https://example.com/document.pdf
+```
+
+#### Key Characteristics
+- **Automatic**: No agent configuration changes needed
+- **Lightweight**: Only file paths, not content
+- **Tool-dependent**: Agent must have file reading tools to access content
+- **Universal**: Works with any agent regardless of template design
+- **Multimodal-compatible**: Handles both files and URLs
+
+**Original message:**
+```
+"Analyze this data for trends"
+```
+
+**Enhanced message (with files):**
+```
+"Analyze this data for trends
+
+Provided files:
+- /path/to/data.csv
+- /path/to/report.pdf
+- https://example.com/chart.png
+"
+```
+
+This ensures that agents without explicit file handling templates still receive awareness of provided files, maintaining backward compatibility while encouraging users to pass relevant files.
+
+### Binary File Detection
+
+The `_is_binary_file()` method identifies binary files by extension:
+
+```python
+binary_extensions = {
+    # Images: .png, .jpg, .jpeg, .gif, .bmp, .tiff, .webp, .svg, .ico
+    # Video: .mp4, .avi, .mov, .wmv, .flv, .webm, .mkv, .m4v
+    # Audio: .mp3, .wav, .flac, .aac, .ogg, .wma, .m4a
+    # Documents: .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx
+    # Archives: .zip, .rar, .7z, .tar, .gz, .bz2
+    # Executables: .exe, .dll, .so, .dylib, .app
+    # Other: .bin, .dat, .db, .sqlite
+}
+```
+
+### Multimodal Integration
+
+The system provides dual-track processing for binary files:
+
+#### Track 1: Template Context (Text Representation)
+- Binary files get placeholder text in `provided_files`
+- Enables template-based awareness of media files
+- Allows agents to reference files in system prompts
+
+#### Track 2: Multimodal Content (Binary Processing)
+- `MultimodalProcessor` creates appropriate content objects:
+  - `BinaryContent` for local files
+  - `ImageUrl`, `DocumentUrl`, `AudioUrl`, `VideoUrl` for URLs
+- Passed as separate message parts to the agent
+- Enables actual processing of binary content
+
+### Error Handling Patterns
+
+#### File Read Errors
+```python
+try:
+    content = self.tool_services.read(filepath)
+    file_contents[filepath] = content
+except Exception as e:
+    file_contents[filepath] = f"[ERROR READING FILE: {e}]"
+    # Continue processing other files
+```
+
+#### Template Rendering Errors
+- `TemplateNotFound`: Missing snippet includes
+- `TemplateSyntaxError`: Invalid Jinja2 syntax
+- `TemplateProcessingError`: General rendering failures
+
+#### Multimodal Processing Errors
+- `MultimodalFileError`: File access, size, or format issues
+- `MultimodalURLError`: URL validation or network issues
+- `MultimodalCapabilityError`: Missing PydanticAI multimodal support
+
+### Performance Considerations
+
+#### Memory Usage by Strategy
+- **`provided_files`**: O(total_file_size) - Can be very large
+- **`provided_filepaths`**: O(number_of_files) - Minimal memory
+- **`provided_files_summary`**: O(summary_length) - Small, fixed size
+
+#### Processing Time
+- **Binary Detection**: O(1) per file - Fast extension lookup
+- **Text File Reading**: O(file_size) - Linear with content size
+- **Template Rendering**: O(template_complexity) - Depends on Jinja2 operations
+
+#### Best Practices for Performance
+1. Use `provided_filepaths` for large files when full content isn't needed
+2. Implement file size limits in agent configurations
+3. Consider lazy loading patterns for optional file content
+4. Use binary detection to avoid reading large media files as text
+
+### Integration Points
+
+#### With Agent Executor
+- `AgentExecutor._process_multimodal_inputs()` coordinates with template processing
+- System prompt gets modified with template context before agent creation
+- Multimodal content objects are passed separately to agent
+
+#### With Tool Services
+- `tool_services.read()` used for file content retrieval
+- Run ID integration ensures proper artifact organization
+- Built-in template variables available in all contexts
+
+### Troubleshooting Common Issues
+
+#### Files Not Appearing in Agent Context
+1. **Check template variables**: Agent must use `{% if provided_files %}` or similar
+2. **Verify file paths**: Ensure files exist and are readable
+3. **Check binary detection**: Binary files only show placeholders in templates
+
+#### Template Rendering Failures
+1. **Validate Jinja2 syntax**: Check for unclosed tags or invalid expressions
+2. **Verify snippet includes**: Ensure referenced snippets exist in `/snippets`
+3. **Check context variables**: Verify all referenced variables are available
+
+#### Multimodal Processing Issues
+1. **PydanticAI version**: Ensure multimodal classes are available
+2. **File format support**: Check against supported extensions list
+3. **File size limits**: Verify files are within configured size limits
+
+This architecture provides a robust foundation for flexible file handling while maintaining clear separation between text processing and multimodal capabilities.
+
 ## Entry Points and Interfaces
 
 ```mermaid

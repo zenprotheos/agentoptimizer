@@ -12,16 +12,33 @@ print(result)
 "
 """
 
-from app.tool_services import ai
+from app.tool_services import *
+import json
 
-# Tool metadata for the agent system
 TOOL_METADATA = {
-    "name": "file_creator",
-    "description": "Create and save files with content, automatically organized by conversation run",
-    "parameters": {
-        "content": "The content to save in the file",
-        "description": "A description of what the file contains", 
-        "filename": "Optional specific filename (if not provided, auto-generated)"
+    "type": "function",
+    "function": {
+        "name": "file_creator",
+        "description": "Use this tool to create and save files with content to the artifacts directory. Files include metadata like creation time, token count, and description. Perfect for saving agent outputs, research results, or any generated content.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string", 
+                    "description": "The text content to save in the file. Can be plain text, markdown, JSON, or any text format."
+                },
+                "description": {
+                    "type": "string", 
+                    "description": "Human-readable description of what the file contains. This appears in the file metadata and helps with organization.",
+                    "default": "Generated file"
+                },
+                "filename": {
+                    "type": "string", 
+                    "description": "Optional specific filename. If not provided, a timestamped filename will be auto-generated. Include extension if needed (e.g., 'report.md', 'data.json')."
+                }
+            },
+            "required": ["content"]
+        }
     }
 }
 
@@ -37,31 +54,26 @@ def file_creator(content: str, description: str = "Generated file", filename: st
         filename: Optional specific filename (if not provided, auto-generated)
     
     Returns:
-        str: Information about the saved file including filepath and run organization
+        str: JSON response with file details
     """
     try:
-        # Use the ai.save function which now organizes by run ID
-        result = ai.save(content, description, filename)
+        # Use the save function which organizes by run ID
+        result = save(content, description, filename)
         
-        # Format a nice response
-        response = f"""✅ **File Created Successfully**
-
-**File Details:**
-- **Filepath:** `{result['filepath']}`
-- **Run ID:** `{result['run_id'] or 'No run ID set'}`
-- **Artifacts Directory:** `{result['artifacts_dir']}`
-- **Description:** {description}
-- **Tokens:** {result['frontmatter']['tokens']}
-- **Created:** {result['frontmatter']['created']}
-
-**Content Preview:**
-```
-{content[:200]}{'...' if len(content) > 200 else ''}
-```
-
-The file has been saved to the run-specific artifacts directory for easy organization and educational inspection."""
-        
-        return response
+        # Return minimal JSON response with file reference
+        return json.dumps({
+            "success": True,
+            "filepath": result["filepath"],
+            "run_id": result["run_id"],
+            "artifacts_dir": result["artifacts_dir"],
+            "description": description,
+            "tokens": result["frontmatter"]["tokens"],
+            "created": result["frontmatter"]["created"],
+            "preview": content[:100] + "..." if len(content) > 100 else content
+        }, indent=2)
         
     except Exception as e:
-        return f"❌ **Error creating file:** {str(e)}" 
+        return json.dumps({
+            "success": False,
+            "error": str(e)
+        }, indent=2) 

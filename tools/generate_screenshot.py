@@ -18,7 +18,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "generate_screenshot",
-        "description": "Generate a PNG screenshot from a markdown (.md) or HTML (.html) file using Puppeteer-based bash scripts. The screenshot will be created in the same directory as the input file and automatically opened.",
+        "description": "Use this tool to generate a PNG screenshot from a markdown (.md) or HTML (.html) file. The screenshot will be created in the same artifacts directory as the input file and automatically opened for the user to view.",
         "parameters": {
             "type": "object",
             "properties": {

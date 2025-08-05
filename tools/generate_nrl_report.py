@@ -1,3 +1,16 @@
+# tools/generate_nrl_report.py
+"""
+Tool: generate_nrl_report
+Description: An example tool that shows an end to end process for creating a report artifact in a specific presentation template. The tool generate a comprehensive NRL match report by performing a search of live data, using openai/gpt-4o-mini-search-preview, returning a structured JSON response, populating a template HTML file, and generating a PDF.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.generate_nrl_report import generate_nrl_report
+result = generate_nrl_report('Cowboys vs Dragons, 25 July 2025')
+print(result)
+"
+"""
 from app.tool_services import *
 import json
 import shutil
@@ -9,7 +22,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "generate_nrl_report",
-        "description": "Generate a comprehensive NRL match report by researching live data and creating a PDF",
+        "description": "Use this tool to generate a comprehensive NRL match report by researching live data and creating a PDF.",
         "parameters": {
             "type": "object",
             "properties": {

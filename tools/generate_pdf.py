@@ -19,7 +19,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "generate_pdf",
-        "description": "Generate a PDF from a markdown (.md) or HTML (.html) file. The PDF will be created in the same directory as the input file and automatically opened.",
+        "description": "Use this tool to generate a PDF from a markdown (.md) or HTML (.html) file. The PDF will be created in the same artifacts directory as the input file and automatically opened for the user to view.",
         "parameters": {
             "type": "object",
             "properties": {

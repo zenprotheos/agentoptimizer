@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Meta tool for Orchestration agents
+Meta tool for use by an Orchestration agent to read guides that explain how to perform important tasks in the oneshot system.
 """
 
 import os
@@ -12,7 +12,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "read_howto_docs",
-        "description": "Read documentation files from the guides directory with frontmatter parsing",
+        "description": "Use this tool to read guides which explain how to perform important tasks in the oneshot system. It will read the file and return the contents, including any frontmatter metadata.",
         "parameters": {
             "type": "object",
             "properties": {

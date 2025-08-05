@@ -25,27 +25,33 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "agent_caller",
-        "description": "Call another agent from within an agent. Allows for agent-to-agent communication and delegation of tasks. Returns the agent's response along with metadata about the call.",
+        "description": "Call another agent to delegate tasks and enable agent-to-agent workflows. This tool allows you to invoke specialist agents and pass them messages and files as context to perform their tasks. Returns the agent's response with execution metadata. Perfect for orchestrating multi-agent workflows where different agents handle different aspects of a task.",
         "parameters": {
             "type": "object",
             "properties": {
                 "agent_name": {
                     "type": "string", 
-                    "description": "Name of the agent to call (e.g., 'web_agent', 'knowledge_agent')"
+                    "description": "Name of the agent to call. The list_agents tool can be used to show all of the available agents."
                 },
                 "message": {
                     "type": "string",
-                    "description": "Message to send to the agent"
+                    "description": "A clear instruction or question to send to the target agent. Be specific about *what* you want the agent to accomplish but trust that they know *how* to do it. The agent will receive this message and execute their specialised tools to complete the task."
                 },
                 "run_id": {
                     "type": "string",
-                    "description": "Optional run ID to continue an existing conversation with the target agent",
+                    "description": "Optional run ID to continue an existing conversation with the target agent. Use this to maintain context across multiple calls to the same agent, allowing for follow-up questions or multi-step workflows.",
                     "default": None
                 },
                 "files": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Optional list of file paths to pass context to the called agent",
+                    "description": "Optional list of file paths to pass as context to the delegated agent. The agent will be able to read the full content of these files and can use them in their task execution. Useful for passing outputs from previous agent calls or providing reference materials.",
+                    "default": []
+                },
+                "urls": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional list of URLs to pass as context to the delegated agent. The agent will be able to access these web resources and can use them in their task execution. Useful for passing web-based media content (images, documents, etc.) for multimodal processing.",
                     "default": []
                 }
             },
@@ -58,7 +64,8 @@ def agent_caller(
     agent_name: str, 
     message: str, 
     run_id: Optional[str] = None,
-    files: List[str] = None
+    files: List[str] = None,
+    urls: List[str] = None
 ) -> str:
     """
     Call another agent from within an agent execution context.
@@ -73,6 +80,8 @@ def agent_caller(
     
     if files is None:
         files = []
+    if urls is None:
+        urls = []
     
     try:
         # Get project root (where the 'agent' bash script is located)
@@ -87,7 +96,7 @@ def agent_caller(
                 "call_id": str(uuid.uuid4())[:8]
             }, indent=2)
         
-        # Prepare the enhanced message with file contents
+        # Prepare the enhanced message with file contents and URLs
         enhanced_message = message
         
         # Add file contents if files are provided
@@ -106,6 +115,15 @@ def agent_caller(
             
             if file_contents:
                 enhanced_message += f"\n\nFILE CONTEXT:\n{''.join(file_contents)}"
+        
+        # Add URL context if URLs are provided
+        if urls:
+            url_context = []
+            for url in urls:
+                url_context.append(f"=== URL: {url} ===")
+            
+            if url_context:
+                enhanced_message += f"\n\nURL CONTEXT:\n{chr(10).join(url_context)}"
         
         # Build command
         cmd = ["bash", str(agent_script), agent_name, enhanced_message]
@@ -158,6 +176,7 @@ def agent_caller(
                 "called_agent": agent_name,
                 "message": message,
                 "files_passed": files,
+                "urls_passed": urls,
                 "run_id": run_id,
                 "response": clean_response,
                 "usage": usage_info,
@@ -192,6 +211,7 @@ def agent_caller(
                 "called_agent": agent_name,
                 "message": message,
                 "files_passed": files,
+                "urls_passed": urls,
                 "run_id": run_id,
                 "error": error_msg,
                 "success": False,

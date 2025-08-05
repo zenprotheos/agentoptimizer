@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
 from app.oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
 from app.oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
+from app.oneshot_mcp_tools.ask_oneshot_expert import ask_oneshot_expert as ask_expert_impl
 
 # Create the MCP server
 mcp = FastMCP(
@@ -75,28 +76,30 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     """
     When in `Orchestrator` mode, use this tool to delegate a task to a specific agent on your team. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps or agent runs, to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
 
-    **File Link Requirements:**
-    - Agents produce files as artifacts. Always provide clickable file:// links in "Generated Files" section
-    - Use descriptive labels to help users find outputs easily
+    **CRITICAL: For image analysis, NEVER put file paths in the message text. Use the `files` parameter only.**
+
+    **File Parameter Format:**
+    - Single file: files="/absolute/path/to/file.png"  
+    - Multiple files: files="/path/file1.jpg|/path/file2.pdf"
+    - DO NOT use JSON format like "['/path/file']" - use plain string only
 
     **Multimodal Support:**
     - `files`: local media files (images, PDFs, audio, video) + text files
     - `urls`: web-based media content (pipe-separated: "url1|url2")
-    - Supported: images (jpg, png, gif, webp), PDFs, audio (mp3, wav, m4a), video (mp4, mov, avi)
-    - For images: use `files` parameter, NOT message text
+    - Supported: images (jpg, png, gif, webp), PDFs, audio (mp3, wav, m4a)
 
-    **URL Handling:**
-    - Use `urls` parameter for web media, NEVER in message text
-    - Multiple URLs: pipe-separated format
-
+    **Examples:**
+    - Image analysis: files="/Users/user/image.png", message="What do you see?"
+    - Multiple files: files="/path/doc.pdf|/path/image.jpg", message="Analyze these"
+    - Web image: urls="https://example.com/image.jpg", message="Describe this"
 
     Use `list_agents` to see available agents and their capabilities.
     
     Args:
         agent_name: Name of the agent (e.g., 'web_agent')
-        message: Message to send to the agent
-        files: Pipe-separated list of file paths (e.g. "file1.md|file2.md"). Default empty string.
-        urls: Pipe-separated list of URLs for media content (e.g. "https://example.com/image.jpg|https://example.com/doc.pdf"). Default empty string.
+        message: Message to send to the agent (do NOT include file paths here)
+        files: Plain string with absolute file paths, pipe-separated for multiple files
+        urls: Plain string with URLs, pipe-separated for multiple URLs  
         run_id: Optional run ID to continue an existing conversation (if None, starts new conversation)
         debug: If True, returns detailed debug output including tool calls
         
@@ -145,6 +148,24 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
     except Exception as e:
         return f"ERROR: Failed to call agent {agent_name}: {e}"
 
+@mcp.tool()
+async def ask_oneshot_expert(question: str) -> str:
+    """When in `Developer` mode and need assistance to quickly get to the heart of a problem, debug or understand the oneshot system, you can use this tool to ask a question of a simulated senior developer who has deep knowledge of the system architecture and implementation.
+    
+    Args:
+        question: The question to ask about the oneshot system, architecture, implementation, or usage. Be as specific as possible about the problem you are experiencing anf the kind of help you need.
+        
+    Returns:
+        str: JSON formatted response from the expert including the detailed technical answer
+    """
+    try:
+        return await ask_expert_impl(question, str(project_root))
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"Failed to get expert response: {str(e)}",
+            "question": question
+        }, indent=2)
 
 
 if __name__ == "__main__":

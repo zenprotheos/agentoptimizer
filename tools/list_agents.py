@@ -1,7 +1,7 @@
 # tools/list_agents.py
 """
 Tool: list_agents
-Description: List all available agents in the core agents directory with their names, descriptions, models, and tools
+Description: A tool for Orchestration agents to list all available agents in the oneshot system with their names, descriptions, models, and tools
 
 CLI Test:
     cd /path/to/oneshot
@@ -18,7 +18,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "list_agents",
-        "description": "List all available agents in the core agents directory with their names, descriptions, models, and tools to help choose which agent to use for a specific task",
+        "description": "Use this tool to get a list of all the agents available in the oneshot system, with their names, descriptions, models, and tools to help choose which agent to use for a specific task and avoid duplication.",
         "parameters": {
             "type": "object",
             "properties": {},

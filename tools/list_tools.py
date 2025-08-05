@@ -1,11 +1,23 @@
 # tools/list_tools.py
+"""
+Tool: list_tools
+Description: List all available tools in the tools directory with their names, descriptions, parameters, and capabilities
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.list_tools import list_tools
+result = list_tools()
+print(result)
+"
+"""
 from app.tool_services import *
 
 TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "list_tools",
-        "description": "Lists all available tools with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.",
+        "description": "Use this tool to get a list of all the tools available in the oneshot system, with their complete metadata including descriptions, parameters, and capabilities. This provides the complete catalog of tools that can be assigned to agents.",
         "parameters": {
             "type": "object",
             "properties": {},

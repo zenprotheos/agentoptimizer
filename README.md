@@ -17,8 +17,20 @@ This framework lets you create and orchestrate specialist AI agents without need
 
 ### Setup (2 minutes)
 1. Clone this repo in Cursor: `https://github.com/chrisboden/oneshot`
-2. Rename `.env_example` to `.env`
-3. Add your [OpenRouter API key](https://openrouter.ai/keys)
+2. Ask Cursor or Claude Code to set it up for you. You'll need your Openrouter key handy. It should be able to do the rest with a little bit of input from you.
+
+Manual steps are:
+
+1. Rename `.env_example` to `.env`
+2. Add your [OpenRouter API key](https://openrouter.ai/keys) to .env
+3. Open .cursor directory and rename mcp_example.json to mcp.json
+4. In the mcp config json simply update the path you see there, ie `/Users/PATH/TO/oneshot/app/oneshot_mcp.py` to the where you actually have the oneshot repo on your computer.
+5. Enable the oneshot mcp server in Cursor>Settings>Cursor Settings>Tools & Integrations
+
+Optional but recommended:
+
+1. Add your Logfire token to .env so that Cursor/Claude Code can inspect logs and help you debug when things go wrong. Cursor can guide you through how to do this.
+2. Get a Brave search api key and add it to your .env file as you'll need it for some of the provided tools. Do that [here] (https://brave.com/search/api/)
 
 ### Your First Agent
 
@@ -30,7 +42,7 @@ Simply ask your AI assistant (Cursor/Claude) to delegate tasks to one of the exa
 
 **"Create a match report for the latest Broncos game"** → Your assistant will use the nrl_agent
 
-**"Create an agent that summarises YouTube videos"** → Your assistant will build a custom agent for you
+**"Create a news agent that produces pdf reports for any topic"** → Your assistant will build a custom news agent for you
 
 
 ## Create your own agents

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Tool: read_file_metadata
-Description: Read metadata from markdown or JSON files in the artifacts directory
+Description: Read only the metadata from markdown or JSON files in the artifacts directory, to help understand whether to read the full file or not
 
 CLI Test:
     cd /path/to/oneshot
