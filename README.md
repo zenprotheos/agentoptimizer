@@ -31,7 +31,7 @@ Manual steps are:
 Optional but recommended:
 
 1. Add your Logfire token to .env so that Cursor/Claude Code can inspect logs and help you debug when things go wrong. Cursor can guide you through how to do this.
-2. Get a Brave search api key and add it to your .env file as you'll need it for some of the provided tools. Do that [here] (https://brave.com/search/api/)
+2. Get a Brave search api key and add it to your .env file as you'll need it for some of the provided tools. Do that [here](https://brave.com/search/api/)
 
 ### Your First Agent
 
