@@ -85,7 +85,7 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
 
     **Multimodal Support:**
     - `files`: local media files (images, PDFs, audio, video) + text files
-    - `urls`: web-based media content (pipe-separated: "url1|url2")
+    - `urls`: use this for pointing to web-based media files (pipe-separated: "url1|url2")
     - Supported: images (jpg, png, gif, webp), PDFs, audio (mp3, wav, m4a)
 
     **Examples:**

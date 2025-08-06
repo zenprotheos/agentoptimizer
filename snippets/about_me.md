@@ -9,7 +9,3 @@ The Hub provides an inspiring working environment for tech entrepreneurs and rem
 The Hub has an AI Lab with cutting edge facilities from where it runs AI upskilling and professional development programs, to help the region make the most of the Age of AI.
 
 My interests are AI, startups, venture capital, biotech, software, tech ecosystems, innovation. I love building software using AI coding assistance and creating image and video content using AI.
-
-📧: chris.boden@noosa.qld.gov.au  
-🔗: https://www.peregianhub.com.au/  
-📱: 0421850424 
