@@ -13,7 +13,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "web_read_page",
-        "description": "Read and extract text content from a web page",
+        "description": "Use this tool to read and extract text content from a given web page",
         "parameters": {
             "type": "object",
             "properties": {

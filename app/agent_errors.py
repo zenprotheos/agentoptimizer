@@ -412,4 +412,29 @@ class MultimodalCapabilityError(MultimodalProcessingError):
                 "Try with text-only processing as fallback"
             ]
         
-        super().__init__(message, agent_file, suggestions) 
+        super().__init__(message, agent_file, suggestions)
+
+
+class LLMAPIError(AgentConfigError):
+    """Simple error handling for LLM API failures that encourages checking run artifacts"""
+    
+    def __init__(self, original_error: Exception, run_id: str = None, 
+                 agent_file: Optional[Path] = None, run_directory: Optional[Path] = None):
+        self.original_error = original_error
+        self.run_id = run_id
+        self.run_directory = run_directory
+        
+        error_message = str(original_error)
+        message = f"LLM API error: {error_message}"
+        
+        suggestions = [
+            f"📁 Check run artifacts in runs/{self.run_id}/ to assess what work was completed",
+            "🔄 Consider continuing with existing run_id rather than starting a new run",
+            "⚡ Many LLM errors are transient - the agent may have made substantial progress"
+        ]
+        
+        # Add run directory info if it exists
+        if self.run_directory and self.run_directory.exists():
+            suggestions.insert(0, f"📊 Run directory exists at {self.run_directory} - inspect contents first")
+        
+        super().__init__(message, agent_file, suggestions)

@@ -35,6 +35,11 @@ TOOL_METADATA = {
                 "filename": {
                     "type": "string", 
                     "description": "Optional specific filename. If not provided, a timestamped filename will be auto-generated. Include extension if needed (e.g., 'report.md', 'data.json')."
+                },
+                "add_frontmatter": {
+                    "type": "boolean",
+                    "description": "Whether to add YAML frontmatter with metadata to the file. Defaults to False.",
+                    "default": False
                 }
             },
             "required": ["content"]
@@ -42,7 +47,7 @@ TOOL_METADATA = {
     }
 }
 
-def file_creator(content: str, description: str = "Generated file", filename: str = None) -> str:
+def file_creator(content: str, description: str = "Generated file", filename: str = None, add_frontmatter: bool = False) -> str:
     """
     Create and save a file with the given content.
     
@@ -52,13 +57,14 @@ def file_creator(content: str, description: str = "Generated file", filename: st
         content: The content to save in the file
         description: A description of what the file contains
         filename: Optional specific filename (if not provided, auto-generated)
+        add_frontmatter: Whether to add YAML frontmatter with metadata (default: False)
     
     Returns:
         str: JSON response with file details
     """
     try:
         # Use the save function which organizes by run ID
-        result = save(content, description, filename)
+        result = save(content, description, filename, add_frontmatter)
         
         # Return minimal JSON response with file reference
         return json.dumps({

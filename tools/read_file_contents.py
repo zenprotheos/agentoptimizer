@@ -1,7 +1,7 @@
 # tools/read_file_contents.py
 """
 Tool: read_file_contents
-Description: Read the full content of markdown or JSON files in the artifacts directory
+Description: Read the full content of markdown, JSON, or XML files in the artifacts directory
 
 CLI Test:
     cd /path/to/oneshot
@@ -13,18 +13,19 @@ print(result)
 """
 
 from app.tool_services import *
+import xml.etree.ElementTree as ET
 
 TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "read_file_contents",
-        "description": "Use this tool to read the full content of markdown or JSON files in the artifacts directory",
+        "description": "Use this tool to read the full content of markdown, JSON, or XML files in the artifacts directory",
         "parameters": {
             "type": "object",
             "properties": {
                 "filepath": {
                     "type": "string",
-                    "description": "Path to the file in the artifacts directory (e.g., 'ec3aa3b5/20250725_083525_results.md' or '1910ea06/20250725_084543_results.json')"
+                    "description": "Path to the file in the artifacts directory (e.g., 'ec3aa3b5/20250725_083525_results.md', '1910ea06/20250725_084543_results.json', or '0808_151552_fadf/gpt5_research.xml')"
                 },
                 "include_metadata": {
                     "type": "boolean",
@@ -38,7 +39,7 @@ TOOL_METADATA = {
 }
 
 def read_file_contents(filepath: str, include_metadata: bool = True) -> str:
-    """Read full content from markdown or JSON files in the artifacts directory"""
+    """Read full content from markdown, JSON, or XML files in the artifacts directory"""
     
     try:
         # Construct full path to artifacts directory
@@ -146,9 +147,75 @@ def read_file_contents(filepath: str, include_metadata: bool = True) -> str:
                     "filepath": str(full_path)
                 }, indent=2)
         
+        elif full_path.suffix.lower() == '.xml':
+            # XML file - parse and return structured content
+            try:
+                # Parse XML content
+                root = ET.fromstring(content)
+                
+                # Extract metadata from XML attributes and structure
+                metadata = {}
+                if root.attrib:
+                    metadata['attributes'] = root.attrib
+                
+                # Convert XML to a more readable format
+                def xml_to_dict(element):
+                    result = {}
+                    
+                    # Add attributes
+                    if element.attrib:
+                        result['attributes'] = element.attrib
+                    
+                    # Add text content if present
+                    if element.text and element.text.strip():
+                        result['text'] = element.text.strip()
+                    
+                    # Add child elements
+                    for child in element:
+                        child_data = xml_to_dict(child)
+                        if child.tag in result:
+                            # If tag already exists, convert to list
+                            if isinstance(result[child.tag], list):
+                                result[child.tag].append(child_data)
+                            else:
+                                result[child.tag] = [result[child.tag], child_data]
+                        else:
+                            result[child.tag] = child_data
+                    
+                    return result
+                
+                xml_content = xml_to_dict(root)
+                
+                if include_metadata:
+                    return json.dumps({
+                        "success": True,
+                        "filepath": str(full_path),
+                        "file_type": "xml",
+                        "metadata": metadata,
+                        "content": xml_content
+                    }, indent=2)
+                else:
+                    return json.dumps({
+                        "success": True,
+                        "filepath": str(full_path),
+                        "file_type": "xml",
+                        "content": xml_content
+                    }, indent=2)
+                    
+            except ET.ParseError as e:
+                return json.dumps({
+                    "error": f"Invalid XML file: {str(e)}",
+                    "filepath": str(full_path)
+                }, indent=2)
+            except Exception as e:
+                return json.dumps({
+                    "error": f"Failed to parse XML file: {str(e)}",
+                    "filepath": str(full_path)
+                }, indent=2)
+        
         else:
             return json.dumps({
-                "error": "Unsupported file type. Only .md and .json files are supported",
+                "error": "Unsupported file type. Only .md, .json, and .xml files are supported",
                 "filepath": str(full_path),
                 "file_extension": full_path.suffix
             }, indent=2)

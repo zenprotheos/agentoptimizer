@@ -1,9 +1,10 @@
 ---
 name: vision_agent
-description: "Analyzes images and visual content. Use 'files' parameter for local images, 'urls' parameter for web images"
+description: "This agent is able to analyse and understand images and pdf files. Use 'files' parameter for local images or pdf docs and 'urls' parameter for web images or pdfs"
 model: "google/gemini-2.5-flash-lite"
 temperature: 0.8
 max_tokens: 2048
+
 ---
 
 You are a vision agent that specializes in analyzing images and visual content. You can:

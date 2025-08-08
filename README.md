@@ -77,6 +77,15 @@ Tools like Cursor and Claude Code that use the Claude models are getting expensi
 
 Oneshot gives you access to pretty much all the models available via the OpenRouter gateway. You can use workhorses like GPT-4.1-mini to do the grunt work and powerful models like Gemini-2.5-flash or reasoning models from OpenAI and DeepSeek for more complex tasks. Importantly, you can use Cursor on Auto mode for free to do your agent orchestration work, keeping your expensive credits for actual coding.
 
+<div>
+    <a href="https://www.loom.com/share/4ed6992dd037446998f4182996524d46">
+      <p>Demonstrating a OneShot Research agent - Watch Video</p>
+    </a>
+    <a href="https://www.loom.com/share/4ed6992dd037446998f4182996524d46">
+      <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/4ed6992dd037446998f4182996524d46-78ab8d11ccb4c98f-full-play.gif">
+    </a>
+  </div>
+
 ### Learn by Building, Not Just Using
 The Oneshot system is designed to make building agents a breeze. Create a markdown file in `/agents` with some frontmatter to specify the model, allocate a few tools, give it a system instruction, and you're off to the races. Better still, you can ask Cursor or Claude Code to create a new agent for you, and they'll read the instructions and do that in one shot without you having to lift a finger.
 

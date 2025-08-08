@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+Tool: search_analyst
+Description: This tool allows research agents to delegate focused search tasks to a specialised search analyst agent that has access to web search and other databases like arxiv and bioarxiv.
+
+CLI Test:
+    cd /path/to/oneshot
+    python3 -c "
+from tools.search_analyst import search_analyst
+result = search_analyst('Find information about GPT-5 models', context='Testing', max_sources=3)
+print(result)
+"
+"""
+
 # tools/search_analyst.py
 # Specialized tool that allows research agents to delegate focused search tasks to a search analyst sub-agent
 
@@ -83,12 +97,12 @@ def search_analyst(
     try:
         # Get project root
         project_root = Path(__file__).parent.parent
-        agent_script = project_root / "oneshot"
+        agent_script = project_root / "app" / "oneshot"
         
         if not agent_script.exists():
             return json.dumps({
                 "success": False,
-                "error": "Agent script not found. This tool requires the 'oneshot' script.",
+                "error": f"Agent script not found at {agent_script}. This tool requires the 'oneshot' script in the app directory.",
                 "task_id": str(uuid.uuid4())[:8]
             }, indent=2)
         

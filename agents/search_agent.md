@@ -1,13 +1,12 @@
 ---
 name: search_agent
 description: "A search-focused agent that uses search and browse tools to provide comprehensive, up-to-date information"
-model: "openai/gpt-4.1-mini"
+model: "openai/gpt-5-mini"
 temperature: 0.7
 max_tokens: 4096
 tools:
   - web_search
   - web_read_page
-
 ---
 
 # ABOUT YOU

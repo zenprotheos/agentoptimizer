@@ -141,9 +141,11 @@ class AgentExecutor:
         
         return appended_message
     
-    def _handle_execution_error(self, e: Exception, run_id: str = None) -> Dict[str, Any]:
-        """Handle execution errors with specific messaging"""
-        from pydantic_ai.exceptions import UsageLimitExceeded
+    def _handle_execution_error(self, e: Exception, run_id: str = None, config: 'AgentConfig' = None) -> Dict[str, Any]:
+        """Handle execution errors with specific messaging and intelligent recovery strategies"""
+        from pydantic_ai.exceptions import UsageLimitExceeded, UnexpectedModelBehavior
+        from .agent_errors import LLMAPIError
+        from pathlib import Path
         
         # Handle multimodal-specific errors first
         if isinstance(e, MultimodalProcessingError):
@@ -168,9 +170,39 @@ class AgentExecutor:
                 "usage_limit_type": "request_limit" if "request_limit" in str(e) else "token_limit"
             }
         
-        # Handle common MCP server errors with helpful messages
+        # Handle LLM API errors with enhanced context and recovery strategies
         error_message = str(e)
+        is_llm_error = any(indicator in error_message.lower() for indicator in [
+            "openai", "anthropic", "google", "chat completion", "finish_reason", 
+            "pydantic", "validation error", "rate limit", "token", "model", "api"
+        ]) or isinstance(e, UnexpectedModelBehavior)
         
+        if is_llm_error:
+            # Determine run directory for context
+            run_directory = None
+            if run_id:
+                run_directory = Path(f"runs/{run_id}")
+            
+            # Create enhanced LLM error with recovery strategies
+            agent_file = Path(f"agents/{config.name}.md") if config else None
+            llm_error = LLMAPIError(
+                original_error=e,
+                run_id=run_id,
+                run_directory=run_directory,
+                agent_file=agent_file
+            )
+            
+            return {
+                "output": "",
+                "success": False,
+                "run_id": run_id,
+                "error": llm_error.get_formatted_message(),
+                "error_type": "llm_api_error",
+                "recovery_suggestions": llm_error.suggestions,
+                "original_error": error_message
+            }
+        
+        # Handle common MCP server errors with helpful messages
         if "401 Unauthorized" in error_message:
             return {
                 "output": "",
@@ -206,7 +238,7 @@ class AgentExecutor:
         try:
             is_multimodal, multimodal_result = self._process_multimodal_inputs(files, urls)
         except MultimodalProcessingError as e:
-            return self._handle_execution_error(e, run_id)
+            return self._handle_execution_error(e, run_id, config)
         
         try:
             # Create model and settings
@@ -305,4 +337,4 @@ class AgentExecutor:
             return response_data
             
         except Exception as e:
-            return self._handle_execution_error(e, run_id) 
+            return self._handle_execution_error(e, run_id, config) 

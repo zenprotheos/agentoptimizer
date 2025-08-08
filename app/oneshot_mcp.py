@@ -44,12 +44,12 @@ def read_instructions_for(guide_name: str) -> str:
     
     Args:
         guide_name: Name of the guide to read. Available guides:
+            - "onboarding": Guide for AI Coding agents to get onboarded to the oneshot system so they can contribute accurately to the repo.
             - "how_oneshot_works": Technical details of how the oneshot system works
             - "how_to_create_agents": Use this guide for creating new agents
             - "how_to_create_tools": Use this guide for creating new tools
             - "how_to_use_tool_services": Guide for understanding how to use the tool_services in new tools
             - "how_to_create_mcp_servers": Guide for creating local stdio MCP servers
-
     
     Returns:
         str: Contents of the requested documentation guide

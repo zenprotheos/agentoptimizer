@@ -565,6 +565,42 @@ def data_analysis_tool(data: str) -> str:
 | Tool structure | This guide |
 | Best practices | Both guides |
 
+## Checking Available MCP Servers
+
+Before creating any new tools, you must check what tools AND MCP servers already exist so that you don't reinvent the wheel.
+
+### How to Check Available MCP Servers
+
+#### 1. List All Available Tools
+Use the oneshot MCP tool to see all available tools including MCP server tools:
+
+```python
+# Available via mcp.oneshot.list_tools
+# This shows regular, native python tools in the /tools directory
+```
+
+#### 2. Check MCP Configuration
+Examine the local `.cursor/mcp.json` file to see what MCP servers are already configured:
+
+```json
+{
+  "mcpServers": {
+    "arxiv": {
+      "command": "python3",
+      "type": "stdio", 
+      "args": ["/path/to/arxiv_mcp.py"],
+      "prefix": "arxiv_"
+    }
+    // ... other servers
+  }
+}
+```
+
+### Best Practices for MCP Server Discovery
+
+1. **Check Before Creating**: Always verify if functionality already exists
+2. **Understand Prefixes**: MCP servers often use prefixes (e.g., `arxiv_`) to namespace their tools
+
 ## MCP Server Creation for Agents
 
 When a user requests that an MCP server should be created for an agent, the Cursor agent should:

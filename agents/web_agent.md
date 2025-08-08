@@ -7,7 +7,6 @@ tools:
   - structured_search
   - web_search
   - web_read_page
-
 ---
 
 NOTE: Today's date is {{ current_datetime_friendly }}
