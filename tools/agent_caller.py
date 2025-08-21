@@ -202,9 +202,56 @@ def agent_caller(
             }, indent=2)
             
         else:
-            error_msg = result.stderr.strip() or "Unknown error occurred"
+            error_msg = result.stderr.strip()
             
-            # Save error log
+            # If stderr is empty, check stdout for formatted error messages
+            if not error_msg:
+                stdout_content = result.stdout.strip()
+                if stdout_content:
+                    # Check for usage limit specific errors
+                    if "Agent reached usage limit" in stdout_content:
+                        # Save error log
+                        error_log = {
+                            "call_id": call_id,
+                            "calling_agent": "unknown",
+                            "called_agent": agent_name,
+                            "message": message,
+                            "files_passed": files,
+                            "urls_passed": urls,
+                            "run_id": run_id,
+                            "error": stdout_content,
+                            "error_type": "usage_limit_exceeded",
+                            "success": False,
+                            "timestamp": llm("What is the current timestamp in ISO format? Just return the timestamp, nothing else.")
+                        }
+                        
+                        save(
+                            json.dumps(error_log, indent=2),
+                            f"Agent call error log: {agent_name}",
+                            f"agent_call_error_{call_id}.json"
+                        )
+                        
+                        return json.dumps({
+                            "success": False,
+                            "error": f"USAGE_LIMIT_EXCEEDED: Agent '{agent_name}' reached its usage limit",
+                            "error_type": "usage_limit_exceeded",
+                            "details": stdout_content,
+                            "agent_name": agent_name,
+                            "call_id": call_id,
+                            "run_id": run_id,
+                            "recovery_suggestions": [
+                                f"Continue the agent's work by calling it again with the same run_id: {run_id}",
+                                "The agent will get a fresh usage limit allocation for the continuation",
+                                "Check the run history for any partial results that were saved",
+                                "Consider breaking the task into smaller subtasks if it consistently hits limits"
+                            ]
+                        }, indent=2)
+                    else:
+                        error_msg = stdout_content
+                else:
+                    error_msg = "Unknown error occurred"
+            
+            # Save error log for other types of errors
             error_log = {
                 "call_id": call_id,
                 "calling_agent": "unknown",

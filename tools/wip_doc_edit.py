@@ -111,7 +111,9 @@ def _edit_xml(content: str, new_content: str, edit_type: str,
               target_id: str = None, status: str = None) -> str:
     """Edit XML document"""
     try:
-        root = ET.fromstring(content)
+        # Fix common XML encoding issues before parsing
+        fixed_content = content.replace('&', '&amp;').replace('&amp;amp;', '&amp;')
+        root = ET.fromstring(fixed_content)
         
         # Find target section
         if target_id:

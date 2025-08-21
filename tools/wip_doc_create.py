@@ -8,7 +8,7 @@ TOOL_METADATA = {
     "type": "function",
     "function": {
         "name": "wip_doc_create",
-        "description": "Create Work-In-Progress (WIP) documents in markdown or XML format.",
+        "description": "Use this tool to create Work-In-Progress (WIP) documents in markdown or XML format. WIP documents can be created from scratch or initialised from a file that was created in a previous workflow step.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -28,7 +28,7 @@ TOOL_METADATA = {
                 },
                 "existing_file_path": {
                     "type": "string",
-                    "description": "Optional: Initialize from existing file"
+                    "description": "Optional: Use this to initialise a WIP document from an existing file, eg a research plan. It will create a duplicate of the existing file and name it with the document_name parameter."
                 },
                 "status": {
                     "type": "string",
@@ -102,7 +102,7 @@ def wip_doc_create(document_name: str, content: str, file_extension: str = ".md"
         
         # Save document
         saved_doc = save(content, f"WIP: {document_name}", 
-                        f"{document_name}{file_extension}", add_frontmatter=False)
+                        doc_path.name, add_frontmatter=False)
         
         # Create audit log
         audit_data = {

@@ -46,10 +46,14 @@ class AgentToolManager:
                 if self.debug:
                     print(f"Error loading tool {tool_file}: {e}")
     
-    def create_tool_functions(self, tool_names: List[str]) -> List[Any]:
-        """Create tool functions for Pydantic AI from loaded tools with enhanced error handling"""
+    def create_tool_functions(self, tool_names: List[str], config: Dict[str, Any] = None) -> List[Any]:
+        """Create tool functions for Pydantic AI from loaded tools with enhanced error handling and usage tracking"""
         tool_functions = []
         errors = []
+        
+        # Get usage tracking settings from config
+        usage_limits_config = config.get('usage_limits', {}) if config else {}
+        show_usage_stats = usage_limits_config.get('show_usage_stats', False)
         
         for tool_name in tool_names:
             if tool_name in self.loaded_tools:
@@ -57,7 +61,12 @@ class AgentToolManager:
                 tool_func = tool_info['function']
                 
                 if tool_func:
-                    tool_functions.append(tool_func)
+                    if show_usage_stats:
+                        # Wrap the tool function with usage tracking
+                        wrapped_func = self._wrap_tool_with_usage_tracking(tool_func, tool_name)
+                        tool_functions.append(wrapped_func)
+                    else:
+                        tool_functions.append(tool_func)
                 else:
                     errors.append(f"Tool '{tool_name}' has no main function - check tool file structure")
             else:
@@ -77,6 +86,55 @@ class AgentToolManager:
                 print(f"WARNING: {error}")
         
         return tool_functions
+    
+    def _wrap_tool_with_usage_tracking(self, tool_func, tool_name):
+        """Wrap a tool function to track usage and append usage stats to responses"""
+        import functools
+        import os
+        
+        @functools.wraps(tool_func)
+        def wrapped_tool(*args, **kwargs):
+            # Call the original tool function
+            result = tool_func(*args, **kwargs)
+            
+            # Get current usage context from environment variables
+            try:
+                current_requests = int(os.getenv('ONESHOT_CURRENT_REQUESTS', 0))
+                request_limit = int(os.getenv('ONESHOT_REQUEST_LIMIT', 30))
+                
+                # Increment the request count (this is a rough approximation)
+                # Note: This tracks tool calls, not actual LLM requests
+                current_requests += 1
+                os.environ['ONESHOT_CURRENT_REQUESTS'] = str(current_requests)
+                
+                # Calculate usage statistics
+                remaining_requests = max(0, request_limit - current_requests)
+                usage_percentage = int((current_requests / request_limit) * 100) if request_limit > 0 else 0
+                
+                # Create usage footer
+                if usage_percentage < 50:
+                    status_emoji = "🟢"
+                elif usage_percentage < 75:
+                    status_emoji = "🟡"
+                elif usage_percentage < 90:
+                    status_emoji = "🟠"
+                else:
+                    status_emoji = "🔴"
+                
+                usage_footer = f"\n\n---\n{status_emoji} *Tool usage: {current_requests}/{request_limit} calls ({usage_percentage}%) - {remaining_requests} remaining*"
+                
+                # Append usage footer to result if it's a string
+                if isinstance(result, str):
+                    result = result + usage_footer
+                
+            except Exception as e:
+                # If usage tracking fails, don't break the tool
+                if self.debug:
+                    print(f"Warning: Usage tracking failed for {tool_name}: {e}")
+            
+            return result
+        
+        return wrapped_tool
     
     def _is_similar_tool_name(self, name1: str, name2: str) -> bool:
         """Conservative similarity check for tool name suggestions"""

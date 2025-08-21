@@ -506,6 +506,44 @@ class ToolHelper:
         """Get the current run ID"""
         return self._current_run_id
     
+    # USAGE TRACKING MANAGEMENT
+    def set_usage_context(self, current_requests: int, request_limit: int):
+        """Set the current usage context for tools to access"""
+        self._current_requests = current_requests
+        self._request_limit = request_limit
+        # Set environment variables for tools to access usage context
+        os.environ['ONESHOT_CURRENT_REQUESTS'] = str(current_requests)
+        os.environ['ONESHOT_REQUEST_LIMIT'] = str(request_limit)
+    
+    def get_usage_context(self) -> Optional[Dict[str, int]]:
+        """Get the current usage context"""
+        if hasattr(self, '_current_requests') and hasattr(self, '_request_limit'):
+            return {
+                "current_requests": self._current_requests,
+                "request_limit": self._request_limit
+            }
+        return None
+    
+    def append_usage_stats(self, response: str) -> str:
+        """Append usage statistics to a tool response if enabled"""
+        # Check if usage stats are enabled in config
+        usage_limits_config = self.config.get('usage_limits', {})
+        if not usage_limits_config.get('show_usage_stats', False):
+            return response
+        
+        # Get usage context
+        usage_context = self.get_usage_context()
+        if not usage_context:
+            return response
+        
+        # Append usage footer
+        current = usage_context['current_requests']
+        limit = usage_context['request_limit']
+        percentage = int((current / limit) * 100) if limit > 0 else 0
+        
+        usage_footer = f"\n\n---\n*Usage: {current}/{limit} requests ({percentage}%)*"
+        return response + usage_footer
+    
     def _get_artifacts_dir(self) -> Path:
         """Get the artifacts directory for the current run"""
         if self._current_run_id:

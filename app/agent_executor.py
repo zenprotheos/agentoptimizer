@@ -247,7 +247,7 @@ class AgentExecutor:
             usage_limits = self._create_usage_limits(config)
             
             # Load tools and MCP servers
-            tool_functions = tool_manager.create_tool_functions(config.tools)
+            tool_functions = tool_manager.create_tool_functions(config.tools, self.config)
             mcp_servers = []
             if config.mcp:
                 mcp_servers = await tool_manager.create_mcp_servers(config.mcp)
@@ -288,6 +288,12 @@ class AgentExecutor:
             
             # Set run ID in tool helper for file organization
             tool_services.set_run_id(run_id)
+            
+            # Initialize usage tracking environment variables for tool wrappers
+            default_request_limit = self.config.get('usage_limits', {}).get('request_limit', 50)
+            agent_request_limit = config.request_limit if config.request_limit is not None else default_request_limit
+            os.environ['ONESHOT_CURRENT_REQUESTS'] = '0'  # Start with 0 tool calls
+            os.environ['ONESHOT_REQUEST_LIMIT'] = str(agent_request_limit)
             
             # Handle message appending for agents without template-based file handling
             final_message = message

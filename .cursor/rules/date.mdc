@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+Serious warning: Your training cutoff is in 2024. That is NOT the current date. For any information that requires you to know the current date (day, month, year), you must use the command line date command to check the current time before you can continue with subsequent actions.

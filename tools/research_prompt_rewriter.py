@@ -37,7 +37,7 @@ TOOL_METADATA = {
 }
 
 def research_prompt_rewriter(user_research_prompt: str, filename: str = "research_brief.md") -> str:
-    """Rewrite a user's initial research prompt into a detailed research brief using openai/gpt-4o"""
+    """Rewrite a user's initial research prompt into a detailed research brief"""
     
     try:
         # Create the system prompt for research brief rewriting
@@ -98,7 +98,7 @@ Your output should be a comprehensive research brief written in markdown format 
         # Use the openai/gpt-4o model to rewrite the research prompt
         research_brief = llm(
             user_research_prompt,
-            model="openai/gpt-4o",
+            model="deepseek/deepseek-chat-v3.1:thinking",
             system_prompt=system_prompt
         )
         
@@ -113,7 +113,7 @@ Your output should be a comprehensive research brief written in markdown format 
             "success": True,
             "original_prompt": user_research_prompt,
             "research_brief_file": saved_file["filepath"],
-            "model_used": "openai/gpt-4o",
+            "model_used": "deepseek/deepseek-chat-v3.1:thinking",
             "run_id": saved_file["run_id"],
             "tokens": saved_file["frontmatter"]["tokens"],
             "summary": "User research prompt successfully rewritten into detailed research brief"

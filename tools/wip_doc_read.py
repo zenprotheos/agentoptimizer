@@ -147,7 +147,9 @@ def wip_doc_read(action: str, file_path: str = None, section_id: str = None,
 def _process_xml_read(content: str, section_id: str = None, content_only: bool = False) -> str:
     """Process XML document for reading"""
     try:
-        root = ET.fromstring(content)
+        # Fix common XML encoding issues before parsing
+        fixed_content = content.replace('&', '&amp;').replace('&amp;amp;', '&amp;')
+        root = ET.fromstring(fixed_content)
         
         # If section_id specified, find that section
         if section_id:

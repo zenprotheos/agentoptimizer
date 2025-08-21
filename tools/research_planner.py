@@ -13,6 +13,9 @@ print(result)
 """
 from app.tool_services import *
 
+# Configuration
+DEFAULT_MODEL = "openai/gpt-5-chat"
+
 TOOL_METADATA = {
     "type": "function",
     "function": {
@@ -303,7 +306,7 @@ Remember: This plan will guide systematic research execution. Make it specific e
         # Use the reasoning model to generate the research plan
         research_plan_xml = llm(
             research_brief_content,
-            model="openai/gpt-5",
+            model=DEFAULT_MODEL,
             system_prompt=system_prompt
         )
         
@@ -322,7 +325,7 @@ Remember: This plan will guide systematic research execution. Make it specific e
             "research_brief_file": research_brief_filepath,
             "research_plan_file": saved_file["filepath"],
             "format": "XML",
-            "model_used": "deepseek/deepseek-r1",
+            "model_used": DEFAULT_MODEL,
             "run_id": saved_file["run_id"],
             "summary": "XML research plan generated for WIP document system"
         }, indent=2)

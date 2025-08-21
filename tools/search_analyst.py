@@ -19,6 +19,7 @@ import subprocess
 import json
 import os
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from app.tool_services import *
@@ -69,6 +70,16 @@ The search analyst will return synthesized findings with citations that you can 
                     "type": "string",
                     "description": "Optional run ID to continue a previous conversation with the search analyst agent",
                     "default": ""
+                },
+                "wip_doc_path": {
+                    "type": "string",
+                    "description": "Optional path to WIP document that contains the research plan and section structure",
+                    "default": ""
+                },
+                "section_id": {
+                    "type": "string", 
+                    "description": "Optional XML section ID to focus on within the WIP document. When provided with wip_doc_path, the search analyst will read the section brief and update that specific section.",
+                    "default": ""
                 }
             },
             "required": ["research_brief"]
@@ -81,7 +92,9 @@ def search_analyst(
     context: str = "",
     max_sources: int = 15,
     focus_area: str = "general",
-    run_id: str = ""
+    run_id: str = "",
+    wip_doc_path: str = "",
+    section_id: str = ""
 ) -> str:
     """
     Delegate a focused search task to a specialized search analyst agent.
@@ -107,7 +120,40 @@ def search_analyst(
             }, indent=2)
         
         # Craft the message for the search analyst
-        analyst_message = f"""You are a specialized search analyst. Your task is to conduct focused research and provide synthesized findings with citations.
+        if wip_doc_path and section_id:
+            analyst_message = f"""You are a specialized search analyst working on a section of a larger research project. 
+
+WIP DOCUMENT WORKFLOW:
+1. Read the WIP document at: {wip_doc_path}
+2. Focus on section ID: {section_id}
+3. Review the section's brief and acceptance criteria
+4. Conduct research to fulfill the section requirements
+5. Update the section directly in the WIP document as you work
+6. Mark the section as complete when acceptance criteria are met
+
+RESEARCH BRIEF:
+{research_brief}
+
+{f"PROJECT CONTEXT: {context}" if context else ""}
+
+REQUIREMENTS:
+- Find and analyze up to {max_sources} relevant sources
+- Focus on {focus_area} sources primarily
+- Update the WIP document section iteratively as you research
+- Include inline citations in XML format: <cite ref="author-year"/>
+- Meet all acceptance criteria specified in the section
+- Mark section status as "complete" when finished
+
+WORKFLOW:
+1. Use wip_doc_read to understand the full research context
+2. Read your assigned section to understand the brief and acceptance criteria
+3. Conduct systematic research to meet the requirements
+4. Use wip_doc_edit to update your section with findings (you can do this multiple times)
+5. Update section status to "complete" when acceptance criteria are satisfied
+
+Focus on depth over breadth. Ensure your section is comprehensive and meets all specified acceptance criteria."""
+        else:
+            analyst_message = f"""You are a specialized search analyst. Your task is to conduct focused research and provide synthesized findings with citations.
 
 RESEARCH BRIEF:
 {research_brief}
@@ -162,6 +208,8 @@ Focus on depth over breadth. Quality analysis of fewer sources is better than su
                 "max_sources": max_sources,
                 "focus_area": focus_area,
                 "run_id": run_id,
+                "wip_doc_path": wip_doc_path,
+                "section_id": section_id,
                 "analyst_response": analyst_response,
                 "success": True,
                 "timestamp": datetime.now().isoformat()
@@ -177,7 +225,32 @@ Focus on depth over breadth. Quality analysis of fewer sources is better than su
             return analyst_response
             
         else:
-            error_msg = result.stderr.strip() or "Search analyst execution failed"
+            error_msg = result.stderr.strip()
+            
+            # If stderr is empty, check stdout for formatted error messages
+            if not error_msg:
+                stdout_content = result.stdout.strip()
+                if stdout_content:
+                    # Check for usage limit specific errors
+                    if "Agent reached usage limit" in stdout_content:
+                        return json.dumps({
+                            "success": False,
+                            "error": "USAGE_LIMIT_EXCEEDED: Search analyst agent reached its usage limit",
+                            "error_type": "usage_limit_exceeded",
+                            "details": stdout_content,
+                            "task_id": task_id,
+                            "run_id": run_id,
+                            "recovery_suggestions": [
+                                f"Continue the search analyst's work by calling search_analyst again with run_id: {run_id}" if run_id else "Continue the search analyst's work by calling search_analyst again with the same run_id",
+                                "The agent will get a fresh usage limit allocation for the continuation",
+                                "Consider reducing max_sources parameter if consistently hitting limits",
+                                "Break complex research briefs into smaller focused questions"
+                            ]
+                        }, indent=2)
+                    else:
+                        error_msg = stdout_content
+                else:
+                    error_msg = "Search analyst execution failed"
             
             return json.dumps({
                 "success": False,
@@ -204,7 +277,7 @@ Focus on depth over breadth. Quality analysis of fewer sources is better than su
 
 # Test the tool if run directly
 if __name__ == "__main__":
-    # Test search analyst delegation
+    # Test search analyst delegation (standalone mode)
     test_result = search_analyst(
         research_brief="""Find and analyze techno-economic comparisons of enzymatic vs chemical 
         depolymerization of algal EPS. Focus on:
@@ -218,5 +291,18 @@ if __name__ == "__main__":
         focus_area="academic"
     )
     
-    print("Test Result:")
+    print("Standalone Test Result:")
     print(test_result)
+    
+    # Test search analyst delegation with WIP document integration
+    wip_test_result = search_analyst(
+        research_brief="Research the technical analysis section focusing on scalability and implementation challenges",
+        context="Comprehensive analysis of emerging algae processing technologies", 
+        max_sources=12,
+        focus_area="technical",
+        wip_doc_path="algae_research_plan.xml",
+        section_id="technical-analysis"
+    )
+    
+    print("WIP Document Test Result:")
+    print(wip_test_result)

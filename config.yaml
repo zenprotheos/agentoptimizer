@@ -55,6 +55,9 @@ usage_limits:
   
   # Maximum total tokens (requests + responses) (null = no limit)
   total_tokens_limit: null
+  
+  # Whether to append tool usage statistics to tool responses so that agents know how many tool calls they have made and what the limits are
+  show_usage_stats: true
 
 # MCP Configuration paths
 mcp_config:
