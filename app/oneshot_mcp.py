@@ -72,7 +72,7 @@ def list_tools() -> str:
     return list_tools_impl(project_root)
 
 @mcp.tool()
-def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", run_id: str = "", debug: bool = False) -> str:
+async def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", run_id: str = "", debug: bool = False) -> str:
     """
     When in `Orchestrator` mode, use this tool to delegate a task to a specific agent on your team. Call an agent by name, eg `web_agent` and provide an instruction via `message`. Use the `files` argument to pass the content outputs from previous steps or agent runs, to a specialist agent rather than paraphrasing or repeating that content (must be full absolute paths to the files). Use the `urls` argument to provide web-based media content (images, documents, etc.) for multimodal processing. Use the `run_id` argument to continue an existing conversation with an agent - eg to ask follow-up questions or to continue a multi-step task.
 
@@ -107,46 +107,49 @@ def call_agent(agent_name: str, message: str, files: str = "", urls: str = "", r
         str: Agent response in clean markdown format (or detailed debug format if debug=True)
     """
     try:
-        # Build command with appropriate flags
-        cmd = ["bash", str(project_root / "app" / "oneshot"), agent_name, message]
-
+        # LEVEL 2 FIX: Use direct function calls instead of subprocess
+        # This eliminates subprocess hanging issues while maintaining functionality
+        sys.path.insert(0, str(project_root / "app"))
+        from agent_runner import AgentRunner
         
-        # Add files if provided
+        # Convert pipe-separated strings to lists
+        files_list = None
         if files:
-            cmd.extend(["--files", files])
+            files_list = [f.strip() for f in files.split('|') if f.strip()]
         
-        # Add URLs if provided
+        urls_list = None  
         if urls:
-            cmd.extend(["--urls", urls])
+            urls_list = [u.strip() for u in urls.split('|') if u.strip()]
         
-        if run_id:
-            cmd.extend(["--run-id", run_id])
+        # Create AgentRunner instance and execute async
+        runner = AgentRunner(debug=debug)
+        
         if debug:
-            cmd.append("--debug")
-        
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=project_root
-        )
-        
-        if result.returncode == 0:
-            return result.stdout.strip()
+            # Return full result for debugging
+            result = await runner.run_agent_async(agent_name, message, files_list, urls_list, run_id)
+            return json.dumps(result, indent=2)
         else:
-            # Parse error for better formatting
-            error_output = result.stderr.strip()
+            # Use async method and format the response manually (avoiding run_agent_clean's asyncio.run)
+            result = await runner.run_agent_async(agent_name, message, files_list, urls_list, run_id)
             
-            # Check if it's a structured error from our agent runner
-            if "Agent Configuration Error:" in error_output:
-                return f"❌ **Configuration Error**\n\n{error_output}\n\n💡 **How to fix:**\n- Check your agent's YAML frontmatter syntax\n- Verify all tool and MCP server names are correct\n- Ensure required fields (name, description, model) are present"
-            elif "Agent execution failed:" in error_output:
-                return f"❌ **Execution Error**\n\n{error_output}\n\n💡 **Troubleshooting:**\n- Check if the specified model exists on OpenRouter\n- Verify your OPENROUTER_API_KEY is valid\n- Ensure all tools and MCP servers are properly configured"
+            if result["success"]:
+                output = result["output"]
+                
+                # Add run and usage stats (same format as run_agent_clean)
+                usage = result["usage"]
+                output += f"\n\n---\n"
+                output += f"**Run ID:** `{result['run_id']}`"
+                if result.get("is_new_run"):
+                    output += " (new conversation)"
+                else:
+                    output += " (continued conversation)"
+                output += f"\n**Usage:** {usage['requests']} requests"
+                return output
             else:
-                return f"❌ **Agent Error**\n\n{error_output}"
+                return f"ERROR: Run {result.get('error', 'Unknown error')}"
             
     except Exception as e:
-        return f"ERROR: Failed to call agent {agent_name}: {e}"
+        return f"ERROR: Failed to call agent {agent_name}: {str(e)}"
 
 @mcp.tool()
 async def ask_oneshot_expert(question: str) -> str:

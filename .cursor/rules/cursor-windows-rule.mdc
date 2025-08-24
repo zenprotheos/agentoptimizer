@@ -1,0 +1,186 @@
+---
+alwaysApply: true
+---
+### Global Rule — Windows 11 Agent Command Execution (Refined)
+
+**Applies To:** Windows 11 only
+**Goal:** Run commands reliably, avoid hangs, and remove flakiness when Cursor operates agents
+
+#### Key Enhancements
+
+| Issue                                                                         | Improvement                              | Evidence                                     |
+| ----------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
+| `.UseShellExecute = false` required for redirected output to work             | Now explicit in the template             | ([Microsoft Learn][1], [Chromium Issues][2]) |
+| `--headless=old` being removed — use `--headless` or `--headless=new` instead | Updated in headless mode recommendations | ([Chrome for Developers][3], [Selenium][4])  |
+
+---
+
+#### 1) Launch Syntax (PowerShell + ExecutionPolicy)
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { $ErrorActionPreference='Stop'; <YOUR COMMAND> }"
+```
+
+#### 2) Pre-flight Validation
+
+```powershell
+$exe = 'C:\Path\To\tool.exe'
+if (!(Test-Path $exe)) { throw "Missing executable: $exe" }
+Set-Location 'C:\Path\To\WorkingDir'  # ensure accurate context
+```
+
+#### 3) Control Flow & Bounded Retries
+
+```powershell
+function Invoke-WithTimeout {
+  param([ScriptBlock]$Script, [int]$TimeoutSec = 60)
+  $job = Start-Job -ScriptBlock $Script
+  if (Wait-Job $job -Timeout $TimeoutSec) {
+    Receive-Job $job
+  } else {
+    Stop-Job $job -Force
+    throw "Command timed out after $TimeoutSec s"
+  }
+}
+$tries=0; $max=3
+while ($true) {
+  try {
+    Invoke-WithTimeout -TimeoutSec 90 -Script { & 'C:\...\.exe' 'args' }
+    break
+  } catch {
+    $tries++
+    if ($tries -ge $max) { throw $_ }
+    Start-Sleep -Seconds ([math]::Pow(2,$tries))
+  }
+}
+```
+
+#### 4) Redirected Output with UseShellExecute=false
+
+```powershell
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName            = 'C:\Program Files\nodejs\node.exe'
+$psi.Arguments           = 'cli.js --task build'
+$psi.UseShellExecute     = $false         # REQUIRED for redirection
+$psi.RedirectStandardOutput = $true
+$psi.RedirectStandardError  = $true
+$p = [System.Diagnostics.Process]::Start($psi)
+$p.WaitForExit(90000) | Out-Null
+...
+```
+
+Make sure to include `UseShellExecute = $false`; otherwise redirection fails silently. ([CodingTechRoom][5])
+
+#### 5) Headless Mode Modernization
+
+Use:
+
+```
+--headless
+```
+
+or explicitly (`--headless=new`)
+***Avoid** `--headless=old` as it's deprecated and being removed.*
+Chromium forum confirms this update: ([Chrome for Developers][3])
+
+---
+
+#### 6) Critical Timeout Requirements
+
+**ALL COMMANDS MUST HAVE TIMEOUTS** as a mandatory failsafe against Windows stalling/hanging:
+
+```powershell
+# For PowerShell jobs
+$job = Start-Job -ScriptBlock $Script
+if (Wait-Job $job -Timeout 60) { Receive-Job $job } else { Stop-Job $job -Force; throw "Timeout" }
+
+# For Process.Start()
+$p = [System.Diagnostics.Process]::Start($psi)
+if (!$p.WaitForExit(60000)) { $p.Kill(); throw "Process timeout" }
+
+# For web requests
+Invoke-WebRequest -Uri $url -TimeoutSec 30
+
+# Default timeout recommendations:
+# - Simple commands: 10-30 seconds
+# - MCP server startup: 30 seconds  
+# - Heavy operations: 90 seconds max
+```
+
+---
+
+### Windows 11 MCP Troubleshooting References
+
+When encountering MCP-related issues, refer to these comprehensive guides:
+
+| Guide | Purpose | When to Use |
+|-------|---------|-------------|
+| **~doc/cursor_windows11_mcp_setup.md** | Core setup for MCP servers on Windows 11 | Initial MCP configuration, transport selection (SSE vs StdIO), global config setup |
+| **~doc/cursor_windows11_mcp_autocheck_guide.md** | Automated verification script for MCP environments | Validating paths, detecting missing runtimes, converting to stable absolute paths |
+| **~doc/cursor_windows11_mcp_troubleshooting.md** | Comprehensive troubleshooting for MCP issues | Red dots, server connection failures, hangs, configuration errors, diagnostic workflows |
+
+**Common MCP Issues Solved:**
+- StdIO servers spawning flaky shells → Use absolute paths + proper timeouts
+- Python Store alias hijacking → Disable alias, use absolute python.exe paths  
+- npx causing Windows hangs → Install globally, reference direct paths
+- Buffer hangs on large output → Prefer SSE transport when available
+- Missing Chrome/Node/Python paths → Auto-detect with verification script
+
+---
+
+#### 7) Temporary File Management (NEW - Windows Agent Specific)
+
+**CRITICAL:** All temporary files MUST follow proper workspace organization:
+
+```powershell
+# CORRECT: Task-specific temp files
+New-Item -Path "tasks\YYYY-MM-DD_TaskName\tests\temp_script.py" -ItemType File
+
+# CORRECT: Global temp files (non-task specific)  
+New-Item -Path "temp\test_script.py" -ItemType File
+
+# WRONG: Root level temp files (FORBIDDEN)
+New-Item -Path "test_script.py" -ItemType File  # ❌ NEVER DO THIS
+```
+
+**Windows Agent Temp File Protocol:**
+1. **Task-Specific**: Use `tasks\[TaskName]\tests\` for task-related temp files
+2. **Global**: Use `temp\` folder for non-task specific temp files
+3. **Cleanup**: ALWAYS delete temp files after use
+4. **Root Level**: NEVER create temp files at project root
+
+**Complex Command Workaround:**
+- **Issue**: Complex PowerShell escaping with embedded Python causes stalls
+- **Solution**: Create temp Python files instead of inline commands
+- **Pattern**: Use temporary scripts in proper workspace folders
+- **Cleanup**: Delete temp files immediately after execution
+
+```powershell
+# Create temp script in proper location
+$tempScript = "tasks\2024-08-24_TaskName\tests\temp_test.py"
+Set-Content -Path $tempScript -Value "import os; print('test')"
+
+# Execute with timeout
+$job = Start-Job -ScriptBlock { python $using:tempScript }
+if (Wait-Job $job -Timeout 30) { 
+    Receive-Job $job 
+} else { 
+    Stop-Job $job -Force; throw "Timeout" 
+}
+
+# MANDATORY: Clean up temp file
+Remove-Item $tempScript -Force
+```
+
+### Summary of Rule Enhancements
+
+* **Enforced** absolute executable use
+* **Guaranteed** redirected I/O via `.UseShellExecute=false`
+* **Modern headless mode**, avoiding deprecated flags
+* **Mandatory timeout protection** against Windows stalling
+* **Proper temp file management** in organized workspace structure
+* **Complex command workarounds** using temporary scripts
+* **MCP-aware troubleshooting** with comprehensive documentation
+* **Solid error handling**, timeout control, and retries
+* **Clean, reproducible behavior** on Windows agent runs
+

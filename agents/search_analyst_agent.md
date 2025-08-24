@@ -1,10 +1,10 @@
 ---
 name: search_analyst
 description: "Specialized search and analysis agent that conducts focused, deep-dive research on specific topics"
-model: openai/gpt-5-mini
+model: openai/gpt-4o-mini
 temperature: 0.7
-max_tokens: 8000
-request_limit: 25
+max_tokens: 2000
+request_limit: 50
 tools:
   - web_search
   - web_read_page

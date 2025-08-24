@@ -1,0 +1,121 @@
+---
+description: any tasks related to coding, troubleshooting, programming, running commands, etc.
+alwaysApply: false
+---
+
+## Step 1 - Task Workspace
+Create a timestamped task folder under `/tasks/` using the standardized date tool:
+
+**Get Current Date**: `node tools/date-current.cjs taskFolder` → `2025-08-25`
+
+```
+tasks/YYYY-MM-DD_[TaskName]/
+├── MASTER_Architecture_UMLs_[TaskName].md
+├── implementation-plan_[TaskName].md
+├── development-progress-tracker_[TaskName].md
+├── troubleshooting_[TaskName].md
+├── completion-summary_[TaskName].md
+├── subtasks/
+│   ├── 01_[subtask_name].md
+│   ├── 02_[subtask_name].md
+│   └── ... (individual tracking docs)
+└── tests/
+```
+
+Notes:
+- Include proper front-matter in every `.md` file (use `node tools/date-current.cjs iso` for timestamps)
+- For diagrams, follow your team Mermaid standards (`C:\Users\CSJin\Jininja Projects\AI Projects\main_oneshot\oneshot\.cursor\rules\mermaid-rule.mdc`)
+- **Subtasks folder**: Break complex tasks into manageable pieces with individual tracking documents
+  - Each subtask should have clear scope, dependencies, progress tracking, and troubleshooting notes
+  - Use numbered prefixes (01_, 02_) for logical task ordering
+  - Include status tracking, effort estimates, and completion criteria
+  - **EXECUTE IMMEDIATELY**: After creating subtask documentation, begin implementation work on the subtasks
+
+### Step 2: Comprehensive UML Documentation (IMMEDIATELY after creating MASTER_Architecture_UMLs_[TaskName].md)
+**IMMEDIATELY after creating** `MASTER_Architecture_UMLs_[TaskName].md`, update it with:
+- **Comprehensive UML diagrams** showing ALL system interactions
+- **Multiple root cause analysis** - never stop at first issue found
+- **Race condition mapping** - identify ALL timing dependencies
+- **Data flow analysis** - trace complete data lifecycle
+- **State management audit** - map ALL state changes and conflicts
+
+### Step 3: MANDATORY AUTOMATED TESTING (BEFORE COMPLETION)
+**CRITICAL: ALL TASKS MUST PASS AUTOMATED TESTS BEFORE MARKING COMPLETE**
+
+### Step 4: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMPLETION)
+**REQUIRED: After task completion, identify lessons learned and propose rule improvements**
+
+#### Lessons Learned Documentation
+1. **Document Key Lessons**: Record what was learned during task execution
+2. **Identify Pain Points**: Note any processes that caused delays or confusion
+3. **Propose Rule Enhancements**: Suggest specific additions to coding-tasks.mdc
+4. **Process Improvements**: Recommend changes to prevent future issues
+5. **Add to Global Rules**: Include actionable improvements in the coding-tasks rule to help future agents
+
+#### Rule Enhancement Examples
+- Workflow improvements discovered during implementation
+- Testing patterns that proved especially valuable
+- Common pitfalls and how to avoid them
+- Tool usage patterns that work best
+- Documentation standards that improve efficiency
+
+#### Core Testing Requirements
+1. **Create Task-Specific Test Script**: Every implementation task MUST create automated tests
+2. **Test All Modified Functionality**: Every changed endpoint, UI component, and flow
+3. **Test Existing Functionality**: Ensure changes don't break existing features
+4. **Exit Code Validation**: Tests must return exit code 0 (success) or 1 (failure)
+
+#### Testing Tools & Scripts
+- **🚨 MANDATORY TEST LOCATION 🚨**: Create ALL tests in `tasks/YYYY-MM-DD_[TaskName]/tests/` folder ONLY
+  - **NEVER create test scripts at project root level**
+  - **NEVER create test scripts outside the task folder**
+  - **ALWAYS use the task-specific tests/ directory**
+  - Example correct path: `tasks/2025-08-24_OneShot_Windows_Compatibility/tests/test_my_feature.py`
+  - Example WRONG path: `test_my_feature.py` (root level - FORBIDDEN)
+
+#### Temporary File Management (CRITICAL)
+- **🚨 TEMP FILE PROTOCOL 🚨**: ALL temporary files MUST follow workspace organization
+  - **Task-Related Temp Files**: Use `tasks/YYYY-MM-DD_[TaskName]/tests/temp_*.py` 
+  - **Global Temp Files**: Use `temp/temp_*.py` for non-task specific files
+  - **ROOT LEVEL FORBIDDEN**: NEVER create temp files at project root
+  - **MANDATORY CLEANUP**: ALWAYS delete temp files after use
+  - **Windows-Specific**: Use temp files to avoid complex PowerShell escaping issues
+
+```python
+# CORRECT: Task-specific temp file
+temp_file = "tasks/2024-08-25_TaskName/tests/temp_validation.py"
+with open(temp_file, 'w') as f:
+    f.write("test_code_here")
+# Execute test
+os.system(f"python {temp_file}")
+# MANDATORY: Clean up
+os.remove(temp_file)
+
+# WRONG: Root level temp file (FORBIDDEN)
+temp_file = "temp_test.py"  # ❌ NEVER DO THIS
+```
+- **Intelligent Test Scripts**: Create logical, comprehensive test scripts that validate actual functionality
+  - Test real-world scenarios, not just unit tests
+  - Include error handling and edge case validation
+  - Test cross-platform compatibility when relevant
+  - Validate end-to-end workflows work correctly
+  - Include automated pass/fail criteria with meaningful error messages
+- **Test File Cleanup**: ALWAYS delete temporary test files created at root level after use
+  - Use the task/tests/ folder for ALL permanent test artifacts
+  - Clean up any accidental root-level test files immediately
+  - Maintain clean project root directory
+- **Status Updates**: ALWAYS update subtask/task status and progress AFTER testing validations pass
+  - Update status from "Not Started" → "In Progress" → "Completed" 
+  - Document progress in Progress Log with dates, actions, and test results
+  - Only mark as "Completed" after all tests pass successfully
+- **Checkbox Completion**: MANDATORY - tick all relevant checkboxes when subtasks/tasks complete
+  - Mark all completed items in Implementation Plan checklists as [x]
+  - Update Test Cases checkboxes as tests pass
+  - Complete Testing Checklist items as validation succeeds
+  - Tick Definition of Done checkboxes when criteria are met
+  - Ensure all documentation reflects actual completion status
+- **End-to-End Master Test**: After completing individual subtasks, create ONE master test that validates the entire user workflow
+  - Test from user perspective, not just individual components
+  - Validate complete application functionality, not just micro-level features
+  - Ensure the whole system works together even if individual parts pass tests
+  - Master test should simulate real user scenarios and catch integration issues

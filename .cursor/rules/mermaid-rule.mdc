@@ -1,0 +1,154 @@
+---
+description: ANY diagram/mermaid used. Can also use to make corrections after the fact.
+alwaysApply: false
+---
+# UML / Mermaid Diagrams Rule
+
+For all UML / Mermaid Diagrams tasks, you MUST follow the critical syntax standards in `docs\global_docs\ui_patterns\mermaid-diagram-standards.md` to ensure you're creating diagrams without error.
+
+## 🚨 CRITICAL SYNTAX RULES (NEVER BREAK THESE)
+
+### 1. HTML Tags Are COMPLETELY FORBIDDEN
+❌ **NEVER use ANY HTML tags** - they break Mermaid parsing:
+- `<br/>` - Use pipe `|` for line breaks instead
+- `<b>`, `<i>`, `<div>`, `<span>` - Not supported in Mermaid
+- Any HTML syntax causes immediate parse errors
+
+✅ **Correct line breaks**: Use pipe `|` inside quoted node text:
+```mermaid
+graph TD
+    A["Text with|line break"]
+    B["Multiple|line|breaks"]
+```
+
+### 2. Always Quote Node Text with Special Characters
+❌ **Unquoted special characters break parsing**:
+```mermaid
+graph TD
+    A[File/Path/Example]    <!-- ERROR: Unquoted slashes -->
+    B[Function(params)]     <!-- ERROR: Unquoted parentheses -->
+```
+
+✅ **Quote ALL node text containing special characters**:
+```mermaid
+graph TD
+    A["File/Path/Example"]
+    B["Function(params)"]
+    C["Array[index]"]
+```
+
+### 3. Class Diagram Relationships MUST Have Labels AND Use Standard Syntax
+❌ **Missing relationship labels AND complex syntax cause lexical errors**:
+```mermaid
+classDiagram
+class FrameworkType ||--|| BasicEssentials  <!-- ERROR: No label -->
+class GlobalStateManager ||--|| RealTimeClient  <!-- ERROR: Complex syntax + truncation -->
+```
+
+✅ **Use STANDARD relationship syntax with clear labels**:
+```mermaid
+classDiagram
+class FrameworkType {
+    +type: string
+}
+class BasicEssentials {
+    +documents: array
+}
+class GlobalStateManager {
+    +processingQueue: Array
+}
+class WebSocketClient {
+    +websocket: WebSocket
+}
+FrameworkType --> BasicEssentials : "contains"
+GlobalStateManager --> WebSocketClient : "uses"
+GlobalStateManager --o ProgressTracker : "manages"
+```
+
+**PREFERRED relationship syntax for compatibility**:
+- `-->` for associations
+- `--o` for aggregation  
+- `--|>` for inheritance
+- `--*` for composition
+
+### 4. Sequence Diagram Participants Must Be Defined
+❌ **Undefined participants in subgraphs cause parse errors**:
+```mermaid
+sequenceDiagram
+    subgraph "Real-time UI Updates (WebSockets / SSE)"
+        USER->>+WebSocket: Connect    <!-- ERROR: USER not defined -->
+    end
+```
+
+✅ **Define ALL participants before use**:
+```mermaid
+sequenceDiagram
+    participant User
+    participant WebSocket
+    
+    subgraph "Real-time UI Updates"
+        User->>+WebSocket: Connect
+        WebSocket->>-User: Connected
+    end
+```
+
+### 5. State Diagram Notes Require Special Syntax
+❌ **Inline notes with pipe separators cause parse errors in state diagrams**:
+```mermaid
+stateDiagram-v2
+    A --> B
+    note right of A : Multi-line|content|breaks parsing
+```
+
+✅ **Use multiline note blocks for state diagrams**:
+```mermaid
+stateDiagram-v2
+    A --> B
+    note right of A
+        Multi-line content
+        Works correctly
+        In state diagrams
+    end note
+```
+
+## 📋 MANDATORY PRE-PUBLISH CHECKLIST
+
+Before creating ANY Mermaid diagram, verify:
+- [ ] **No HTML tags** (`<br/>`, `<b>`, `<i>`, etc.) anywhere
+- [ ] **All node text quoted** in graphs/flowcharts with special characters
+- [ ] **Class relationship labels** present for ALL connections
+- [ ] **Participant definitions** before sequence diagram interactions
+- [ ] **Subgraph syntax** proper formatting
+- [ ] **Arrow syntax** uses correct Mermaid operators
+
+## ⚠️ COMMON ERROR PATTERNS TO AVOID
+
+### Most Frequent Parse Errors:
+1. **HTML `<br/>` tags** - Replace with pipe `|` in quotes
+2. **Unquoted special characters** - Quote node text: `["text"]`
+3. **Complex class relationship syntax** - Use `-->`, `--o`, `--|>`, `--*` instead of `||--||`
+4. **Long class names causing truncation** - Use shorter, descriptive names
+5. **Missing relationship labels** - Add `: "label"` to class connections
+6. **Undefined participants** - Define before use in sequence diagrams
+7. **Incorrect arrow syntax** - Use proper Mermaid operators
+8. **State diagram note syntax** - Use multiline `note...end note` blocks instead of inline notes with pipes
+
+### Testing Strategy:
+1. **Mental syntax check** against these rules before output
+2. **Visual validation** of examples in standards doc
+3. **Error pattern recognition** from common mistakes
+
+## 🎯 AI AGENT REQUIREMENTS
+
+When creating ANY Mermaid diagram:
+1. **Reference standards doc** for syntax validation
+2. **Follow examples** in `mermaid-diagram-standards.md`
+3. **Apply all critical rules** without exception
+4. **Test mentally** against common error patterns
+5. **Ensure professional quality** diagrams
+
+**Failure to follow these rules results in broken diagrams that prevent documentation rendering. These standards are MANDATORY, not optional.**
+description: For all UML / Mermaid Diagrams tasks to ensure you're creating diagrams without error.
+alwaysApply: false
+---
+For all UML / Mermaid Diagrams, you MUST check `docs\global_docs\ui_patterns\mermaid-diagram-standards.md` to ensure you're creating diagrams without error.

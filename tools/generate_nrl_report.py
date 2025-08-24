@@ -78,7 +78,7 @@ Remember, you are highly resourceful and work hard to complete this in detail us
 Remember, You MUST reply in JSON format per the provided schema."""
 
         # Generate the match report JSON using web search
-        print(f"🔍 Researching match: {match_description}")
+        print(f"[RESEARCH] Researching match: {match_description}")
         match_data_json = llm(
             research_prompt,
             model=model,
@@ -114,7 +114,7 @@ Remember, You MUST reply in JSON format per the provided schema."""
         shutil.copy2(html_template_path, html_output_path)
         
         # Generate PDF using the pdf_from_html script
-        print(f"📄 Generating PDF report...")
+        print(f"[PDF] Generating PDF report...")
         pdf_script_path = os.path.join(os.getcwd(), "tools","bash_tools", "export_as_pdf_from_html")
         
         # Run the PDF generation script

@@ -84,14 +84,14 @@ def agent_caller(
         urls = []
     
     try:
-        # Get project root (where the 'agent' bash script is located)
+        # Get project root and agent runner script
         project_root = Path(__file__).parent.parent
-        agent_script = project_root / "oneshot"
+        agent_runner_script = project_root / "app" / "agent_runner.py"
         
-        if not agent_script.exists():
+        if not agent_runner_script.exists():
             return json.dumps({
                 "success": False,
-                "error": "Agent script not found. This tool requires the 'oneshot' bash script to be present.",
+                "error": "Agent runner script not found. Expected agent_runner.py in app directory.",
                 "agent_name": agent_name,
                 "call_id": str(uuid.uuid4())[:8]
             }, indent=2)
@@ -125,8 +125,9 @@ def agent_caller(
             if url_context:
                 enhanced_message += f"\n\nURL CONTEXT:\n{chr(10).join(url_context)}"
         
-        # Build command
-        cmd = ["bash", str(agent_script), agent_name, enhanced_message]
+        # Build command using Python directly (cross-platform)
+        import sys
+        cmd = [sys.executable, str(agent_runner_script), agent_name, enhanced_message]
         
         # Add run-id if provided (assuming the agent script supports it)
         if run_id:

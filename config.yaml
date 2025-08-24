@@ -11,11 +11,11 @@ template_engine:
 # Default model settings
 model_settings:
   # Model name - can be overridden per agent
-  model: "openai/gpt-5-mini"
+  model: "openai/gpt-4o-mini"
   
   # Core generation parameters
   temperature: 0.7          # 0.0 = deterministic, higher = more creative
-  max_tokens: 2048          # Maximum tokens to generate
+  max_tokens: 1024          # Maximum tokens to generate (reduced for cost control)
   
   # Advanced sampling (use either temperature OR top_p, not both)
   top_p: null               # Nucleus sampling, 0.1 = top 10% probability mass
@@ -45,7 +45,7 @@ agent_defaults:
 # Usage limits to prevent infinite loops and control costs
 usage_limits:
   # Maximum number of requests per agent run (prevents infinite loops)
-  request_limit: 30
+  request_limit: 100
   
   # Maximum tokens allowed in requests (null = no limit)
   request_tokens_limit: null
@@ -101,4 +101,16 @@ logfire:
 framework:
   agents_dir: "agents"      # Directory containing agent markdown files
   tools_dir: "tools"        # Directory containing tool Python scripts
-  defer_model_check: false # Check model availability immediately 
+  defer_model_check: false # Check model availability immediately
+  
+# Model restrictions for cost control
+model_restrictions:
+  # Block expensive models that charge per request
+  blocked_models:
+    - "openai/gpt-4o-mini-search-preview"
+    - "openai/gpt-4-turbo-preview"
+    - "openai/gpt-4-vision-preview"
+    - "anthropic/claude-3.5-sonnet-latest"
+  
+  # Fallback model when blocked model is requested
+  fallback_model: "openai/gpt-4o-mini" 

@@ -1,10 +1,10 @@
 ---
 name: research_agent
 description: "Deep research specialist agent that conducts comprehensive, iterative research using structured WIP document management"
-model: openai/gpt-5-mini
+model: openai/gpt-4o-mini
 temperature: 0.7
-max_tokens: 16000
-request_limit: 50
+max_tokens: 4000
+request_limit: 100
 tools:
   - usage_status
   - research_prompt_rewriter

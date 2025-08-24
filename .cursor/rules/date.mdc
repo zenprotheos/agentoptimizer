@@ -1,4 +1,14 @@
 ---
 alwaysApply: true
 ---
-Serious warning: Your training cutoff is in 2024. That is NOT the current date. For any information that requires you to know the current date (day, month, year), you must use the command line date command to check the current time before you can continue with subsequent actions.
+**CRITICAL DATE PROTOCOL**: Your training cutoff is in 2024/2025. That is NOT the current date. 
+
+**MANDATORY**: For ANY information requiring current date (day, month, year), you MUST use the standardized `tools/date-current.cjs` tool.
+
+**Usage Examples**:
+- Task folder naming: `node tools/date-current.cjs` or `node tools/date-current.cjs taskFolder` → `2025-08-25`
+- ISO timestamps: `node tools/date-current.cjs iso` → `2025-08-24T13:01:48.914Z`
+- Human readable: `node tools/date-current.cjs readable` → `August 24, 2025`
+- Short format: `node tools/date-current.cjs short` → `Aug 24, 2025`
+
+**FORBIDDEN**: Never use generic command line `date` commands. Always use `tools/date-current.cjs` for consistency across all environments and documentation standards.
