@@ -66,18 +66,23 @@ def export_as_screenshot(file_path: str, visible_only: bool = False) -> str:
             png_path = input_path.parent / f"{input_path.stem}-fullpage.png"
         
         try:
-            # Try to generate screenshot using playwright
-            success = _generate_screenshot_playwright(input_path, png_path, file_extension, visible_only)
+            # Try Windows-optimized selenium with webdriver-manager first
+            success = _generate_screenshot_selenium_auto(input_path, png_path, file_extension, visible_only)
             if success:
-                method = "playwright"
+                method = "selenium_auto"
             else:
-                # Fallback to selenium approach
-                success = _generate_screenshot_selenium(input_path, png_path, file_extension, visible_only)
-                method = "selenium" if success else "failed"
+                # Fallback to playwright
+                success = _generate_screenshot_playwright(input_path, png_path, file_extension, visible_only)
+                if success:
+                    method = "playwright"
+                else:
+                    # Final fallback - simple image
+                    success = _generate_simple_screenshot(input_path, png_path, file_extension)
+                    method = "simple_image" if success else "failed"
         except Exception as e:
-            # Final fallback - create a simple image with text
+            # Emergency fallback - create a simple image with text
             success = _generate_simple_screenshot(input_path, png_path, file_extension)
-            method = "simple_image" if success else "failed"
+            method = "simple_image_emergency" if success else "failed"
         
         if success:
             # Success - save the process output for reference
@@ -151,6 +156,53 @@ def _generate_screenshot_playwright(input_path: Path, png_path: Path, file_exten
                 page.screenshot(path=str(png_path), full_page=True)
             
             browser.close()
+        
+        # Clean up temp file if created
+        if file_extension == '.md' and temp_html.exists():
+            temp_html.unlink()
+        
+        return png_path.exists()
+    except ImportError:
+        return False
+    except Exception:
+        return False
+
+def _generate_screenshot_selenium_auto(input_path: Path, png_path: Path, file_extension: str, visible_only: bool) -> bool:
+    """Try to generate screenshot using selenium with automatic Windows webdriver management"""
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from webdriver_manager.chrome import ChromeDriverManager
+        from selenium.webdriver.chrome.service import Service
+        
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+        
+        if file_extension == '.md':
+            # Convert markdown to HTML first
+            html_content = _markdown_to_html(input_path)
+            # Create temporary HTML file
+            temp_html = input_path.parent / f"{input_path.stem}_temp.html"
+            temp_html.write_text(html_content, encoding='utf-8')
+            file_url = f"file:///{temp_html.absolute().as_posix()}"
+        else:
+            file_url = f"file:///{input_path.absolute().as_posix()}"
+        
+        # Auto-download and manage Chrome driver for Windows
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        
+        driver.get(file_url)
+        
+        if visible_only:
+            driver.set_window_size(1920, 1080)
+        
+        driver.save_screenshot(str(png_path))
+        driver.quit()
         
         # Clean up temp file if created
         if file_extension == '.md' and temp_html.exists():

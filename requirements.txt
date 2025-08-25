@@ -12,3 +12,17 @@ beautifulsoup4
 fastapi
 pydantic
 pydantic-core
+
+# Windows-Optimized PDF and Screenshot Generation
+pdfkit>=1.0.0
+reportlab>=4.0.0
+Pillow>=10.0.0
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+markdown>=3.5.0
+
+# Windows-compatible browser automation  
+playwright>=1.40.0
+
+# Optional: For better markdown processing
+pymdown-extensions>=10.0

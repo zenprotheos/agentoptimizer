@@ -38,8 +38,7 @@ def test_tool(message: str = "Hello from test tool!") -> str:
         Test response message
     """
     # Use tool_services for consistency, but maintain exact output format for system testing
-    # Removed emoji to prevent Windows Unicode encoding errors
-    response = f"[OK] Test tool executed successfully! Message: {message}"
+    response = f"✅ Test tool executed successfully! Message: {message}"
     
     # Save test execution for run-aware organization (optional for test tool)
     save(response, "Test tool execution")

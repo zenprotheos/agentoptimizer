@@ -5,11 +5,12 @@ alwaysApply: true
 # 🚨 MANDATORY COMPLETION PROTOCOL 🚨
 **BEFORE RESPONDING "TASK COMPLETE" YOU MUST:**
 1. ✅ **PASS ALL TESTS** - Automated tests must return exit code 0
-2. ✅ **GIT COMMIT & PUSH** - All changes committed to GitHub with detailed message
-3. ✅ **RULES COMPLIANCE CHECK** - Review ALL coding-tasks steps for compliance
-4. ✅ **EXPLICITLY STATE** - "I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
+2. ✅ **PASS MASTER END-TO-END TEST** - Complete user workflow validation must pass
+3. ✅ **GIT COMMIT & PUSH** - All changes committed to GitHub with detailed message
+4. ✅ **RULES COMPLIANCE CHECK** - Review ALL coding-tasks steps for compliance
+5. ✅ **EXPLICITLY STATE** - "I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
 
-**❌ FAILURE TO COMPLETE ALL 4 ITEMS = INCOMPLETE TASK**
+**❌ FAILURE TO COMPLETE ALL 5 ITEMS = INCOMPLETE TASK**
 
 ---
 
@@ -58,7 +59,91 @@ Notes:
 - If exit code ≠ 0: Fix issues, re-test until passing
 - **CHECKPOINT**: Only proceed after tests pass
 
-### Step 4: 🔄 MANDATORY GIT COMMIT & PUSH (REQUIRED)
+### Step 4: 🎯 MANDATORY MASTER END-TO-END TEST (REQUIRED)
+**⛔ HARD STOP: Cannot complete task without comprehensive user workflow validation**
+
+**CRITICAL: This step is MANDATORY and AUTOMATED - no exceptions**
+
+**IMMEDIATE ACTION REQUIRED:**
+1. **Create Master Test Script**: `tasks/YYYY-MM-DD_[TaskName]/tests/master_end_to_end_test.py`
+2. **Test Complete User Workflow**: Validate ENTIRE system from user perspective
+3. **Execute Master Test**: Must return exit code 0 (success)
+4. **Fix Integration Issues**: If exit code ≠ 0, resolve all integration problems
+5. **CHECKPOINT**: Only proceed after master test passes
+
+#### Master Test Requirements
+- **🚨 MANDATORY AUTOMATION 🚨**: This test MUST be created automatically without user prompting
+- **User Perspective Testing**: Test complete workflows as an actual user would experience them
+- **End-to-End Validation**: Verify entire system functionality, not just individual components
+- **Integration Testing**: Ensure all parts work together seamlessly
+- **Real-World Scenarios**: Simulate authentic user interactions and use cases
+- **Error Handling**: Test edge cases and error conditions in the complete workflow
+- **Cross-System Testing**: Validate interactions between different system components
+- **Performance Validation**: Ensure acceptable response times for complete workflows
+
+#### Master Test Structure Template
+```python
+# Master End-to-End Test Template
+import sys
+import os
+# Add comprehensive imports for your system
+
+def test_complete_user_workflow():
+    """Test the entire user workflow from start to finish"""
+    print("🎯 Starting Master End-to-End Test...")
+    
+    # Test Step 1: Initial setup/authentication
+    # Test Step 2: Core functionality
+    # Test Step 3: Data persistence
+    # Test Step 4: User interactions
+    # Test Step 5: Final validation
+    
+    print("✅ Master End-to-End Test PASSED")
+    return True
+
+def test_error_scenarios():
+    """Test error handling in complete workflows"""
+    # Test various error conditions
+    pass
+
+def test_integration_points():
+    """Test all system integration points"""
+    # Test component interactions
+    pass
+
+if __name__ == "__main__":
+    try:
+        test_complete_user_workflow()
+        test_error_scenarios()
+        test_integration_points()
+        print("🎉 ALL MASTER TESTS PASSED")
+        sys.exit(0)  # Success
+    except Exception as e:
+        print(f"❌ MASTER TEST FAILED: {e}")
+        sys.exit(1)  # Failure
+```
+
+#### Master Test Execution Protocol
+```powershell
+# Execute master test with timeout protection
+$masterTest = "tasks/YYYY-MM-DD_[TaskName]/tests/master_end_to_end_test.py"
+$job = Start-Job -ScriptBlock { python $using:masterTest }
+if (Wait-Job $job -Timeout 120) {
+    $result = Receive-Job $job
+    Write-Host $result
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ Master End-to-End Test PASSED"
+    } else {
+        throw "❌ Master End-to-End Test FAILED - Must fix before completion"
+    }
+} else {
+    Stop-Job $job -Force
+    throw "❌ Master test timeout - Must fix before completion"
+}
+Remove-Job $job -Force
+```
+
+### Step 5: 🔄 MANDATORY GIT COMMIT & PUSH (REQUIRED)
 **⛔ HARD STOP: Cannot complete task without Git commit & push**
 
 **IMMEDIATE ACTION SEQUENCE:**
@@ -85,7 +170,9 @@ Notes:
 - Test implementations and validation results
 
 ## Testing Status:
-- ✅ All automated tests passed
+- ✅ All unit/component tests passed
+- ✅ Master end-to-end test passed
+- ✅ Complete user workflow validated
 - ✅ Integration tests validated
 - ✅ Cross-platform compatibility verified
 - ✅ Error handling tested
@@ -155,7 +242,7 @@ if (Wait-Job $job -Timeout 60) {
 - **Merge Strategy**: Prepare for clean merges to main branch
 - **Conflict Resolution**: Address merge conflicts before final push
 
-### Step 5: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMMIT)
+### Step 6: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMMIT)
 **REQUIRED: After git commit/push, identify lessons learned and propose rule improvements**
 
 #### Lessons Learned Documentation
@@ -229,22 +316,22 @@ temp_file = "temp_test.py"  # ❌ NEVER DO THIS
   - Tick Definition of Done checkboxes when criteria are met
   - Ensure all documentation reflects actual completion status
   - **MANDATORY**: After ticking final completion checkboxes, execute Git commit & push protocol
-- **End-to-End Master Test**: After completing individual subtasks, create ONE master test that validates the entire user workflow
-  - Test from user perspective, not just individual components
-  - Validate complete application functionality, not just micro-level features
-  - Ensure the whole system works together even if individual parts pass tests
-  - Master test should simulate real user scenarios and catch integration issues
-  - **MANDATORY**: After master test passes, execute final Git commit & push for task completion
+- **End-to-End Master Test**: Refer to Step 4 for comprehensive master test requirements
+  - **AUTOMATIC CREATION**: Master test is created automatically as part of Step 4
+  - **MANDATORY EXECUTION**: Must pass before task can be marked complete
+  - **USER WORKFLOW FOCUS**: Tests complete user experience, not just components
+  - **INTEGRATION VALIDATION**: Ensures all system parts work together seamlessly
 
-### Step 6: 📋 MANDATORY RULES COMPLIANCE CHECK (REQUIRED)
+### Step 7: 📋 MANDATORY RULES COMPLIANCE CHECK (REQUIRED)
 **⛔ HARD STOP: Cannot complete without full SOP compliance verification**
 
 **IMMEDIATE COMPLIANCE AUDIT:**
-1. **Review Step 3**: ✅ Tests passed (exit code 0)?
-2. **Review Step 4**: ✅ Git commit & push completed?
-3. **Review Step 6**: ✅ This compliance check completed?
-4. **EXPLICIT STATEMENT REQUIRED**: "I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
-5. **CHECKPOINT**: Full compliance verified
+1. **Review Step 3**: ✅ Unit/component tests passed (exit code 0)?
+2. **Review Step 4**: ✅ Master end-to-end test passed (exit code 0)?
+3. **Review Step 5**: ✅ Git commit & push completed?
+4. **Review Step 7**: ✅ This compliance check completed?
+5. **EXPLICIT STATEMENT REQUIRED**: "I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
+6. **CHECKPOINT**: Full compliance verified
 
 #### Global Rules Review Requirements
 1. **Review All Applicable Rules**: After completing ANY task or subtask, review relevant global rules
@@ -317,26 +404,32 @@ fetch_rules(["coding-tasks"])
 
 # 🎯 TASK COMPLETION VERIFICATION CHECKLIST
 
-**BEFORE SAYING "TASK COMPLETE" - VERIFY ALL 4 ITEMS:**
+**BEFORE SAYING "TASK COMPLETE" - VERIFY ALL 5 ITEMS:**
 
-## ✅ Step 3: Testing Complete
+## ✅ Step 3: Unit/Component Testing Complete
 - [ ] Created test script in `tasks/YYYY-MM-DD_[TaskName]/tests/`
 - [ ] Executed test: Exit code = 0 (success)
 - [ ] All functionality validated
 
-## ✅ Step 4: Git Workflow Complete  
+## ✅ Step 4: Master End-to-End Test Complete
+- [ ] Created master end-to-end test script
+- [ ] Executed master test: Exit code = 0 (success)
+- [ ] Complete user workflow validated
+- [ ] Integration points tested
+
+## ✅ Step 5: Git Workflow Complete  
 - [ ] `git add -A` executed
 - [ ] `git commit -m "[detailed message]"` executed
 - [ ] `git push origin HEAD` executed
 - [ ] Push successful (no errors)
 
-## ✅ Step 6: Compliance Verified
-- [ ] Reviewed Steps 3, 4, 6 completion
+## ✅ Step 7: Compliance Verified
+- [ ] Reviewed Steps 3, 4, 5, 7 completion
 - [ ] All SOP requirements met
 - [ ] Ready to state compliance
 
 ## ✅ Required Statement
 **MUST INCLUDE IN RESPONSE:**
-"I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
+"I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
 
 **🚨 IF ANY ITEM UNCHECKED = TASK INCOMPLETE 🚨**

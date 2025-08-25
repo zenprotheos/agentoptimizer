@@ -57,18 +57,23 @@ def export_as_pdf(file_path: str) -> str:
         pdf_path = input_path.parent / f"{input_path.stem}.pdf"
         
         try:
-            # Try to generate PDF using weasyprint (if available)
-            success = _generate_pdf_weasyprint(input_path, pdf_path, file_extension)
+            # Try Windows-optimized pdfkit first (best for Windows)
+            success = _generate_pdf_pdfkit(input_path, pdf_path, file_extension)
             if success:
-                method = "weasyprint"
+                method = "pdfkit"
             else:
-                # Fallback to playwright/puppeteer approach
+                # Fallback to playwright approach
                 success = _generate_pdf_playwright(input_path, pdf_path, file_extension)
-                method = "playwright" if success else "failed"
+                if success:
+                    method = "playwright"
+                else:
+                    # Final fallback - reportlab
+                    success = _generate_simple_pdf(input_path, pdf_path, file_extension)
+                    method = "reportlab" if success else "failed"
         except Exception as e:
-            # Final fallback - create a simple PDF with the text content
+            # Emergency fallback - create a simple PDF with reportlab
             success = _generate_simple_pdf(input_path, pdf_path, file_extension)
-            method = "simple_pdf" if success else "failed"
+            method = "reportlab_emergency" if success else "failed"
         
         if success:
             # Success - save the process output for reference
@@ -111,19 +116,42 @@ def export_as_pdf(file_path: str) -> str:
             "file_path": file_path
         }, indent=2)
 
-def _generate_pdf_weasyprint(input_path: Path, pdf_path: Path, file_extension: str) -> bool:
-    """Try to generate PDF using weasyprint library"""
+def _generate_pdf_pdfkit(input_path: Path, pdf_path: Path, file_extension: str) -> bool:
+    """Try to generate PDF using pdfkit (Windows-optimized)"""
     try:
-        import weasyprint
+        import pdfkit
         
         if file_extension == '.md':
             # Convert markdown to HTML first
             html_content = _markdown_to_html(input_path)
+            # Create temporary HTML file for pdfkit
+            temp_html = input_path.parent / f"{input_path.stem}_temp.html"
+            temp_html.write_text(html_content, encoding='utf-8')
+            input_for_pdf = str(temp_html)
+            is_temp = True
         else:
-            html_content = input_path.read_text(encoding='utf-8')
+            input_for_pdf = str(input_path)
+            is_temp = False
         
-        # Generate PDF
-        weasyprint.HTML(string=html_content).write_pdf(str(pdf_path))
+        # Windows-optimized pdfkit options
+        options = {
+            'page-size': 'A4',
+            'margin-top': '0.75in',
+            'margin-right': '0.75in',
+            'margin-bottom': '0.75in',
+            'margin-left': '0.75in',
+            'encoding': "UTF-8",
+            'no-outline': None,
+            'enable-local-file-access': None
+        }
+        
+        # Generate PDF with Windows-friendly settings
+        pdfkit.from_file(input_for_pdf, str(pdf_path), options=options)
+        
+        # Clean up temp file if created
+        if is_temp and temp_html.exists():
+            temp_html.unlink()
+        
         return pdf_path.exists()
     except ImportError:
         return False
