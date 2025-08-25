@@ -3,12 +3,23 @@ alwaysApply: true
 ---
 **CRITICAL DATE PROTOCOL**: Your training cutoff is in 2024/2025. That is NOT the current date. 
 
-**MANDATORY**: For ANY information requiring current date (day, month, year), you MUST use the standardized `tools/date-current.cjs` tool.
+**MANDATORY**: For ANY information requiring current date (day, month, year), you MUST use the standardized date tool.
 
-**Usage Examples**:
-- Task folder naming: `node tools/date-current.cjs` or `node tools/date-current.cjs taskFolder` → `2025-08-25`
+**🚨 WINDOWS DATE TOOL PRIORITY 🚨**: 
+- **PRIMARY**: Always use `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1` on Windows
+- **FALLBACK**: Use `node tools/date-current.cjs` only on non-Windows systems
+- **REASON**: Node.js causes timeout/stall issues on Windows agents
+
+**Usage Examples (Windows)**:
+- Task folder naming: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 taskFolder` → `2025-08-25`
+- ISO timestamps: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso` → `2025-08-24T13:01:48.914Z`
+- Human readable: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 readable` → `August 24, 2025`
+- Short format: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 short` → `Aug 24, 2025`
+
+**Usage Examples (Non-Windows)**:
+- Task folder naming: `node tools/date-current.cjs taskFolder` → `2025-08-25`
 - ISO timestamps: `node tools/date-current.cjs iso` → `2025-08-24T13:01:48.914Z`
 - Human readable: `node tools/date-current.cjs readable` → `August 24, 2025`
 - Short format: `node tools/date-current.cjs short` → `Aug 24, 2025`
 
-**FORBIDDEN**: Never use generic command line `date` commands. Always use `tools/date-current.cjs` for consistency across all environments and documentation standards.
+**FORBIDDEN**: Never use generic command line `date` commands. Always use the standardized date tools for consistency across all environments and documentation standards.

@@ -19,6 +19,11 @@ Create a timestamped task folder under `/tasks/` using the standardized date too
 
 **Get Current Date**: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 taskFolder` → `2025-08-25`
 
+**🚨 WINDOWS DATE TOOL PRIORITY 🚨**: 
+- **PRIMARY**: Always use `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1` on Windows
+- **AVOID**: `node tools/date-current.cjs` causes timeout/stall issues on Windows
+- **REASON**: PowerShell execution is more reliable and bypasses Node.js hanging problems
+
 ```
 tasks/YYYY-MM-DD_[TaskName]/
 ├── MASTER_Architecture_UMLs_[TaskName].md
@@ -187,7 +192,7 @@ Remove-Job $job -Force
 - Parent Task: [COMPLETED/IN-PROGRESS]
 - Next Steps: [Brief description if applicable]
 
-Generated: $(node tools/date-current.cjs iso)
+Generated: $(powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso)
 ```
 
 #### Git Command Execution Protocol
