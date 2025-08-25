@@ -115,9 +115,9 @@ When encountering MCP-related issues, refer to these comprehensive guides:
 
 | Guide | Purpose | When to Use |
 |-------|---------|-------------|
-| **~doc/cursor_windows11_mcp_setup.md** | Core setup for MCP servers on Windows 11 | Initial MCP configuration, transport selection (SSE vs StdIO), global config setup |
-| **~doc/cursor_windows11_mcp_autocheck_guide.md** | Automated verification script for MCP environments | Validating paths, detecting missing runtimes, converting to stable absolute paths |
-| **~doc/cursor_windows11_mcp_troubleshooting.md** | Comprehensive troubleshooting for MCP issues | Red dots, server connection failures, hangs, configuration errors, diagnostic workflows |
+| **app/guides/cursor-windows/cursor_windows11_mcp_setup.md** | Core setup for MCP servers on Windows 11 | Initial MCP configuration, transport selection (SSE vs StdIO), global config setup |
+| **app/guides/cursor-windows/cursor_windows11_mcp_autocheck_guide.md** | Automated verification script for MCP environments | Validating paths, detecting missing runtimes, converting to stable absolute paths |
+| **app/guides/cursor-windows/cursor_windows11_mcp_troubleshooting.md** | Comprehensive troubleshooting for MCP issues | Red dots, server connection failures, hangs, configuration errors, diagnostic workflows |
 
 **Common MCP Issues Solved:**
 - StdIO servers spawning flaky shells → Use absolute paths + proper timeouts
@@ -157,7 +157,7 @@ New-Item -Path "test_script.py" -ItemType File  # ❌ NEVER DO THIS
 
 ```powershell
 # Create temp script in proper location
-$tempScript = "tasks\2024-08-24_TaskName\tests\temp_test.py"
+$tempScript = "tasks\2025-08-24_TaskName\tests\temp_test.py"
 Set-Content -Path $tempScript -Value "import os; print('test')"
 
 # Execute with timeout
