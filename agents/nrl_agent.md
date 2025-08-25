@@ -1,7 +1,7 @@
 ---
 name: nrl_agent
 description: "This agent can produce match reports for nrl (National Rugby League) games."
-model: "openai/gpt-4.1-mini"
+model: "openai/gpt-5-mini"
 
 tools:
   - generate_nrl_report

@@ -2,7 +2,7 @@
 """
 Tool: web_search
 Description: Search the web with automatic fallback between multiple providers:
-1. OpenAI Search (GPT-4o-mini-search-preview) via OpenRouter
+1. OpenAI Search (GPT-5-nano) via OpenRouter
 2. Serper.dev API (if SERPER_API_KEY available)
 3. Google Custom Search (if GOOGLE_API_KEY available) 
 4. Brave Search API (if BRAVE_API_KEY available)
@@ -65,7 +65,7 @@ Return only valid JSON with actual search results from the web."""
 
         search_results = llm_json(
             search_prompt,
-            model="openai/gpt-4o-mini-search-preview"
+            model="openai/gpt-5-nano"
         )
         
         # Handle case where llm_json returns an error dict

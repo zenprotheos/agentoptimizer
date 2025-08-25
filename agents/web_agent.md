@@ -1,7 +1,7 @@
 ---
 name: web_agent
 description: "This agent can search the web and read webpages on behalf of CB. It can also deploy sites and has access to database operations via MCP servers."
-model: "openai/gpt-4.1-mini"
+model: "openai/gpt-5-mini"
 
 tools:
   - structured_search

@@ -1,7 +1,7 @@
 # tools/generate_nrl_report.py
 """
 Tool: generate_nrl_report
-Description: An example tool that shows an end to end process for creating a report artifact in a specific presentation template. The tool generate a comprehensive NRL match report by performing a search of live data, using openai/gpt-4o-mini-search-preview, returning a structured JSON response, populating a template HTML file, and generating a PDF.
+Description: An example tool that shows an end to end process for creating a report artifact in a specific presentation template. The tool generate a comprehensive NRL match report by performing a search of live data, using openai/gpt-5-nano, returning a structured JSON response, populating a template HTML file, and generating a PDF.
 
 CLI Test:
     cd /path/to/oneshot
@@ -33,7 +33,7 @@ TOOL_METADATA = {
                 "model": {
                     "type": "string",
                     "description": "LLM model to use for research",
-                    "default": "openai/gpt-4o-mini-search-preview"
+                    "default": "openai/gpt-5-nano"
                 }
             },
             "required": ["match_description"]
@@ -41,7 +41,7 @@ TOOL_METADATA = {
     }
 }
 
-def generate_nrl_report(match_description: str, model: str = "openai/gpt-4o-mini-search-preview") -> str:
+def generate_nrl_report(match_description: str, model: str = "openai/gpt-5-nano") -> str:
     """Generate comprehensive NRL match report with web research and PDF creation"""
     
     try:

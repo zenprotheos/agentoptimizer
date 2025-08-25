@@ -10,12 +10,12 @@ template_engine:
 
 # Default model settings
 model_settings:
-  # Model name - can be overridden per agent
-  model: "openai/gpt-4o-mini"
+  # Model name - can be overridden per agent (prioritized for cost-effectiveness)
+  model: "openai/gpt-5-nano"
   
   # Core generation parameters
   temperature: 0.7          # 0.0 = deterministic, higher = more creative
-  max_tokens: 1024          # Maximum tokens to generate (reduced for cost control)
+  max_tokens: 4096          # Maximum tokens to generate (increased for GPT-5 Nano's 128K output capacity)
   
   # Advanced sampling (use either temperature OR top_p, not both)
   top_p: null               # Nucleus sampling, 0.1 = top 10% probability mass
@@ -111,6 +111,21 @@ model_restrictions:
     - "openai/gpt-4-turbo-preview"
     - "openai/gpt-4-vision-preview"
     - "anthropic/claude-3.5-sonnet-latest"
+    - "openai/gpt-4o-mini"  # Legacy model, replaced by GPT-5 Nano
   
-  # Fallback model when blocked model is requested
-  fallback_model: "openai/gpt-4o-mini" 
+  # Fallback model when blocked model is requested (most cost-effective)
+  fallback_model: "openai/gpt-5-nano"
+
+# Preferred models by use case (based on cost/performance analysis)
+preferred_models:
+  # Ultra-cheap, fast, multimodal & reasoning - Best default choice
+  lightweight_tasks: "openai/gpt-5-nano"
+  
+  # Open source, privacy-first, strong reasoning/math
+  privacy_first: "openrouter/oss-120b"
+  
+  # Large context for document processing (1M tokens)
+  long_context: "openai/gpt-4.1-mini"
+  
+  # Balanced reasoning, multimodal, mid-cost powerhouse
+  balanced_reasoning: "openai/gpt-5-mini" 

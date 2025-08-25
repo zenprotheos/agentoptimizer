@@ -89,10 +89,10 @@ Return results that match this JSON schema structure:
 
 The schema uses example values to show the expected format. Provide comprehensive, accurate search results that fit the specified structure. Return only valid JSON that matches the schema exactly."""
 
-        # Use the GPT-4o-mini-search-preview model for structured search
+        # Use the GPT-5-nano model for structured search
         search_results = llm_json(
             search_prompt,
-            model="openai/gpt-4o-mini-search-preview"
+            model="openai/gpt-5-nano"
         )
         
         # Handle case where llm_json returns an error dict
@@ -121,7 +121,7 @@ The schema uses example values to show the expected format. Provide comprehensiv
             "filepath": saved_file["filepath"],
             "run_id": saved_file["run_id"],
             "tokens": saved_file["frontmatter"]["tokens"],
-            "model_used": "openai/gpt-4o-mini-search-preview",
+            "model_used": "openai/gpt-5-nano",
             "summary": f"Search completed and results saved to {saved_file['filepath']}"
         }, indent=2)
         

@@ -1,7 +1,7 @@
 ---
 name: news_search_agent
 description: "Specialized news search and analysis agent that finds, summarizes, and analyzes news articles on any topic"
-model: "openai/gpt-4o-mini"
+model: "openai/gpt-5-nano"
 temperature: 0.3
 max_tokens: 4096
 tools:

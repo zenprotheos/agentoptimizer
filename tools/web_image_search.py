@@ -79,7 +79,7 @@ Focus on finding relevant, high-quality images. Return only valid JSON."""
 
         search_results = llm_json(
             search_prompt,
-            model="openai/gpt-4o-mini-search-preview"
+            model="openai/gpt-5-nano"
         )
         
         # Handle case where llm_json returns an error dict

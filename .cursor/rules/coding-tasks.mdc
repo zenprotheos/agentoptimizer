@@ -1,8 +1,6 @@
 ---
-description: any tasks related to coding, troubleshooting, programming, running commands, etc.
-alwaysApply: false
+alwaysApply: true
 ---
-
 ## Step 1 - Task Workspace
 Create a timestamped task folder under `/tasks/` using the standardized date tool:
 
@@ -212,6 +210,41 @@ temp_file = "temp_test.py"  # ❌ NEVER DO THIS
   - Ensure the whole system works together even if individual parts pass tests
   - Master test should simulate real user scenarios and catch integration issues
   - **MANDATORY**: After master test passes, execute final Git commit & push for task completion
+
+### Step 6: MANDATORY GLOBAL RULES REVIEW (AFTER EVERY TASK/SUBTASK COMPLETION)
+**CRITICAL: Agents MUST review global rules to ensure full SOP compliance**
+
+#### Global Rules Review Requirements
+1. **Review All Applicable Rules**: After completing ANY task or subtask, review relevant global rules
+2. **Verify SOP Compliance**: Ensure all standard operating procedures were followed correctly
+3. **Identify Rule Violations**: Check for any deviations from established protocols
+4. **Document Compliance Status**: Record rule adherence in completion documentation
+5. **Update Global Rules**: Add any discovered improvements or missing procedures
+
+#### Review Process
+- **Fetch All Rules**: Use `fetch_rules()` to retrieve relevant rule sets
+- **Cross-Reference Actions**: Compare completed work against rule requirements
+- **Validate Documentation**: Ensure all required documentation was created/updated
+- **Verify Testing**: Confirm testing protocols were followed completely
+- **Check Git Workflow**: Validate commit/push procedures were executed correctly
+
+#### Compliance Checklist
+- [ ] All required documentation created/updated
+- [ ] Testing protocols followed completely
+- [ ] Git workflow executed properly
+- [ ] Temporary files managed correctly
+- [ ] Architecture diagrams updated
+- [ ] Lessons learned documented
+- [ ] Rule enhancements proposed
+- [ ] Next steps identified
+
+#### Rule Violation Protocol
+If any rule violations are discovered:
+1. **Document Violation**: Record what rule was violated and how
+2. **Correct Immediately**: Fix any issues before marking task complete
+3. **Update Documentation**: Reflect corrections in task documentation
+4. **Propose Rule Enhancement**: Suggest improvements to prevent future violations
+5. **Commit Corrections**: Execute git commit/push for any fixes
 
 ## 🔄 BUFFER RESET PROTOCOL: Prevent Stall Accumulation
 

@@ -1,7 +1,7 @@
 ---
 name: oneshot_agent
 description: "Coordinates a team of specialist AI agents to accomplish complex tasks. Analyzes requests, breaks them down into subtasks, and delegates to the right agents in optimal sequence. Manages multi-step workflows and agent-to-agent communication."
-model: openai/gpt-4.1
+model: "openai/gpt-4.1-mini"
 temperature: 0.7
 max_tokens: 5000
 return_tool_output_only: false
