@@ -16,7 +16,7 @@ alwaysApply: true
 ## Step 1 - Task Workspace
 Create a timestamped task folder under `/tasks/` using the standardized date tool:
 
-**Get Current Date**: `node tools/date-current.cjs taskFolder` → `2025-08-25`
+**Get Current Date**: `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 taskFolder` → `2025-08-25`
 
 ```
 tasks/YYYY-MM-DD_[TaskName]/
@@ -33,7 +33,7 @@ tasks/YYYY-MM-DD_[TaskName]/
 ```
 
 Notes:
-- Include proper front-matter in every `.md` file (use `node tools/date-current.cjs iso` for timestamps)
+- Include proper front-matter in every `.md` file (use `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso` for timestamps)
 - For diagrams, follow your team Mermaid standards (`C:\Users\CSJin\Jininja Projects\AI Projects\main_oneshot\oneshot\.cursor\rules\mermaid-rule.mdc`)
 - **Subtasks folder**: Break complex tasks into manageable pieces with individual tracking documents
   - Each subtask should have clear scope, dependencies, progress tracking, and troubleshooting notes
