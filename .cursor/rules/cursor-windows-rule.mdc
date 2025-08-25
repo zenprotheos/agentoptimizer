@@ -172,12 +172,99 @@ if (Wait-Job $job -Timeout 30) {
 Remove-Item $tempScript -Force
 ```
 
+---
+
+## 🚨 ANTI-STALL PROTOCOL 🚨
+
+**CRITICAL**: Prevent cursor agent stalls that require manual Ctrl+Enter intervention.
+
+### ✅ WORKING SOLUTION: Use Temp Files for Complex Operations
+```powershell
+# STEP 1: Create temp script file
+$tempScript = "tasks/YYYY-MM-DD_TaskName/tests/temp_$(Get-Random).ps1"
+Set-Content -Path $tempScript -Value @"
+`$job = Start-Job { <YOUR_COMMAND> }
+if (Wait-Job `$job -Timeout <TIMEOUT_SECONDS>) {
+    Write-Host "COMPLETED"
+    Receive-Job `$job
+} else {
+    Write-Host "AUTO-RECOVERY: Timeout - continuing"
+    Stop-Job `$job
+}
+Remove-Job `$job -Force
+"@
+
+# STEP 2: Execute with timeout protection
+powershell.exe -ExecutionPolicy Bypass -File $tempScript
+
+# STEP 3: Clean up
+Remove-Item $tempScript -Force
+```
+
+### ⚠️ AVOID: Long Inline Commands (Cause Race Condition Stalls)
+```powershell
+# ❌ NEVER: Long commands cause parsing stalls
+try { if (Wait-Job $job -Timeout 30) { ... } } finally { ... }
+
+# ✅ ALWAYS: Use temp files for complex operations
+```
+
+### Timeout Requirements by Command Type:
+- **Simple Commands**: 30 seconds | **MCP Operations**: 60 seconds
+- **Heavy Operations**: 90 seconds | **Network Operations**: 45 seconds
+
+### 🔧 For Simple Commands: Keep Under 50 Characters
+```powershell
+# ✅ SAFE: Short commands work reliably
+Write-Host "Status"; Get-Date; Clear-Host
+
+# ❌ RISKY: Long commands cause stalls  
+Write-Host "Very long command with lots of parameters and complex syntax"
+```
+
+### 🔄 BUFFER RESET PROTOCOL: Prevent Stall Accumulation
+
+**CRITICAL DISCOVERY**: Non-terminal tool calls reset command buffer state and prevent stalls!
+
+#### ✅ WORKING RESET ACTIONS (Use Every 3-5 Commands):
+```python
+# MCP oneshot tools that reset terminal buffer state:
+mcp_oneshot_list_tools()              # Tool listing resets buffer
+fetch_rules(["rule-name"])             # Rule fetch resets buffer  
+read_file("file.md", limit=3)         # File read resets buffer
+list_dir(".", ignore_globs=["*.tmp"])  # Directory listing resets buffer
+codebase_search("simple query", [])   # Search resets buffer
+```
+
+#### 🎯 OPTIMAL WORKFLOW PATTERN:
+```
+Command 1 → Command 2 → Command 3 → **MCP RESET** → Command 4 → Command 5 → **MCP RESET**
+```
+
+#### 📝 IMPLEMENTATION RULE:
+**MANDATORY**: After every 3-5 terminal commands, use an MCP oneshot tool call to reset buffer state and prevent stall accumulation. MCP tools are preferred as they don't consume Cursor Agent tool calls.
+
+```python
+# Example implementation:
+run_terminal_cmd("command1")
+run_terminal_cmd("command2") 
+run_terminal_cmd("command3")
+# MCP RESET: Prevent stall accumulation (doesn't count against tool limits)
+mcp_oneshot_list_tools()  
+run_terminal_cmd("command4")
+run_terminal_cmd("command5")
+# MCP RESET: Prevent stall accumulation
+fetch_rules(["coding-tasks"])
+```
+
 ### Summary of Rule Enhancements
 
 * **Enforced** absolute executable use
 * **Guaranteed** redirected I/O via `.UseShellExecute=false`
 * **Modern headless mode**, avoiding deprecated flags
 * **Mandatory timeout protection** against Windows stalling
+* **Complete anti-stall protocol** with temp files and buffer resets
+* **MCP-powered buffer reset** using oneshot tools (no tool call limits)
 * **Proper temp file management** in organized workspace structure
 * **Complex command workarounds** using temporary scripts
 * **MCP-aware troubleshooting** with comprehensive documentation

@@ -42,8 +42,98 @@ Notes:
 ### Step 3: MANDATORY AUTOMATED TESTING (BEFORE COMPLETION)
 **CRITICAL: ALL TASKS MUST PASS AUTOMATED TESTS BEFORE MARKING COMPLETE**
 
-### Step 4: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMPLETION)
-**REQUIRED: After task completion, identify lessons learned and propose rule improvements**
+### Step 4: MANDATORY GIT COMMIT & PUSH (AFTER COMPLETION)
+**CRITICAL: ALL SUBTASK AND TASK COMPLETIONS MUST BE COMMITTED TO GITHUB WITH DETAILED MESSAGES**
+
+#### Automatic Git Workflow Requirements
+1. **Stage All Changes**: Add all modified files, documentation, tests, and artifacts
+2. **Detailed Commit Message**: Create comprehensive commit messages following the template below
+3. **Automatic Push**: Push commits to GitHub immediately after successful commit
+4. **Branch Management**: Ensure commits are on the correct feature/task branch
+
+#### Commit Message Template
+```
+[TASK] TaskName - SubtaskName: Brief Description
+
+## Changes Made:
+- Specific change 1 with file references
+- Specific change 2 with implementation details
+- Documentation updates and locations
+- Test implementations and validation results
+
+## Testing Status:
+- ✅ All automated tests passed
+- ✅ Integration tests validated
+- ✅ Cross-platform compatibility verified
+- ✅ Error handling tested
+
+## Architecture Impact:
+- UML diagrams updated: [file references]
+- System interactions documented
+- Dependencies and conflicts resolved
+
+## Completion Status:
+- Subtask: [COMPLETED/IN-PROGRESS]
+- Parent Task: [COMPLETED/IN-PROGRESS]
+- Next Steps: [Brief description if applicable]
+
+Generated: $(node tools/date-current.cjs iso)
+```
+
+#### Git Command Execution Protocol
+```powershell
+# Stage all changes with timeout protection
+$job = Start-Job -ScriptBlock { git add -A }
+if (Wait-Job $job -Timeout 30) {
+    Receive-Job $job; Remove-Job $job
+} else {
+    Stop-Job $job -Force; Remove-Job $job
+    Write-Host "⚠️ Git add timeout - manual verification required"
+}
+
+# Commit with detailed message
+$commitMsg = "Generated detailed commit message here..."
+$job = Start-Job -ScriptBlock { git commit -m $using:commitMsg }
+if (Wait-Job $job -Timeout 45) {
+    Receive-Job $job; Remove-Job $job
+} else {
+    Stop-Job $job -Force; Remove-Job $job
+    Write-Host "⚠️ Git commit timeout - continuing execution"
+}
+
+# Push to remote with timeout protection
+$job = Start-Job -ScriptBlock { git push origin HEAD }
+if (Wait-Job $job -Timeout 60) {
+    Receive-Job $job; Remove-Job $job
+    Write-Host "✅ Successfully pushed to GitHub"
+} else {
+    Stop-Job $job -Force; Remove-Job $job
+    Write-Host "⚠️ Git push timeout - may need manual retry"
+}
+```
+
+#### Commit Frequency Requirements
+- **Subtask Completion**: MANDATORY commit after each subtask finishes
+- **Task Milestone**: MANDATORY commit after major task milestones
+- **Testing Success**: MANDATORY commit after all tests pass
+- **Documentation Updates**: MANDATORY commit after architecture/UML updates
+- **Error Resolution**: MANDATORY commit after fixing critical issues
+
+#### Commit Quality Standards
+- **Descriptive Titles**: Clear, specific titles that explain the change
+- **Detailed Bodies**: Comprehensive change descriptions with file references
+- **Status Tracking**: Clear indication of completion status and next steps
+- **Timestamp Metadata**: Include generation timestamp for tracking
+- **Testing Evidence**: Document all testing validations in commit message
+
+#### Branch Strategy Integration
+- **Feature Branches**: Use task-specific branches for larger changes
+- **Commit Frequency**: Multiple commits per task for granular tracking
+- **Merge Strategy**: Prepare for clean merges to main branch
+- **Conflict Resolution**: Address merge conflicts before final push
+
+### Step 5: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMMIT)
+**REQUIRED: After git commit/push, identify lessons learned and propose rule improvements**
 
 #### Lessons Learned Documentation
 1. **Document Key Lessons**: Record what was learned during task execution
@@ -108,14 +198,52 @@ temp_file = "temp_test.py"  # ❌ NEVER DO THIS
   - Update status from "Not Started" → "In Progress" → "Completed" 
   - Document progress in Progress Log with dates, actions, and test results
   - Only mark as "Completed" after all tests pass successfully
+  - **MANDATORY**: Execute automatic Git commit & push IMMEDIATELY after marking "Completed"
 - **Checkbox Completion**: MANDATORY - tick all relevant checkboxes when subtasks/tasks complete
   - Mark all completed items in Implementation Plan checklists as [x]
   - Update Test Cases checkboxes as tests pass
   - Complete Testing Checklist items as validation succeeds
   - Tick Definition of Done checkboxes when criteria are met
   - Ensure all documentation reflects actual completion status
+  - **MANDATORY**: After ticking final completion checkboxes, execute Git commit & push protocol
 - **End-to-End Master Test**: After completing individual subtasks, create ONE master test that validates the entire user workflow
   - Test from user perspective, not just individual components
   - Validate complete application functionality, not just micro-level features
   - Ensure the whole system works together even if individual parts pass tests
   - Master test should simulate real user scenarios and catch integration issues
+  - **MANDATORY**: After master test passes, execute final Git commit & push for task completion
+
+## 🔄 BUFFER RESET PROTOCOL: Prevent Stall Accumulation
+
+**CRITICAL DISCOVERY**: Non-terminal tool calls reset command buffer state and prevent stalls!
+
+#### ✅ WORKING RESET ACTIONS (Use Every 3-5 Commands):
+```python
+# MCP oneshot tools that reset terminal buffer state:
+mcp_oneshot_list_tools()              # Tool listing resets buffer
+fetch_rules(["rule-name"])             # Rule fetch resets buffer  
+read_file("file.md", limit=3)         # File read resets buffer
+list_dir(".", ignore_globs=["*.tmp"])  # Directory listing resets buffer
+codebase_search("simple query", [])   # Search resets buffer
+```
+
+#### 🎯 OPTIMAL WORKFLOW PATTERN:
+```
+Command 1 → Command 2 → Command 3 → **MCP RESET** → Command 4 → Command 5 → **MCP RESET**
+```
+
+#### 📝 IMPLEMENTATION RULE:
+**MANDATORY**: After every 3-5 terminal commands, use an MCP oneshot tool call to reset buffer state and prevent stall accumulation. MCP tools are preferred as they don't consume Cursor Agent tool calls.
+
+```python
+# Example implementation:
+run_terminal_cmd("command1")
+run_terminal_cmd("command2") 
+run_terminal_cmd("command3")
+# MCP RESET: Prevent stall accumulation (doesn't count against tool limits)
+mcp_oneshot_list_tools()  
+run_terminal_cmd("command4")
+run_terminal_cmd("command5")
+# MCP RESET: Prevent stall accumulation
+fetch_rules(["coding-tasks"])
+```

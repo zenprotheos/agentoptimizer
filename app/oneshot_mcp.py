@@ -19,6 +19,7 @@ from app.oneshot_mcp_tools.list_agents import list_agents as list_agents_impl
 from app.oneshot_mcp_tools.list_tools import list_tools as list_tools_impl
 from app.oneshot_mcp_tools.read_howto_docs import read_doc, get_available_docs
 from app.oneshot_mcp_tools.ask_oneshot_expert import ask_oneshot_expert as ask_expert_impl
+from app.oneshot_mcp_tools.fetch_cursor_rules import fetch_cursor_rules as fetch_cursor_rules_impl, list_available_cursor_rules
 
 # Create the MCP server
 mcp = FastMCP(
@@ -170,6 +171,32 @@ async def ask_oneshot_expert(question: str) -> str:
             "question": question
         }, indent=2)
 
+
+@mcp.tool()
+def fetch_cursor_rules(rule_names: list) -> str:
+    """Fetch Cursor rules from .cursor/rules directory for buffer reset and reference.
+    
+    Args:
+        rule_names: List of rule names to fetch (without .mdc extension). Available rules include:
+            - "coding-tasks": Main coding workflow rules
+            - "cursor-windows-rule": Windows command execution rules  
+            - "mermaid-rule": Diagram creation standards
+            - "get_setup": Repository setup guidance
+            - "reminder_about_docs": Documentation reminders
+            
+    Returns:
+        str: JSON formatted response with rule contents and metadata
+    """
+    return fetch_cursor_rules_impl(rule_names, str(project_root))
+
+@mcp.tool()
+def list_cursor_rules() -> str:
+    """List all available Cursor rules in .cursor/rules directory.
+    
+    Returns:
+        str: JSON formatted list of available rules with descriptions and metadata
+    """
+    return list_available_cursor_rules(str(project_root))
 
 if __name__ == "__main__":
     mcp.run()
