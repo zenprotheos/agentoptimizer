@@ -1,6 +1,18 @@
 ---
 alwaysApply: true
 ---
+
+# 🚨 MANDATORY COMPLETION PROTOCOL 🚨
+**BEFORE RESPONDING "TASK COMPLETE" YOU MUST:**
+1. ✅ **PASS ALL TESTS** - Automated tests must return exit code 0
+2. ✅ **GIT COMMIT & PUSH** - All changes committed to GitHub with detailed message
+3. ✅ **RULES COMPLIANCE CHECK** - Review ALL coding-tasks steps for compliance
+4. ✅ **EXPLICITLY STATE** - "I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
+
+**❌ FAILURE TO COMPLETE ALL 4 ITEMS = INCOMPLETE TASK**
+
+---
+
 ## Step 1 - Task Workspace
 Create a timestamped task folder under `/tasks/` using the standardized date tool:
 
@@ -37,11 +49,24 @@ Notes:
 - **Data flow analysis** - trace complete data lifecycle
 - **State management audit** - map ALL state changes and conflicts
 
-### Step 3: MANDATORY AUTOMATED TESTING (BEFORE COMPLETION)
-**CRITICAL: ALL TASKS MUST PASS AUTOMATED TESTS BEFORE MARKING COMPLETE**
+### Step 3: 🧪 MANDATORY AUTOMATED TESTING (REQUIRED)
+**⛔ HARD STOP: Cannot mark task complete without passing tests**
 
-### Step 4: MANDATORY GIT COMMIT & PUSH (AFTER COMPLETION)
-**CRITICAL: ALL SUBTASK AND TASK COMPLETIONS MUST BE COMMITTED TO GITHUB WITH DETAILED MESSAGES**
+**IMMEDIATE ACTION REQUIRED:**
+- Create test script in `tasks/YYYY-MM-DD_[TaskName]/tests/`
+- Execute: Test must return exit code 0 (success)
+- If exit code ≠ 0: Fix issues, re-test until passing
+- **CHECKPOINT**: Only proceed after tests pass
+
+### Step 4: 🔄 MANDATORY GIT COMMIT & PUSH (REQUIRED)
+**⛔ HARD STOP: Cannot complete task without Git commit & push**
+
+**IMMEDIATE ACTION SEQUENCE:**
+1. `git add -A` - Stage all changes
+2. `git commit -m "[detailed message]"` - Use template below
+3. `git push origin HEAD` - Push to GitHub
+4. **VERIFY**: Confirm push successful (no errors)
+5. **CHECKPOINT**: Git workflow complete
 
 #### Automatic Git Workflow Requirements
 1. **Stage All Changes**: Add all modified files, documentation, tests, and artifacts
@@ -211,8 +236,15 @@ temp_file = "temp_test.py"  # ❌ NEVER DO THIS
   - Master test should simulate real user scenarios and catch integration issues
   - **MANDATORY**: After master test passes, execute final Git commit & push for task completion
 
-### Step 6: MANDATORY GLOBAL RULES REVIEW (AFTER EVERY TASK/SUBTASK COMPLETION)
-**CRITICAL: Agents MUST review global rules to ensure full SOP compliance**
+### Step 6: 📋 MANDATORY RULES COMPLIANCE CHECK (REQUIRED)
+**⛔ HARD STOP: Cannot complete without full SOP compliance verification**
+
+**IMMEDIATE COMPLIANCE AUDIT:**
+1. **Review Step 3**: ✅ Tests passed (exit code 0)?
+2. **Review Step 4**: ✅ Git commit & push completed?
+3. **Review Step 6**: ✅ This compliance check completed?
+4. **EXPLICIT STATEMENT REQUIRED**: "I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
+5. **CHECKPOINT**: Full compliance verified
 
 #### Global Rules Review Requirements
 1. **Review All Applicable Rules**: After completing ANY task or subtask, review relevant global rules
@@ -280,3 +312,31 @@ run_terminal_cmd("command5")
 # MCP RESET: Prevent stall accumulation
 fetch_rules(["coding-tasks"])
 ```
+
+---
+
+# 🎯 TASK COMPLETION VERIFICATION CHECKLIST
+
+**BEFORE SAYING "TASK COMPLETE" - VERIFY ALL 4 ITEMS:**
+
+## ✅ Step 3: Testing Complete
+- [ ] Created test script in `tasks/YYYY-MM-DD_[TaskName]/tests/`
+- [ ] Executed test: Exit code = 0 (success)
+- [ ] All functionality validated
+
+## ✅ Step 4: Git Workflow Complete  
+- [ ] `git add -A` executed
+- [ ] `git commit -m "[detailed message]"` executed
+- [ ] `git push origin HEAD` executed
+- [ ] Push successful (no errors)
+
+## ✅ Step 6: Compliance Verified
+- [ ] Reviewed Steps 3, 4, 6 completion
+- [ ] All SOP requirements met
+- [ ] Ready to state compliance
+
+## ✅ Required Statement
+**MUST INCLUDE IN RESPONSE:**
+"I have completed Steps 3, 4, and 6 of the coding-tasks SOP"
+
+**🚨 IF ANY ITEM UNCHECKED = TASK INCOMPLETE 🚨**
