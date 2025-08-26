@@ -1,99 +1,158 @@
 ---
-title: "FINAL Architecture & Implementation Plan - Embedded Obsidian Vault System"
+title: "FINAL Architecture & Implementation Plan - Hybrid Template+AI Vault System"
 date: "2025-08-25T23:59:59.999Z"
 task: "GlobalDocs_System_Analysis"
 status: "Final"
 priority: "High"
-tags: ["architecture", "obsidian", "vault", "implementation", "final-design"]
+tags: ["architecture", "hybrid-system", "templates", "ai-intelligence", "implementation", "extension"]
 ---
 
-# FINAL Architecture & Implementation Plan - Embedded Obsidian Vault System
+# FINAL Architecture & Implementation Plan - Hybrid Template+AI Vault System
 
 ## Executive Summary
 
-After comprehensive analysis of the oneshot system architecture, task management challenges, and document organization requirements, this document presents the final recommended approach: **An embedded Obsidian vault within the oneshot codebase** that serves as the primary storage location for all artifacts, eliminating duplication while maintaining IDE accessibility.
+After comprehensive analysis of the oneshot system architecture and the need to balance structure with flexibility, this document presents the final recommended approach: **A hybrid organization system that extends the existing oneshot architecture** with minimal changes, combining **structured templates for known session types** with **AI intelligence for novel content**, all within an embedded Obsidian vault.
 
-## Current System Reality (What EXISTS Today)
+**Core Strategy**: Extend existing `tool_services.py`, guides system, and MCP integration rather than replacing them, ensuring backward compatibility while adding sophisticated organization capabilities.
 
-### Oneshot Core Architecture
+## System Analysis: Current vs Proposed
+
+### **CURRENT SYSTEM (Preserved & Extended)**
+
+#### **Existing Infrastructure (UNCHANGED)**
+- **`app/tool_services.py`**: Core functionality for LLM integration, file operations
+- **`app/guides/`**: Documentation system with `read_instructions_for()` MCP tool
+- **`/tools/*.py`**: Auto-discovered tool ecosystem
+- **`config.yaml`**: Configuration management
+- **Agent Runner**: 4-module system for agent execution
+- **Run Persistence**: `/runs/{run_id}/` conversation history
+
+#### **Current Organization (Preserved)**
+```
+/artifacts/{run_id}/          # PRESERVED - Legacy mode
+├── file1.md                  # YAML frontmatter
+├── file2.json                # JSON metadata wrapper
+└── file3.py                  # Generated code
+```
+
+#### **Current Workflow (Enhanced)**
+1. User creates content → `tool_services.save()` → `/artifacts/{run_id}/`
+2. Automatic YAML frontmatter injection
+3. Run-aware organization by conversation
+4. Manual task workspace creation via Cursor rules
+
+### **PROPOSED EXTENSIONS (New Capabilities)**
+
+#### **Hybrid Organization Engine (NEW)**
 ```mermaid
 graph TB
-    subgraph "Entry Points"
-        CLI[CLI Interface<br/>app/oneshot bash script]
-        MCP[MCP Server<br/>app/oneshot_mcp.py]
-    end
-    
-    subgraph "Core Engine"
-        AR[AgentRunner System<br/>4 modules]
-        TS[Tool System<br/>/tools directory]
+    subgraph "EXISTING (Unchanged)"
         TSV[Tool Services<br/>app/tool_services.py]
-        RP[Run Persistence<br/>/runs directory]
+        GUIDES[Guides System<br/>app/guides/]
+        TOOLS[Tool Discovery<br/>/tools/*.py]
     end
     
-    subgraph "Current Storage"
-        RUNS["/runs/{run_id}/<br/>• run.json<br/>• messages.json<br/>• metadata.json"]
-        ARTIFACTS["/artifacts/{run_id}/<br/>• generated files<br/>• YAML frontmatter<br/>• JSON metadata"]
-        TASKS["/tasks/{date}_{name}/<br/>• Manual creation<br/>• 7-step SOP workflow"]
+    subgraph "NEW Extensions"
+        TYPE_DETECTOR[Session Type Detector<br/>Templates vs AI routing]
+        TEMPLATE_MGR[Template Manager<br/>Known session types]
+        AI_ANALYZER[AI Analyzer<br/>Novel content organization]
+        VAULT_MGR[Vault Manager<br/>Obsidian integration]
     end
     
-    CLI --> AR
-    MCP --> AR
-    AR --> TS
+    subgraph "Hybrid Storage Options"
+        LEGACY["/artifacts/{run_id}/<br/>PRESERVED (vault_mode: false)"]
+        VAULT["/vault/sessions/{run_id}/<br/>NEW (vault_mode: true)"]
+        PROJECTS["/vault/projects/{name}/<br/>Template-organized"]
+    end
+    
+    TSV --> TYPE_DETECTOR
+    TYPE_DETECTOR --> TEMPLATE_MGR
+    TYPE_DETECTOR --> AI_ANALYZER
+    TEMPLATE_MGR --> VAULT_MGR
+    AI_ANALYZER --> VAULT_MGR
+    
+    TSV -.-> LEGACY
+    VAULT_MGR --> VAULT
+    VAULT_MGR --> PROJECTS
+    
+    style TSV fill:#c8e6c9
+    style TYPE_DETECTOR fill:#ff9800,color:#fff
+    style VAULT_MGR fill:#9c27b0,color:#fff
+    style LEGACY fill:#e0e0e0
+```
+
+#### **Template System (NEW)**
+- **Coding Development**: SOP-compliant 7-step workflow structure
+- **Troubleshooting**: Systematic problem resolution approach  
+- **Research**: Academic structure with methodology, findings
+- **Documentation**: Technical writing patterns
+- **Custom Templates**: User-defined structures via YAML
+
+#### **AI Intelligence (NEW)**
+- **GPT-5 Nano Integration**: Cost-effective analysis (~$0.0005)
+- **Dynamic Organization**: Creative structure for novel content
+- **Content Analysis**: Contextual understanding and placement
+- **Fallback Systems**: Validation and error recovery
+
+## Recommended Solution: Hybrid Template+AI Embedded Vault
+
+### **Final Architecture: Extension Approach**
+```mermaid
+graph TB
+    subgraph "EXISTING Oneshot Core (Unchanged)"
+        AR["AgentRunner|4 modules"]
+        TS["Tool System|/tools/*.py"]
+        GUIDES["Guide System|app/guides/"]
+        CONFIG_SYS["Config System|config.yaml"]
+    end
+    
+    subgraph "EXTENDED Tool Services"
+        TSV["Tool Services|app/tool_services.py"]
+        TSV_OLD["save() method|EXISTING behavior"]
+        TSV_NEW["save() method|VAULT-AWARE extension"]
+    end
+    
+    subgraph "NEW Hybrid Organization"
+        TYPE_DET["Session Type Detector|Template vs AI routing"]
+        TEMPLATE_MGR["Template Manager|SOP-compliant structures"]
+        AI_ANALYZER["AI Content Analyzer|GPT-5 Nano"]
+        VAULT_MGR["Vault Manager|Obsidian integration"]
+    end
+    
+    subgraph "Storage Options"
+        LEGACY["artifacts/{run_id}/|PRESERVED (vault_mode: false)"]
+        VAULT_SESS["vault/sessions/{run_id}/|NEW (vault_mode: true)"]
+        VAULT_PROJ["vault/projects/{name}/|Template-organized"]
+        OBSIDIAN_CONFIG["vault/.obsidian/|Vault configuration"]
+    end
+    
+    AR --> TSV
     TS --> TSV
-    TSV --> ARTIFACTS
-    AR --> RP
-    RP --> RUNS
+    GUIDES --> TSV
+    CONFIG_SYS --> TSV
+    
+    TSV --> TSV_OLD
+    TSV --> TSV_NEW
+    
+    TSV_NEW --> TYPE_DET
+    TYPE_DET --> TEMPLATE_MGR
+    TYPE_DET --> AI_ANALYZER
+    TEMPLATE_MGR --> VAULT_MGR
+    AI_ANALYZER --> VAULT_MGR
+    
+    TSV_OLD --> LEGACY
+    VAULT_MGR --> VAULT_SESS
+    VAULT_MGR --> VAULT_PROJ
+    VAULT_MGR --> OBSIDIAN_CONFIG
     
     style AR fill:#e1f5fe
     style TSV fill:#c8e6c9
-    style ARTIFACTS fill:#f3e5f5
-```
-
-### Key Current Features
-- **Run ID Format**: `MMDD_HHMMSS_UUID` (e.g., `0825_163415_5202`)
-- **Automatic Organization**: Files organized by conversation via `tool_services.save()`
-- **Rich Metadata**: YAML frontmatter for .md files, JSON wrapper for .json files
-- **Clear Separation**: `/runs/` = conversation history, `/artifacts/` = generated files
-- **Task Management**: Manual workspace creation via Cursor rules and 7-step SOP
-
-## Recommended Solution: Embedded Obsidian Vault
-
-### New Architecture Design
-```mermaid
-graph TB
-    subgraph "Oneshot Codebase (Enhanced)"
-        AR[AgentRunner]
-        TS[Tool System]
-        TSV[Tool Services<br/>Enhanced]
-        VM[VaultManager<br/>NEW]
-        
-        subgraph "vault/ (Embedded Obsidian)"
-            PROJ["vault/projects/{name}/<br/>• Long-lived projects<br/>• Obsidian-formatted<br/>• Cross-reference ready"]
-            SESS["vault/sessions/{run_id}/<br/>• Individual conversations<br/>• Rich metadata<br/>• Promotion ready"]
-            TEMP["vault/.temp/{run_id}/<br/>• Working space<br/>• Auto-cleanup"]
-            CONFIG["vault/.obsidian/<br/>• Vault configuration<br/>• Templates<br/>• Plugins"]
-        end
-        
-        subgraph "Legacy Support"
-            LEGACY_ARTS["artifacts/{run_id}/<br/>Backward compatibility"]
-            LEGACY_RUNS["runs/{run_id}/<br/>Conversation history"]
-        end
-    end
-    
-    AR --> VM
-    TS --> VM
-    VM --> PROJ
-    VM --> SESS
-    VM --> TEMP
-    TSV --> VM
-    
-    AR -.-> LEGACY_ARTS
-    AR -.-> LEGACY_RUNS
-    
-    style PROJ fill:#4caf50,color:#fff
-    style SESS fill:#4caf50,color:#fff
-    style CONFIG fill:#2196f3,color:#fff
-    style VM fill:#ff9800,color:#fff
+    style TYPE_DET fill:#ff9800,color:#fff
+    style AI_ANALYZER fill:#ff9800,color:#fff
+    style VAULT_MGR fill:#9c27b0,color:#fff
+    style LEGACY fill:#e0e0e0
+    style VAULT_SESS fill:#4caf50,color:#fff
+    style VAULT_PROJ fill:#4caf50,color:#fff
 ```
 
 ### Directory Structure
@@ -112,7 +171,7 @@ oneshot/
 │   │   │   ├── sessions/          # Related conversations
 │   │   │   └── README.md          # Project overview
 │   ├── sessions/                  # Individual conversations
-│   │   └── {MMDD_HHMMSS_UUID}/    # Session artifacts
+│   │   └── {topic_keywords}_{YYYY_MMDD}_{HHMMSS}/    # Human-readable session names
 │   ├── .temp/                     # Temporary workspace
 │   │   └── {run_id}/              # Working files
 │   └── templates/                 # Obsidian templates
@@ -127,11 +186,17 @@ oneshot/
     └── agent_runner.py            # Vault-aware routing
 ```
 
-## Implementation Plan
+## Implementation Strategy: Extension Approach
 
-### Phase 1: Foundation Setup
+### **Key Implementation Principles**
+1. **Minimal Changes**: Extend existing `tool_services.py` rather than replace
+2. **Backward Compatibility**: vault_mode=false preserves current behavior
+3. **Gradual Adoption**: Users can enable vault features when ready
+4. **Leverage Existing**: Use current guides, tools, and MCP integration
 
-#### 1. Vault Manager Implementation
+### **Phase 1: Core Extensions**
+
+#### **1. Enhanced Tool Services (MINIMAL CHANGE)**
 ```python
 # NEW: app/vault_manager.py
 from pathlib import Path
@@ -301,23 +366,52 @@ status: active
         
         (self.templates_path / "session.md").write_text(session_template)
     
+    def _generate_session_name(self, run_id: str, context: str = None) -> str:
+        """Generate human-readable session name using AI topic extraction"""
+        if context:
+            # Use AI to extract meaningful topic keywords
+            topic_keywords = self._extract_topic_keywords(context)
+            if topic_keywords and len(topic_keywords) > 0:
+                # Format: {topic_keywords}_{YYYY_MMDD}_{HHMMSS}
+                timestamp = datetime.now().strftime("%Y_%m%d_%H%M%S")
+                return f"{topic_keywords}_{timestamp}"
+        
+        # Fallback to run_id if AI extraction fails
+        return run_id
+    
+    def _extract_topic_keywords(self, content: str) -> str:
+        """Extract 2-4 key topic words from content using AI"""
+        # Simplified extraction for example - in real implementation would use LLM
+        content_words = content.lower().split()
+        
+        # Remove common words and extract meaningful terms
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        meaningful_words = [word for word in content_words[:10] if word not in stop_words and len(word) > 2]
+        
+        # Take first 2-3 words and join with underscores
+        return '_'.join(meaningful_words[:3]) if meaningful_words else "session_topic"
+    
     def create_session_workspace(self, run_id: str, context: str = None) -> Path:
-        """Create a new session workspace"""
-        session_dir = self.sessions_path / run_id
+        """Create a new session workspace with human-readable naming"""
+        # Generate human-readable session name using AI topic extraction
+        session_name = self._generate_session_name(run_id, context)
+        session_dir = self.sessions_path / session_name
         session_dir.mkdir(parents=True, exist_ok=True)
         
         # Create session overview
         session_file = session_dir / "README.md"
         if not session_file.exists():
             content = f"""---
-session_id: {run_id}
+session_id: {session_name}
+run_id: {run_id}
 created: {datetime.now().isoformat()}
 tags: [oneshot, session]
 type: conversation
 status: active
+organization_method: hybrid
 ---
 
-# Session: {run_id}
+# Session: {session_name}
 
 **Started**: {datetime.now().strftime('%Y-%m-%d %H:%M')}
 
@@ -585,6 +679,75 @@ class VaultLinker:
             
             session_file.write_text(new_content)
 ```
+
+## Integration with Jinja2 Template System
+
+### **Enhanced Context Management** (New Insights)
+
+Based on comprehensive analysis of OneShot's Jinja2 template system, we can optimize context handling for large file sets:
+
+#### **Current Jinja2 Template Variables**
+- `provided_files` (dict): Full file contents - optimal for small file sets  
+- `provided_filepaths` (list): File paths only - optimal for large file sets
+- `provided_files_summary` (str): Overview text when available
+
+#### **Intelligent File Selection Pattern**
+```markdown
+{% if provided_filepaths %}
+## Available Files: {{ provided_filepaths | length }}
+{{ provided_filepaths | join(', ') }}
+
+**Agent Strategy**: 
+1. Analyze task requirements
+2. Filter files by metadata/naming patterns  
+3. Use read_file_contents tool for selective reading
+4. Process only relevant 2-3 files
+{% endif %}
+```
+
+#### **Index-First Approach Enhancement**
+Leverage existing `build-index.cjs` tool for session-level indexing:
+
+1. **Auto-Index Generation**: Extract front-matter from all artifacts
+2. **Lightweight Master Index**: Metadata-only compilation (~100 tokens vs 10,000+ for full content)
+3. **Just-in-Time Loading**: Agents read index first, then selectively load content
+4. **Template Integration**: Jinja2 templates use index for intelligent file selection
+
+#### **Proposed Enhancement to Hybrid System**
+```python
+class ContextOptimizedVaultManager:
+    def save(self, content, description, **kwargs):
+        # Standard save operation
+        file_path = self.standard_save(content, description, **kwargs)
+        
+        # Enhanced: Auto-generate session index
+        self.update_session_index(file_path, self.extract_metadata(content))
+        
+        # Enhanced: Optimize template context
+        if len(self.get_session_files()) > 5:  # Smart threshold
+            return {
+                "strategy": "index_first",
+                "template_vars": {
+                    "provided_filepaths": self.get_file_paths(),
+                    "session_index": self.generate_lightweight_index(),
+                    "intelligent_selection": True
+                }
+            }
+        else:
+            return {
+                "strategy": "full_content", 
+                "template_vars": {
+                    "provided_files": self.get_file_contents()
+                }
+            }
+```
+
+### **Template Enhancement Benefits**
+- ✅ **Token Efficiency**: Index-first reduces context size by 90%+
+- ✅ **Intelligent Selection**: AI chooses relevant files based on metadata
+- ✅ **Scalability**: Handles 20+ files per session efficiently  
+- ✅ **Reusable**: Leverages existing `build-index.cjs` infrastructure
+- ✅ **Backward Compatible**: Falls back to full content for small file sets
 
 ## Benefits of Embedded Vault Approach
 

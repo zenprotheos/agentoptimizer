@@ -1,25 +1,26 @@
 ---
-title: "Document Organization Strategy - FINAL Embedded Vault Approach"
+title: "Hybrid Template+AI Organization Strategy - Embedded Vault System"
 date: "2025-08-25T23:59:59.999Z"
 task: "GlobalDocs_System_Analysis"
 status: "Final"
 priority: "High"
-tags: ["document-organization", "embedded-vault", "obsidian", "final-approach"]
+tags: ["hybrid-organization", "templates", "ai-intelligence", "vault-extension", "oneshot-extension"]
 ---
 
-# Document Organization Strategy - FINAL Embedded Vault Approach
+# Hybrid Template+AI Organization Strategy - Embedded Vault System
 
 ## Executive Summary
 
-**DECISION FINALIZED**: After comprehensive analysis, the optimal solution is an **embedded Obsidian vault within the oneshot codebase** that serves as the primary storage location, eliminating the export/duplication problem while providing superior knowledge management capabilities.
+**DECISION FINALIZED**: After comprehensive analysis, the optimal solution combines **structured templates for proven workflows** with **AI intelligence for novel content**, all within an embedded Obsidian vault that extends the existing oneshot system with minimal changes.
 
-This strategy provides:
+This hybrid strategy provides:
 
-1. **Single source of truth** - No duplication, files exist in one place
-2. **IDE integration** - All files accessible in coding environment  
-3. **Real-time Obsidian access** - Open vault folder for immediate knowledge management
-4. **Natural workflow** - Sessions promote to projects as work evolves
-5. **Powerful organization** - Leverage Obsidian's linking, tagging, and graph features
+1. **Best of Both Worlds** - Template reliability + AI creativity
+2. **Minimal Implementation Risk** - Extends existing `tool_services.py` rather than replacing
+3. **Backward Compatibility** - vault_mode=false preserves all current behavior  
+4. **SOP Compliance** - Templates automatically follow established 7-step workflow
+5. **Cost-Effective AI** - GPT-5 Nano at ~$0.0005 per analysis for novel content only
+6. **Flexible & Extensible** - Easy to add new templates and validation rules
 
 ## Final Architecture
 

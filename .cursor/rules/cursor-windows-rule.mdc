@@ -222,6 +222,25 @@ Write-Host "Status"; Get-Date; Clear-Host
 Write-Host "Very long command with lots of parameters and complex syntax"
 ```
 
+### 🗂️ Directory Creation: Use Simple mkdir Commands
+```powershell
+# ✅ SAFE: Simple mkdir commands work reliably
+mkdir "tasks\2025-08-25_TaskName\mock_examples\session_examples"
+
+# ❌ CAUSES STALLS: Complex New-Item commands with long paths
+New-Item -Path "tasks\2025-08-25_TaskName\mock_examples\session_examples" -ItemType Directory -Force
+
+# ✅ ALTERNATIVE: Break into shorter commands if needed
+mkdir "tasks\2025-08-25_TaskName\mock_examples"
+mkdir "tasks\2025-08-25_TaskName\mock_examples\session_examples"
+```
+
+**Directory Creation Stall Pattern:**
+- **Issue**: Complex `New-Item` commands with long paths cause parsing stalls
+- **Root Cause**: PowerShell parameter parsing overhead with complex syntax
+- **Solution**: Use simple `mkdir` command instead of `New-Item -Path ... -ItemType Directory`
+- **Evidence**: User reported stalls resolved by switching to simple mkdir syntax
+
 ### 🔄 BUFFER RESET PROTOCOL: Prevent Stall Accumulation
 
 **CRITICAL DISCOVERY**: Non-terminal tool calls reset command buffer state and prevent stalls!

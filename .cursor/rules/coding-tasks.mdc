@@ -6,11 +6,12 @@ alwaysApply: true
 **BEFORE RESPONDING "TASK COMPLETE" YOU MUST:**
 1. ✅ **PASS ALL TESTS** - Automated tests must return exit code 0
 2. ✅ **PASS MASTER END-TO-END TEST** - Complete user workflow validation must pass
-3. ✅ **GIT COMMIT & PUSH** - All changes committed to GitHub with detailed message
-4. ✅ **RULES COMPLIANCE CHECK** - Review ALL coding-tasks steps for compliance
-5. ✅ **EXPLICITLY STATE** - "I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
+3. ✅ **UPDATE TASK INDEX** - All workspace indexes reflect current state
+4. ✅ **GIT COMMIT & PUSH** - All changes committed to GitHub with detailed message
+5. ✅ **RULES COMPLIANCE CHECK** - Review ALL coding-tasks steps for compliance
+6. ✅ **EXPLICITLY STATE** - "I have completed Steps 3, 4, 5, 6, and 8 of the coding-tasks SOP"
 
-**❌ FAILURE TO COMPLETE ALL 5 ITEMS = INCOMPLETE TASK**
+**❌ FAILURE TO COMPLETE ALL 6 ITEMS = INCOMPLETE TASK**
 
 ---
 
@@ -41,6 +42,11 @@ tasks/YYYY-MM-DD_[TaskName]/
 Notes:
 - Include proper front-matter in every `.md` file (use `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso` for timestamps)
 - For diagrams, follow your team Mermaid standards (`C:\Users\CSJin\Jininja Projects\AI Projects\main_oneshot\oneshot\.cursor\rules\mermaid-rule.mdc`)
+- **🚨 MANDATORY INDEX UPDATES**: After ANY document addition, deletion, or significant modification:
+  - Update task workspace index (`TASK_WORKSPACE_INDEX.md`) immediately
+  - Use existing `session-index-builder.cjs` for large workspaces
+  - Ensure cross-references and navigation remain accurate
+  - **TIMING**: Update index before proceeding to next step
 - **Subtasks folder**: Break complex tasks into manageable pieces with individual tracking documents
   - Each subtask should have clear scope, dependencies, progress tracking, and troubleshooting notes
   - Use numbered prefixes (01_, 02_) for logical task ordering
@@ -148,7 +154,42 @@ if (Wait-Job $job -Timeout 120) {
 Remove-Job $job -Force
 ```
 
-### Step 5: 🔄 MANDATORY GIT COMMIT & PUSH (REQUIRED)
+### Step 5: 📋 MANDATORY INDEX UPDATES (REQUIRED)
+**⛔ HARD STOP: Cannot proceed without updated workspace indexes**
+
+**IMMEDIATE ACTION REQUIRED:**
+1. **Update Task Workspace Index**: Ensure `TASK_WORKSPACE_INDEX.md` reflects all changes
+2. **Run Session Index Builder**: Use `session-index-builder.cjs` for large workspaces if needed
+3. **Verify Cross-References**: All internal links and navigation remain accurate
+4. **Update Statistics**: File counts, examples, tools, and status information current
+5. **CHECKPOINT**: Index accuracy verified before git operations
+
+#### Index Update Requirements
+- **File Changes**: Any document addition, deletion, or major modification
+- **Structure Changes**: New directories, reorganized content, renamed files
+- **Status Updates**: Progress changes, completion markers, priority shifts
+- **Cross-Task Integration**: Links to related tasks, shared resources, dependencies
+
+#### Index Update Protocol
+```powershell
+# For task workspaces with many files, use automated indexing
+$indexBuilder = "tasks/YYYY-MM-DD_[TaskName]/imported_tools/indexing/session-index-builder.cjs"
+if (Test-Path $indexBuilder) {
+    node $indexBuilder
+    Write-Host "✅ Automated index updated"
+} else {
+    Write-Host "⚠️ Manual index update required - update TASK_WORKSPACE_INDEX.md"
+}
+```
+
+#### Index Quality Standards
+- **Navigation Accuracy**: All links functional and point to correct sections
+- **Current Statistics**: File counts, completion status, integration points accurate
+- **Clear Structure**: Logical organization with priority-based navigation
+- **Cross-References**: Related tasks, dependencies, and shared resources linked
+- **Timestamp Updates**: Last updated timestamps reflect current state
+
+### Step 6: 🔄 MANDATORY GIT COMMIT & PUSH (REQUIRED)
 **⛔ HARD STOP: Cannot complete task without Git commit & push**
 
 **IMMEDIATE ACTION SEQUENCE:**
@@ -247,7 +288,7 @@ if (Wait-Job $job -Timeout 60) {
 - **Merge Strategy**: Prepare for clean merges to main branch
 - **Conflict Resolution**: Address merge conflicts before final push
 
-### Step 6: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMMIT)
+### Step 7: LESSONS LEARNED & RULE ENHANCEMENT (AFTER COMMIT)
 **REQUIRED: After git commit/push, identify lessons learned and propose rule improvements**
 
 #### Lessons Learned Documentation
@@ -327,16 +368,17 @@ temp_file = "temp_test.py"  # ❌ NEVER DO THIS
   - **USER WORKFLOW FOCUS**: Tests complete user experience, not just components
   - **INTEGRATION VALIDATION**: Ensures all system parts work together seamlessly
 
-### Step 7: 📋 MANDATORY RULES COMPLIANCE CHECK (REQUIRED)
+### Step 8: 📋 MANDATORY RULES COMPLIANCE CHECK (REQUIRED)
 **⛔ HARD STOP: Cannot complete without full SOP compliance verification**
 
 **IMMEDIATE COMPLIANCE AUDIT:**
 1. **Review Step 3**: ✅ Unit/component tests passed (exit code 0)?
 2. **Review Step 4**: ✅ Master end-to-end test passed (exit code 0)?
-3. **Review Step 5**: ✅ Git commit & push completed?
-4. **Review Step 7**: ✅ This compliance check completed?
-5. **EXPLICIT STATEMENT REQUIRED**: "I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
-6. **CHECKPOINT**: Full compliance verified
+3. **Review Step 5**: ✅ Task workspace indexes updated and accurate?
+4. **Review Step 6**: ✅ Git commit & push completed?
+5. **Review Step 8**: ✅ This compliance check completed?
+6. **EXPLICIT STATEMENT REQUIRED**: "I have completed Steps 3, 4, 5, 6, and 8 of the coding-tasks SOP"
+7. **CHECKPOINT**: Full compliance verified
 
 #### Global Rules Review Requirements
 1. **Review All Applicable Rules**: After completing ANY task or subtask, review relevant global rules
@@ -409,7 +451,7 @@ fetch_rules(["coding-tasks"])
 
 # 🎯 TASK COMPLETION VERIFICATION CHECKLIST
 
-**BEFORE SAYING "TASK COMPLETE" - VERIFY ALL 5 ITEMS:**
+**BEFORE SAYING "TASK COMPLETE" - VERIFY ALL 6 ITEMS:**
 
 ## ✅ Step 3: Unit/Component Testing Complete
 - [ ] Created test script in `tasks/YYYY-MM-DD_[TaskName]/tests/`
@@ -422,19 +464,25 @@ fetch_rules(["coding-tasks"])
 - [ ] Complete user workflow validated
 - [ ] Integration points tested
 
-## ✅ Step 5: Git Workflow Complete  
+## ✅ Step 5: Index Updates Complete
+- [ ] Updated `TASK_WORKSPACE_INDEX.md` with all changes
+- [ ] Verified cross-references and navigation accuracy
+- [ ] Updated statistics and file counts
+- [ ] All workspace indexes current
+
+## ✅ Step 6: Git Workflow Complete  
 - [ ] `git add -A` executed
 - [ ] `git commit -m "[detailed message]"` executed
 - [ ] `git push origin HEAD` executed
 - [ ] Push successful (no errors)
 
-## ✅ Step 7: Compliance Verified
-- [ ] Reviewed Steps 3, 4, 5, 7 completion
+## ✅ Step 8: Compliance Verified
+- [ ] Reviewed Steps 3, 4, 5, 6, 8 completion
 - [ ] All SOP requirements met
 - [ ] Ready to state compliance
 
 ## ✅ Required Statement
 **MUST INCLUDE IN RESPONSE:**
-"I have completed Steps 3, 4, 5, and 7 of the coding-tasks SOP"
+"I have completed Steps 3, 4, 5, 6, and 8 of the coding-tasks SOP"
 
 **🚨 IF ANY ITEM UNCHECKED = TASK INCOMPLETE 🚨**

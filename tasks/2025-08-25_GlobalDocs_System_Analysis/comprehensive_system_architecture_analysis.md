@@ -14,16 +14,18 @@ author: "Claude Sonnet 4 Analysis"
 
 This document provides a comprehensive analysis of the oneshot system architecture and task management integration challenges, along with specific recommendations for optimization. The analysis addresses the core user concerns about system complexity, rule management confusion, and the need for better workflow control mechanisms.
 
-## FINAL RECOMMENDATION: Embedded Obsidian Vault
+## FINAL RECOMMENDATION: Hybrid Template+AI Embedded Vault
 
-**DECISION**: After comprehensive analysis, implement an embedded Obsidian vault within the oneshot codebase as the primary storage solution.
+**DECISION**: After comprehensive analysis, implement a hybrid organization system that extends the existing oneshot architecture with minimal changes, combining structured templates for known session types with AI intelligence for novel content.
 
 ### Solution Summary
-- **Directory**: `oneshot/vault/` with projects/, sessions/, templates/, .obsidian/
-- **Workflow**: Sessions → Projects promotion as work evolves  
-- **Integration**: VaultManager class, enhanced ToolHelper, vault-aware tools
-- **Benefits**: Single source of truth, IDE integration, real-time Obsidian access
-- **Implementation**: 4-week phased rollout with full backward compatibility
+- **Extension Strategy**: Enhance existing `tool_services.py` with vault awareness
+- **Hybrid Intelligence**: Templates for proven workflows + AI for creative organization
+- **Backward Compatibility**: vault_mode=false preserves all current behavior
+- **Cost Control**: AI analysis only for novel content (~$0.0005 per decision)
+- **SOP Compliance**: Templates automatically follow established 7-step workflow
+- **Directory Structure**: `oneshot/vault/` with projects/, sessions/, templates/
+- **Implementation**: 4-week phased extension with minimal risk
 
 *Complete implementation details in: `FINAL_Architecture_and_Implementation_Plan.md`*
 
@@ -605,3 +607,4 @@ The key insight is that we don't need to choose between programmatic control and
 ---
 
 *This analysis provides the foundation for implementing a more robust, reliable, and user-friendly system that addresses all identified concerns while preserving the powerful capabilities of both the oneshot and task management systems.*
+

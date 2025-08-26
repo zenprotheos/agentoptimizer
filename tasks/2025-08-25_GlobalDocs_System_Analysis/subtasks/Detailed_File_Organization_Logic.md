@@ -15,9 +15,27 @@ tags: ["file-organization", "frontmatter", "cross-linking", "obsidian", "detaile
 
 #### 1. Session Creation
 ```python
-# When a conversation starts
+# When a conversation starts - Updated with human-readable naming
+def generate_session_name(run_id: str, context: str = None) -> str:
+    """Generate human-readable session name using topic extraction"""
+    if context:
+        topic_keywords = extract_topic_keywords_heuristic(context)
+        if topic_keywords:
+            timestamp = datetime.now().strftime("%Y_%m%d_%H%M%S")
+            return f"{topic_keywords}_{timestamp}"
+    return run_id
+
+def extract_topic_keywords_heuristic(content: str) -> str:
+    """Extract topic keywords using simple heuristics"""
+    content_words = content.lower().split()
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+    meaningful_words = [word for word in content_words[:10] if word not in stop_words and len(word) > 2]
+    return '_'.join(meaningful_words[:3]) if meaningful_words else None
+
 def create_session_workspace(run_id: str, context: str = None) -> Path:
-    session_dir = vault_manager.sessions_path / run_id
+    # Generate human-readable session name using topic extraction
+    session_name = generate_session_name(run_id, context)
+    session_dir = vault_manager.sessions_path / session_name
     
     # AUTOMATIC: Create session structure
     structure = {
@@ -446,13 +464,16 @@ SORT file.ctime DESC
 run_id = "1225_143521_8492"
 context = "Designing API authentication system with JWT tokens"
 
-# 1. DETECT SESSION TYPE
+# 1. GENERATE HUMAN-READABLE SESSION NAME
+session_name = generate_session_name(run_id, context)  # → "designing_api_authentication_2025_1225_143521"
+
+# 2. DETECT SESSION TYPE
 session_type = detect_session_type(context)  # → "development"
 
-# 2. CREATE INTELLIGENT STRUCTURE
+# 3. CREATE INTELLIGENT STRUCTURE
 session_dir = create_session_workspace(run_id, context)
 # Creates:
-# vault/sessions/1225_143521_8492/
+# vault/sessions/designing_api_authentication_2025_1225_143521/
 # ├── README.md (with smart frontmatter)
 # ├── code/          (auto-created for development type)
 # ├── docs/
@@ -476,12 +497,12 @@ def generate_jwt_token(user_id):
 # 4. INTELLIGENT FILE PLACEMENT
 organizer = SessionOrganizer(session_dir)
 file_path = organizer.organize_file("jwt_guide.md", content)
-# → vault/sessions/1225_143521_8492/docs/jwt_guide.md
+# → vault/sessions/designing_api_authentication_2025_1225_143521/docs/jwt_guide.md
 
 # 5. ENHANCED WITH FRONTMATTER & LINKS
 final_content = update_file_with_obsidian_features(file_path, content, {
     "run_id": run_id,
-    "session_id": run_id,
+    "session_id": session_name,  # Human-readable session identifier
     "tags": ["development", "authentication", "jwt", "api"]
 })
 
@@ -490,8 +511,8 @@ final_content = update_file_with_obsidian_features(file_path, content, {
 ---
 created: 2025-12-25T14:35:21.849Z
 run_id: 1225_143521_8492
-session_id: 1225_143521_8492
-tags: [oneshot, session/1225_143521_8492, code/python, domain/security]
+session_id: designing_api_authentication_2025_1225_143521
+tags: [oneshot, session/designing_api_authentication_2025_1225_143521, code/python, domain/security]
 type: documentation
 related_files: []
 ---
@@ -509,7 +530,7 @@ def generate_jwt_token(user_id):
 ```
 
 ## Related
-- [[sessions/1225_143521_8492]] - Parent Session
+- [[sessions/designing_api_authentication_2025_1225_143521]] - Parent Session
 """
 ```
 
@@ -542,9 +563,9 @@ copy_with_intelligent_organization(session_dir, project_dir)
 # Tests → vault/projects/API_Authentication_System/artifacts/tests/
 
 # 3. CREATE CROSS-REFERENCES
-create_bidirectional_links(session_id, project_name)
+create_bidirectional_links(session_name, project_name)
 # Updates session README with: "Promoted to: [[projects/API_Authentication_System]]"
-# Updates project README with: "Originated from: [[sessions/1225_143521_8492]]"
+# Updates project README with: "Originated from: [[sessions/designing_api_authentication_2025_1225_143521]]"
 ```
 
 This system provides intelligent, context-aware organization while maintaining full Obsidian compatibility through native linking and frontmatter systems.
