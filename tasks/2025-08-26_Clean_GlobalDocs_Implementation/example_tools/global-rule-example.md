@@ -1,8 +1,11 @@
 ---
 alwaysApply: true
 title: "Global Cursor AI Rule for VoiceScribeAI"
+created: "2025-08-27T02:10:00.000Z"
+type: "example"
+purpose: "Example global rule demonstrating task workflow and validation standards"
+status: "Active"
 summary: "Task workflow, validation, and documentation standards adapted for the VoiceScribeAI Flask app (port 5000)."
-type: "rule"
 module: "global"
 tags: ["rules", "workflow", "validation", "documentation"]
 ---

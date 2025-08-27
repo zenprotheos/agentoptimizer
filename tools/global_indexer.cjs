@@ -203,7 +203,13 @@ class GlobalIndexer {
         const indexPath = path.join(directory, 'INDEX.md');
         const dirName = path.basename(directory) || 'Root';
         
-        let indexContent = this.generateIndexHeader(dirName, relativePath, files.length);
+        // Get subdirectories
+        const subdirectories = this.getSubdirectories(directory);
+        
+        // Store current directory for subdirectory purpose lookup
+        this.currentDirectory = directory;
+        
+        let indexContent = this.generateIndexHeader(dirName, relativePath, files.length, subdirectories);
         indexContent += this.generateFileList(files);
         indexContent += this.generateStatistics(files);
 
@@ -211,15 +217,35 @@ class GlobalIndexer {
         console.log(`📋 Generated index: ${path.relative(this.rootPath, indexPath)}`);
     }
 
-    generateIndexHeader(dirName, relativePath, fileCount) {
+    getSubdirectories(directory) {
+        try {
+            const items = fs.readdirSync(directory);
+            const subdirectories = [];
+            
+            for (const item of items) {
+                const fullPath = path.join(directory, item);
+                const stat = fs.statSync(fullPath);
+                
+                if (stat.isDirectory() && !this.shouldSkipDirectory(item)) {
+                    subdirectories.push(item);
+                }
+            }
+            
+            return subdirectories.sort();
+        } catch (error) {
+            return [];
+        }
+    }
+
+    generateIndexHeader(dirName, relativePath, fileCount, subdirectories = []) {
         const now = new Date().toISOString();
         
-        return `---
+        let header = `---
 title: "Index - ${dirName}"
 type: "index"
 purpose: "Auto-generated index for ${dirName} directory with ${fileCount} files"
 status: "Active"
-generated: "${now}"
+created: "${now}"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -231,10 +257,52 @@ tags: ["index", "navigation"]
 **Generated**: ${now}  
 
 ---
+`;
 
-## 📄 Files
+        // Add subdirectory navigation if they exist
+        if (subdirectories.length > 0) {
+            header += `
+## 📁 Subdirectories & Their Files
 
 `;
+            for (const subdir of subdirectories) {
+                const emoji = this.getEmojiForDirectory(subdir);
+                
+                // Get subdirectory info and files
+                const subdirPath = path.join(this.currentDirectory, subdir);
+                const subdirFiles = this.scanMarkdownFiles(subdirPath).filter(f => 
+                    path.dirname(f.path) === subdirPath && 
+                    path.basename(f.path) !== 'INDEX.md'  // Exclude INDEX.md files from counts
+                );
+                
+                // Get meaningful purpose based on directory name and contents
+                let purpose = this.getDirectoryPurpose(subdir, subdirFiles.length);
+                
+                // Check for nested subdirectories
+                const nestedSubdirs = this.getSubdirectories(subdirPath);
+                const nestedInfo = nestedSubdirs.length > 0 ? ` | Nested: ${nestedSubdirs.join(', ')}` : '';
+                
+                header += `### ${emoji} [${subdir}](./${subdir}/) - ${subdirFiles.length} files${nestedInfo}\n`;
+                header += `*${purpose}*\n\n`;
+                
+                // List files in this subdirectory (compact format)
+                if (subdirFiles.length > 0) {
+                    for (const file of subdirFiles) {
+                        const fileEmoji = this.getEmojiForType(file.type);
+                        const fileName = path.basename(file.relativePath);
+                        header += `- ${fileEmoji} [${file.title}](./${subdir}/${fileName})\n`;
+                    }
+                    header += `\n`;
+                }
+            }
+            
+            header += `---\n\n`;
+        }
+
+        header += `## 📄 Files
+
+`;
+        return header;
     }
 
     generateFileList(files) {
@@ -277,6 +345,40 @@ tags: ["index", "navigation"]
             'document': '📖'
         };
         return emoji[type] || '📄';
+    }
+
+    getEmojiForDirectory(dirName) {
+        const emoji = {
+            'modules': '🔧',
+            'brainstorm': '💡',
+            'subtasks': '📋',
+            'tests': '🧪',
+            'temp': '🗂️',
+            'example_tools': '💡',
+            'automation': '⚙️',
+            'indexing': '📇',
+            'testing': '🧪',
+            'validation': '✅'
+        };
+        return emoji[dirName] || '📁';
+    }
+
+    getDirectoryPurpose(dirName, fileCount) {
+        const purposes = {
+            'modules': 'Feature-specific detailed documentation and blueprints',
+            'brainstorm': 'Strategic planning and working documents',
+            'subtasks': 'Granular task breakdown and tracking',
+            'tests': 'Testing and validation scripts',
+            'temp': 'Temporary files (auto-cleanup)',
+            'example_tools': 'Example tools and utilities',
+            'automation': 'Automated scripts and workflows',
+            'indexing': 'Documentation indexing tools',
+            'testing': 'Test scripts and validation',
+            'validation': 'Validation tools and checks'
+        };
+        
+        const basePurpose = purposes[dirName] || 'Supporting documents and resources';
+        return fileCount === 0 ? `${basePurpose} (empty)` : basePurpose;
     }
 
     generateStatistics(files) {

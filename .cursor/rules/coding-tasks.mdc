@@ -40,13 +40,28 @@ tasks/YYYY-MM-DD_[TaskName]/
 ```
 
 Notes:
-- Include proper front-matter in every `.md` file (use `powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso` for timestamps)
+- **🚨 MANDATORY FRONT-MATTER STANDARDS 🚨**: Include proper front-matter in every `.md` file using EXACT format:
+```yaml
+---
+title: "Descriptive Title"
+created: "2025-08-26T14:01:14.635Z"  # Use: powershell.exe -ExecutionPolicy Bypass -File tools/date-current.ps1 iso
+type: "architecture"  # Valid: architecture, planning, analysis, example, test, index, audit_plan, integration_summary, persona_config, template, tool, document
+purpose: "Clear description of document purpose for automated indexing"
+task: "[TaskName]"
+status: "Active"  # Valid: Active, Complete, Legacy, Deprecated, In-Progress, Pending
+priority: "High"  # Optional: High, Medium, Low
+tags: ["tag1", "tag2", "tag3"]
+---
+```
+- **CRITICAL**: All 6 required fields (`title`, `created`, `type`, `purpose`, `status`, `tags`) MUST be present for automated indexing to work
+- **Windows Line Endings**: Files with `\r\n` line endings are now properly supported by global indexer
 - For diagrams, follow your team Mermaid standards (`C:\Users\CSJin\Jininja Projects\AI Projects\main_oneshot\oneshot\.cursor\rules\mermaid-rule.mdc`)
 - **🚨 MANDATORY INDEX UPDATES**: After ANY document addition, deletion, or significant modification:
-  - Update task workspace index (`TASK_WORKSPACE_INDEX.md`) immediately
-  - Use existing `session-index-builder.cjs` for large workspaces
-  - Ensure cross-references and navigation remain accurate
+  - **PRIMARY**: Use `node tools/global_indexer.cjs generate [directory]` for automatic INDEX.md generation
+  - **FALLBACK**: Manual update of task workspace index only when global indexer unavailable
+  - **VALIDATION**: Run `node tools/frontmatter_validator.cjs validate [directory]` to ensure compliance
   - **TIMING**: Update index before proceeding to next step
+  - **REQUIREMENT**: All documents MUST show proper descriptions (not "No description available") in generated INDEX.md
 - **Subtasks folder**: Break complex tasks into manageable pieces with individual tracking documents
   - Each subtask should have clear scope, dependencies, progress tracking, and troubleshooting notes
   - Use numbered prefixes (01_, 02_) for logical task ordering
@@ -172,13 +187,27 @@ Remove-Job $job -Force
 
 #### Index Update Protocol
 ```powershell
-# For task workspaces with many files, use automated indexing
-$indexBuilder = "tasks/YYYY-MM-DD_[TaskName]/imported_tools/indexing/session-index-builder.cjs"
-if (Test-Path $indexBuilder) {
-    node $indexBuilder
-    Write-Host "✅ Automated index updated"
+# MANDATORY: Use global indexer for automatic INDEX.md generation
+$taskDir = "tasks/YYYY-MM-DD_[TaskName]"
+node tools/global_indexer.cjs generate $taskDir
+Write-Host "✅ Global index generated"
+
+# MANDATORY: Validate front-matter compliance
+node tools/frontmatter_validator.cjs validate $taskDir
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "✅ Front-matter validation passed"
 } else {
-    Write-Host "⚠️ Manual index update required - update TASK_WORKSPACE_INDEX.md"
+    Write-Host "❌ Front-matter validation failed - fix before proceeding"
+    exit 1
+}
+
+# VERIFICATION: Check that INDEX.md shows proper descriptions
+$indexFile = "$taskDir/INDEX.md"
+if (Get-Content $indexFile | Select-String "No description available") {
+    Write-Host "❌ INDEX.md contains 'No description available' - fix front-matter"
+    exit 1
+} else {
+    Write-Host "✅ INDEX.md shows proper descriptions"
 }
 ```
 

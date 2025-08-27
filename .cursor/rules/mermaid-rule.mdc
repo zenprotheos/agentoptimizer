@@ -32,6 +32,13 @@ alwaysApply: false
 - **State diagrams**: `note right of X ... end note` works
 - **Class diagrams**: Use standard note syntax
 
+### 6. Diagram Orientation: Prefer TD for Documentation
+❌ `graph LR` - Horizontal layout difficult to read in vertical markdown  
+✅ `graph TD` - Top-Down layout optimal for documentation viewing  
+✅ `flowchart TD` - Modern syntax, better readability in documents
+
+**Best Practice**: Use TD (Top-Down) orientation for diagrams embedded in markdown documents to ensure optimal readability in vertical document layouts.
+
 ## Common Parse Errors & Solutions
 
 ### "DIAMOND_START" Error
@@ -51,6 +58,7 @@ alwaysApply: false
 5. Flowchart notes → use dotted connections
 6. Undefined participants → define first
 7. "DIAMOND_START" error → remove `<br/>`, use `|` in quotes
+8. Diagram orientation → use `TD` for vertical markdown documents
 
 **MANDATORY**: Check syntax against these rules before publishing any diagram.
 description: For all UML / Mermaid Diagrams tasks to ensure you're creating diagrams without error.

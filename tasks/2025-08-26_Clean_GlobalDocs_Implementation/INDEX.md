@@ -3,7 +3,7 @@ title: "Index - 2025-08-26_Clean_GlobalDocs_Implementation"
 type: "index"
 purpose: "Auto-generated index for 2025-08-26_Clean_GlobalDocs_Implementation directory with 10 files"
 status: "Active"
-generated: "2025-08-27T00:00:25.687Z"
+created: "2025-08-27T03:04:10.610Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -12,7 +12,33 @@ tags: ["index", "navigation"]
 
 **Path**: Root  
 **Files**: 10  
-**Generated**: 2025-08-27T00:00:25.687Z  
+**Generated**: 2025-08-27T03:04:10.610Z  
+
+---
+
+## 📁 Subdirectories & Their Files
+
+### 💡 [brainstorm](./brainstorm/) - 1 files
+*Strategic planning and working documents*
+
+- 📋 [Intelligent Workspace Organization Strategy](./brainstorm/intelligent_workspace_organization.md)
+
+### 💡 [example_tools](./example_tools/) - 1 files | Nested: automation, indexing, testing, validation
+*Example tools and utilities*
+
+- 💡 [Global Cursor AI Rule for VoiceScribeAI](./example_tools/global-rule-example.md)
+
+### 🔧 [modules](./modules/) - 0 files
+*Feature-specific detailed documentation and blueprints (empty)*
+
+### 📋 [subtasks](./subtasks/) - 0 files
+*Granular task breakdown and tracking (empty)*
+
+### 🗂️ [temp](./temp/) - 0 files
+*Temporary files (auto-cleanup) (empty)*
+
+### 🧪 [tests](./tests/) - 0 files
+*Testing and validation scripts (empty)*
 
 ---
 
@@ -46,7 +72,7 @@ tags: ["index", "navigation"]
 ### 🏗️ [FINAL Architecture & Implementation Plan - Hybrid Template+AI Vault System](./MASTER_Architecture_and_Implementation_Plan.md)
 **Type**: architecture | **Status**: Complete
 **Purpose**: Complete hybrid Template+AI architecture with persona system integration and 5-week implementation timeline
-**Updated**: 8/26/2025
+**Updated**: 8/27/2025
 
 ### 🏗️ [Modular Programmatic Checkpoint System](./Modular_Checkpoint_System.md)
 **Type**: architecture | **Status**: Active

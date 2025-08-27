@@ -46,7 +46,7 @@ class FrontMatterValidator {
 
     parseSimpleYAML(yamlContent) {
         const result = {};
-        const lines = yamlContent.split('\n');
+        const lines = yamlContent.split(/\r?\n/);
         
         for (const line of lines) {
             const trimmed = line.trim();
@@ -81,7 +81,7 @@ class FrontMatterValidator {
     validateFile(filePath) {
         try {
             const content = fs.readFileSync(filePath, 'utf8');
-            const frontMatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+            const frontMatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
             
             if (!frontMatterMatch) {
                 return {

@@ -96,6 +96,13 @@ graph TB
 - **Content Analysis**: Contextual understanding and placement
 - **Fallback Systems**: Validation and error recovery
 
+#### **Front-Matter & Indexing System (NEW)**
+- **Mandatory Standards**: 6 required fields (title, created, type, purpose, status, tags)
+- **Cross-Platform Support**: Windows (`\r\n`) and Unix (`\n`) line endings
+- **Automated Validation**: Real-time compliance checking via `frontmatter_validator.cjs`
+- **Auto-Generation**: Intelligent INDEX.md creation via `global_indexer.cjs`
+- **Quality Assurance**: Eliminates "No description available" through proper metadata
+
 ## Recommended Solution: Hybrid Template+AI Embedded Vault with Persona Layer
 
 ### **Final Architecture: Extension Approach**

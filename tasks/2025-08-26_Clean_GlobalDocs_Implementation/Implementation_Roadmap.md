@@ -11,7 +11,7 @@ tags: ["implementation", "roadmap", "obsidian", "integration", "step-by-step"]
 
 # Implementation Roadmap - Embedded Obsidian Vault Integration
 
-## Phase 1: Core Foundation (Week 1)
+## Phase 1: Core Foundation + Front-Matter System (Week 1)
 
 ### Step 1: Create Vault Manager
 ```bash
@@ -25,18 +25,23 @@ touch app/vault_manager.py
 
 ### Step 2: Update Configuration
 ```yaml
-# config.yaml - Add vault configuration
+# config.yaml - Add vault configuration with front-matter & indexing support
 vault:
   enabled: false                   # Start disabled for gradual adoption
   path: "vault"
   auto_promote_projects: true
   legacy_support: true
+  indexing:                        # NEW: Front-matter & indexing configuration
+    auto_generate: true            # Automatically generate INDEX.md files
+    validate_frontmatter: true     # Validate front-matter on save
+    require_descriptions: true     # Ensure "purpose" field prevents "No description available"
+    windows_line_endings: true     # Support Windows (\r\n) and Unix (\n) line endings
   obsidian_config:
     themes: ["minimal"]
     plugins: ["templater", "dataview"]
 ```
 
-### Step 3: Enhance Tool Services
+### Step 3: Enhance Tool Services with Front-Matter & Indexing Integration
 ```python
 # app/tool_services.py - Key additions
 def _check_vault_mode(self) -> bool:
@@ -48,6 +53,26 @@ def _check_vault_mode(self) -> bool:
     except:
         return False
 
+def _validate_frontmatter(self, content: str) -> bool:
+    """Validate front-matter compliance for .md files"""
+    if not content.strip().startswith('---'):
+        return False
+    
+    # Run front-matter validator
+    import subprocess
+    import tempfile
+    
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        f.write(content)
+        f.flush()
+        
+        result = subprocess.run([
+            'node', 'tools/frontmatter_validator.cjs', 'validate', f.name
+        ], capture_output=True, text=True)
+        
+        os.unlink(f.name)
+        return result.returncode == 0
+
 def _get_artifacts_dir(self) -> Path:
     """Get run-specific directory (vault-aware)"""
     if self.vault_mode and self.vault_manager:
@@ -58,6 +83,18 @@ def _get_artifacts_dir(self) -> Path:
     else:
         # Legacy mode
         return Path("artifacts") / self._current_run_id
+
+def save(self, filename: str, content: str, metadata: dict = None) -> Path:
+    """Enhanced save method with front-matter validation"""
+    # Existing save logic...
+    
+    # NEW: Front-matter validation for .md files
+    if filename.endswith('.md') and not self._validate_frontmatter(content):
+        logger.warning(f"Front-matter validation failed for {filename}")
+        # Could inject compliant front-matter or raise exception
+    
+    # Continue with existing save logic...
+    return file_path
 ```
 
 ### Step 4: Test Basic Functionality
@@ -102,6 +139,107 @@ def test_session_creation():
         content = (session_dir / "README.md").read_text()
         assert "0825_163415_5202" in content
         assert "Test context" in content
+```
+
+### Step 5: Integrate Front-Matter & Indexing System
+```python
+# New integration points for existing tools
+# tools/global_indexer.cjs - ALREADY ENHANCED with Windows line ending support
+# tools/frontmatter_validator.cjs - ALREADY ENHANCED with Windows line ending support
+
+# Add to vault_manager.py
+def create_session_workspace(self, run_id: str, context: str = "") -> Path:
+    """Create session workspace with automatic indexing"""
+    session_dir = self._create_session_directory(run_id, context)
+    
+    # Existing logic...
+    
+    # NEW: Generate initial INDEX.md
+    self._generate_index(session_dir)
+    return session_dir
+
+def _generate_index(self, directory: Path):
+    """Generate INDEX.md using global indexer"""
+    import subprocess
+    result = subprocess.run([
+        'node', 'tools/global_indexer.cjs', 'generate', str(directory)
+    ], capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        logger.warning(f"Index generation failed: {result.stderr}")
+```
+
+### Step 6: Create MCP Integration Tool
+```python
+# app/oneshot_mcp_tools/generate_index.py - NEW
+def oneshot_generate_index(directory: str) -> dict:
+    """Generate INDEX.md for directory using global indexer"""
+    import subprocess
+    
+    result = subprocess.run([
+        'node', 'tools/global_indexer.cjs', 'generate', directory
+    ], capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        return {
+            "success": True,
+            "message": "Index generated successfully",
+            "output": result.stdout
+        }
+    else:
+        return {
+            "success": False,
+            "error": result.stderr,
+            "message": "Index generation failed"
+        }
+```
+
+### Step 7: Test Front-Matter & Indexing Integration
+```python
+# tests/test_frontmatter_indexing.py - NEW
+def test_frontmatter_validation():
+    """Test front-matter validation system"""
+    valid_content = '''---
+title: "Test Document"
+created: "2025-08-27T12:00:00.000Z"
+type: "test"
+purpose: "Test document for validation"
+task: "testing"
+status: "Active"
+tags: ["test", "validation"]
+---
+
+# Test Content
+'''
+    
+    from app.tool_services import ToolServices
+    ts = ToolServices()
+    
+    assert ts._validate_frontmatter(valid_content) == True
+
+def test_index_generation():
+    """Test automatic index generation"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        test_dir = Path(temp_dir) / "test_workspace"
+        test_dir.mkdir()
+        
+        # Create test file with valid front-matter
+        test_file = test_dir / "test.md"
+        test_file.write_text(valid_content)
+        
+        # Generate index
+        import subprocess
+        result = subprocess.run([
+            'node', 'tools/global_indexer.cjs', 'generate', str(test_dir)
+        ], capture_output=True, text=True)
+        
+        assert result.returncode == 0
+        assert (test_dir / "INDEX.md").exists()
+        
+        # Verify no "No description available"
+        index_content = (test_dir / "INDEX.md").read_text()
+        assert "No description available" not in index_content
+        assert "Test document for validation" in index_content
 ```
 
 ## Phase 2: Integration and Migration (Week 2)
