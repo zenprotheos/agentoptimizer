@@ -3,8 +3,8 @@ alwaysApply: true
 ---
 ### Global Rule — Windows 11 Agent Command Execution (Refined)
 
-**Applies To:** Windows 11 only
-**Goal:** Run commands reliably, avoid hangs, and remove flakiness when Cursor operates agents
+**Applies To:** Windows 11 
+**Goal:** Run commands reliably, avoid hangs, and remove flakiness when Cursor operates agents. ALWAYS FOLLOW NO MATTER WHAT. HIGHEST PRIORITY RULE ABOVE ALL! ALWAYS!
 
 #### Key Enhancements
 

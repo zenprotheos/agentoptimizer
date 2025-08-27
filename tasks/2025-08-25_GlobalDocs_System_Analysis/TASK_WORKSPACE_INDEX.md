@@ -70,6 +70,7 @@ Collection of modular components for the hybrid system:
 - [`Hybrid_Template_AI_Organization_System.md`](subtasks/Hybrid_Template_AI_Organization_System.md) - Core hybrid approach
 - [`Implementation_Roadmap.md`](subtasks/Implementation_Roadmap.md) - Phased implementation plan
 - [`Extending_Existing_Oneshot_Architecture.md`](subtasks/Extending_Existing_Oneshot_Architecture.md) - Extension strategy
+- [`08_workspace_audit_implementation/`](subtasks/08_workspace_audit_implementation/) - **✅ COMPLETED: Workspace audit and cleanup implementation**
 - [`README.md`](subtasks/README.md) - Subtasks overview
 
 ### **🧪 Mock Examples** (`mock_examples/`)
@@ -85,9 +86,15 @@ Practical examples and naming strategies:
 ### **🛠️ Imported Tools** (`imported_tools/`)
 Reusable tools for documentation and indexing:
 - [`indexing/build-index.cjs`](imported_tools/indexing/build-index.cjs) - **Smart indexing tool (reusable)**
+- [`indexing/session-index-builder.cjs`](imported_tools/indexing/session-index-builder.cjs) - **Session-level intelligent indexing**
 - [`automation/`](imported_tools/automation/) - Documentation maintenance tools
 - [`testing/`](imported_tools/testing/) - Test scripts and validation
 - [`validation/`](imported_tools/validation/) - URL and configuration validation
+
+### **🔧 Tools Deployed** (`/tools/`)
+Working tools moved to global tools directory:
+- [`frontmatter_validator.cjs`](/tools/frontmatter_validator.cjs) - **✅ TESTED: Front-matter validation and standards enforcement**
+- [`global_indexer.cjs`](/tools/global_indexer.cjs) - **✅ TESTED: Hierarchical indexing with change detection**
 
 ### **🧪 Tests** (`tests/`)
 - [`master_end_to_end_test.py`](tests/master_end_to_end_test.py) - Comprehensive validation
