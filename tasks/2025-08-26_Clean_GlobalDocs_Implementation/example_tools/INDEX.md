@@ -3,7 +3,7 @@ title: "Index - example_tools"
 type: "index"
 purpose: "Auto-generated index for example_tools directory with 2 files"
 status: "Active"
-created: "2025-08-27T04:41:44.729Z"
+created: "2025-08-27T13:46:57.639Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -12,7 +12,7 @@ tags: ["index", "navigation"]
 
 **Path**: example_tools  
 **Files**: 2  
-**Generated**: 2025-08-27T04:41:44.729Z  
+**Generated**: 2025-08-27T13:46:57.639Z  
 
 ---
 

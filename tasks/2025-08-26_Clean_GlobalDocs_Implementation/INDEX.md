@@ -1,9 +1,9 @@
 ---
 title: "Index - 2025-08-26_Clean_GlobalDocs_Implementation"
 type: "index"
-purpose: "Auto-generated index for 2025-08-26_Clean_GlobalDocs_Implementation directory with 4 files"
+purpose: "Auto-generated index for 2025-08-26_Clean_GlobalDocs_Implementation directory with 5 files"
 status: "Active"
-created: "2025-08-27T04:41:44.684Z"
+created: "2025-08-27T13:46:57.591Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -12,19 +12,23 @@ tags: ["index", "navigation"]
 
 **Path**: Root  
 **Files**: 5  
-**Generated**: 2025-08-27T04:41:44.684Z  
+**Generated**: 2025-08-27T13:46:57.591Z  
 
 ---
 
 ## 📁 Subdirectories & Their Files
 
-### 💡 [brainstorm](./brainstorm/) - 2 files
+### 💡 [brainstorm](./brainstorm/) - 4 files
 *Strategic planning and working documents*
 
 - 🏗️ [Consolidated Insights & Key Decisions - GlobalDocs Implementation](./brainstorm/CONSOLIDATED_INSIGHTS_AND_DECISIONS.md)  
   *Consolidated key insights, user feedback, and decisions from comprehensive system analysis*
 - 📋 [Intelligent Workspace Organization Strategy](./brainstorm/intelligent_workspace_organization.md)  
   *Strategic planning for intelligent, scalable workspace organization with anti-drift guardrails*
+- 📄 [Progress Tracker — Anti-Drift Template Design & Prompt Engineering](./brainstorm/progress_tracker_brainstorm.md)  
+  *Comprehensive prompt engineering design for progress tracker with anti-drift guardrails and markdown-only approach*
+- 📄 [Session Role Clarification: Roles vs Agents vs Templates](./brainstorm/session_role_clarification.md)  
+  *Explore and clarify the distinctions between AI assistant roles, individual agents, and session templates; capture decision points and next steps for implementation*
 
 ### 💡 [example_tools](./example_tools/) - 1 files | Nested: automation, indexing, testing, validation
 *Example tools and utilities*
@@ -32,7 +36,7 @@ tags: ["index", "navigation"]
 - 💡 [Global Cursor AI Rule for VoiceScribeAI](./example_tools/global-rule-example.md)  
   *Example global rule demonstrating task workflow and validation standards*
 
-### 🔧 [modules](./modules/) - 5 files
+### 🔧 [modules](./modules/) - 7 files
 *Feature-specific detailed documentation and blueprints*
 
 - 🏗️ [AI Validation & Failsafe System - Bulletproof AI Organization](./modules/AI_Validation_and_Failsafe_System.md)  
@@ -43,14 +47,20 @@ tags: ["index", "navigation"]
   *Complete implementation logic for intelligent file organization, session naming, and cross-linking strategy*
 - 🏗️ [Modular Programmatic Checkpoint System](./modules/Modular_Checkpoint_System.md)  
   *Flexible, extensible checkpoint system for programmatic SOP validation with BaseCheckpoint framework*
+- 📖 [OneShot 2.0 Complete File Structure](./modules/OneShot_2.0_Complete_File_Structure.md)  
+  *No description available*
+- 🏗️ [Planned Template Architecture Clarification](./modules/Planned_Template_Architecture_Clarification.md)  
+  *Complete clarification of planned template system, decision flows, and relationships between session templates, project templates, and progress trackers*
 - 🏗️ [System Architecture Clarification - Agents vs Templates vs Tools vs Personas](./modules/SYSTEM_ARCHITECTURE_CLARIFICATION.md)  
   *Clear distinction between Tools, Agents, Templates, and Personas in 4-layer architecture*
 
-### 📋 [subtasks](./subtasks/) - 1 files
+### 📋 [subtasks](./subtasks/) - 2 files
 *Granular task breakdown and tracking*
 
 - 📋 [Workspace Reorganization & Consistency Update - Apply Intelligent Organization Principles](./subtasks/2025-08-27_workspace_reorganization_and_consistency_update.md)  
   *Systematic reorganization of current workspace and update of all documents to reflect intelligent workspace organization decisions*
+- 💡 [Example: Progress Tracker Instance — Workspace Reorg](./subtasks/example_progress_tracker_instance.md)  
+  *Rendered example of the progress tracker snippet instantiated for the workspace reorganization task*
 
 ### 🗂️ [temp](./temp/) - 0 files
 *Temporary files (auto-cleanup) (empty)*
@@ -62,11 +72,6 @@ tags: ["index", "navigation"]
 
 ## 📄 Files
 
-### 🎉 [Workspace Reorganization & Intelligent Organization Implementation - Completion Summary](./COMPLETION_SUMMARY.md)
-**Type**: document | **Status**: Complete
-**Purpose**: Final completion summary documenting successful implementation of intelligent workspace organization principles
-**Updated**: 8/27/2025
-
 ### 🏗️ [FINAL Architecture - Hybrid Template+AI Embedded Vault System](./MASTER_Architecture_UMLs_Clean_Implementation.md)
 **Type**: architecture | **Status**: Complete
 **Purpose**: Comprehensive UML diagrams and system architecture visualization for GlobalDocs hybrid system
@@ -77,9 +82,14 @@ tags: ["index", "navigation"]
 **Purpose**: Complete hybrid Template+AI architecture with persona system integration and 5-week implementation timeline
 **Updated**: 8/27/2025
 
+### 📖 [Workspace Reorganization & Intelligent Organization Implementation - Completion Summary](./COMPLETION_SUMMARY.md)
+**Type**: document | **Status**: Complete
+**Purpose**: Final completion summary documenting successful implementation of intelligent workspace organization principles
+**Updated**: 8/27/2025
+
 ### 📇 [Index - 2025-08-26_Clean_GlobalDocs_Implementation](./INDEX.md)
 **Type**: index | **Status**: Active
-**Purpose**: Auto-generated index for 2025-08-26_Clean_GlobalDocs_Implementation directory with 4 files
+**Purpose**: Auto-generated index for 2025-08-26_Clean_GlobalDocs_Implementation directory with 5 files
 **Updated**: 8/27/2025
 
 ### 📋 [Implementation Roadmap - Embedded Obsidian Vault Integration](./Implementation_Roadmap.md)

@@ -1,9 +1,9 @@
 ---
 title: "Index - brainstorm"
 type: "index"
-purpose: "Auto-generated index for brainstorm directory with 3 files"
+purpose: "Auto-generated index for brainstorm directory with 5 files"
 status: "Active"
-created: "2025-08-27T04:41:44.721Z"
+created: "2025-08-27T13:46:57.631Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -11,8 +11,8 @@ tags: ["index", "navigation"]
 # Index: brainstorm
 
 **Path**: brainstorm  
-**Files**: 3  
-**Generated**: 2025-08-27T04:41:44.721Z  
+**Files**: 5  
+**Generated**: 2025-08-27T13:46:57.631Z  
 
 ---
 ## 📄 Files
@@ -22,9 +22,19 @@ tags: ["index", "navigation"]
 **Purpose**: Consolidated key insights, user feedback, and decisions from comprehensive system analysis
 **Updated**: 8/27/2025
 
+### 📄 [Progress Tracker — Anti-Drift Template Design & Prompt Engineering](./progress_tracker_brainstorm.md)
+**Type**: brainstorm | **Status**: Active
+**Purpose**: Comprehensive prompt engineering design for progress tracker with anti-drift guardrails and markdown-only approach
+**Updated**: 8/27/2025
+
+### 📄 [Session Role Clarification: Roles vs Agents vs Templates](./session_role_clarification.md)
+**Type**: brainstorm | **Status**: Active
+**Purpose**: Explore and clarify the distinctions between AI assistant roles, individual agents, and session templates; capture decision points and next steps for implementation
+**Updated**: 8/27/2025
+
 ### 📇 [Index - brainstorm](./INDEX.md)
 **Type**: index | **Status**: Active
-**Purpose**: Auto-generated index for brainstorm directory with 3 files
+**Purpose**: Auto-generated index for brainstorm directory with 5 files
 **Updated**: 8/27/2025
 
 ### 📋 [Intelligent Workspace Organization Strategy](./intelligent_workspace_organization.md)
@@ -34,9 +44,9 @@ tags: ["index", "navigation"]
 
 ## 📊 Statistics
 
-- **Total Files**: 3
-- **By Type**: architecture(1), index(1), planning(1)
-- **By Status**: Active(3)
+- **Total Files**: 5
+- **By Type**: architecture(1), brainstorm(2), index(1), planning(1)
+- **By Status**: Active(5)
 
 ---
 

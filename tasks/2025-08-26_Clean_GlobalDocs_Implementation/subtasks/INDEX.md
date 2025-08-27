@@ -1,9 +1,9 @@
 ---
 title: "Index - subtasks"
 type: "index"
-purpose: "Auto-generated index for subtasks directory with 2 files"
+purpose: "Auto-generated index for subtasks directory with 3 files"
 status: "Active"
-created: "2025-08-27T04:41:44.753Z"
+created: "2025-08-27T13:46:57.663Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -11,27 +11,32 @@ tags: ["index", "navigation"]
 # Index: subtasks
 
 **Path**: subtasks  
-**Files**: 2  
-**Generated**: 2025-08-27T04:41:44.753Z  
+**Files**: 3  
+**Generated**: 2025-08-27T13:46:57.663Z  
 
 ---
 ## 📄 Files
 
+### 💡 [Example: Progress Tracker Instance — Workspace Reorg](./example_progress_tracker_instance.md)
+**Type**: example | **Status**: Active
+**Purpose**: Rendered example of the progress tracker snippet instantiated for the workspace reorganization task
+**Updated**: 8/27/2025
+
 ### 📇 [Index - subtasks](./INDEX.md)
 **Type**: index | **Status**: Active
-**Purpose**: Auto-generated index for subtasks directory with 1 files
+**Purpose**: Auto-generated index for subtasks directory with 3 files
 **Updated**: 8/27/2025
 
 ### 📋 [Workspace Reorganization & Consistency Update - Apply Intelligent Organization Principles](./2025-08-27_workspace_reorganization_and_consistency_update.md)
-**Type**: planning | **Status**: In-Progress
+**Type**: planning | **Status**: Completed
 **Purpose**: Systematic reorganization of current workspace and update of all documents to reflect intelligent workspace organization decisions
 **Updated**: 8/27/2025
 
 ## 📊 Statistics
 
-- **Total Files**: 2
-- **By Type**: index(1), planning(1)
-- **By Status**: Active(1), In-Progress(1)
+- **Total Files**: 3
+- **By Type**: example(1), index(1), planning(1)
+- **By Status**: Active(2), Completed(1)
 
 ---
 
