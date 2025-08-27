@@ -74,79 +74,254 @@ graph TB
     style GUIDES fill:#fff3e0
 ```
 
-### Proposed Hybrid System (Extension)
+## Architecture Clarification: Agent Roles vs Session Templates
+
+**CRITICAL DISTINCTION**: The original UML conflated two completely different systems. This corrected architecture separates:
+
+1. **Agent Roles** (Orchestrator/Designer/Developer) - How the AI assistant behaves
+2. **Session Templates** (Coding/Troubleshooting/Research) - How content gets organized
+
+### Corrected System Architecture - Layered Approach
+
 ```mermaid
 graph TB
-    subgraph "EXTENDED Oneshot System"
-        USER[User] --> CURSOR[Cursor IDE]
-        USER --> OBSIDIAN[Obsidian App]
-        USER --> CLI[Terminal CLI]
+    subgraph "USER INTERACTION LAYER"
+        USER[User Request] --> ANALYZER[Intent Analyzer<br/>Fresh Chat Only]
         
-        CURSOR --> AR[AgentRunner<br/>UNCHANGED]
-        CLI --> AR
-        OBSIDIAN --> VAULT
-        
-        AR --> ENHANCED_TSV[Tool Services<br/>EXTENDED with vault awareness]
-        AR --> TS[Tool System<br/>+ new organization tools]
-        AR --> RP[Run Persistence<br/>UNCHANGED]
-        
-        subgraph "Hybrid Organization Engine"
-            TYPE_DETECTOR[Session Type Detector<br/>NEW]
-            TEMPLATE_MGR[Template Manager<br/>NEW]
-            AI_ANALYZER[AI Analyzer<br/>GPT-5 Nano]
-        end
-        
-        ENHANCED_TSV --> TYPE_DETECTOR
-        TYPE_DETECTOR --> TEMPLATE_MGR
-        TYPE_DETECTOR --> AI_ANALYZER
-        
-        subgraph "Template System"
-            CODING_TEMPLATE[Coding Development<br/>SOP-compliant structure]
-            TROUBLESHOOT_TEMPLATE[Troubleshooting<br/>Systematic approach]
-            RESEARCH_TEMPLATE[Research<br/>Academic structure]
-        end
-        
-        TEMPLATE_MGR --> CODING_TEMPLATE
-        TEMPLATE_MGR --> TROUBLESHOOT_TEMPLATE
-        TEMPLATE_MGR --> RESEARCH_TEMPLATE
-        
-        subgraph "Embedded Vault"
-            VAULT["vault/<br/>Obsidian-compatible"]
-            PROJECTS["vault/projects/<br/>Template-organized"]
-            SESSIONS["vault/sessions/|{topic_keywords}_{YYYY_MMDD}_{HHMMSS}/|Human-readable naming"]
-            VAULT_TEMPLATES["vault/templates/<br/>Obsidian templates"]
-        end
-        
-        TEMPLATE_MGR --> VAULT
-        AI_ANALYZER --> VAULT
-        VAULT --> PROJECTS
-        VAULT --> SESSIONS
-        VAULT --> VAULT_TEMPLATES
-        
-        subgraph "Extended Guides"
-            EXISTING_GUIDES["EXISTING app/guides/<br/>UNCHANGED"]
-            NEW_GUIDES["NEW guides<br/>• vault_organization<br/>• create_templates<br/>• extend_checkpoints"]
-        end
-        
-        AR --> EXISTING_GUIDES
-        AR --> NEW_GUIDES
-        
-        subgraph "Backward Compatibility"
-            LEGACY_ARTIFACTS["/artifacts/{run_id}/<br/>PRESERVED for existing workflows"]
-            LEGACY_RUNS["/runs/{run_id}/<br/>UNCHANGED"]
-        end
-        
-        ENHANCED_TSV -.-> LEGACY_ARTIFACTS
-        RP --> LEGACY_RUNS
+        ANALYZER --> ORCHESTRATOR_ROLE["🎯 ORCHESTRATOR ROLE<br/>Delegates to specialist agents"]
+        ANALYZER --> DESIGNER_ROLE["🎨 DESIGNER ROLE<br/>Creates agents & tools"] 
+        ANALYZER --> DEVELOPER_ROLE["🔧 DEVELOPER ROLE<br/>Modifies core system"]
     end
     
-    style ENHANCED_TSV fill:#4caf50,color:#fff
-    style TYPE_DETECTOR fill:#ff9800,color:#fff
-    style AI_ANALYZER fill:#ff9800,color:#fff
-    style VAULT fill:#9c27b0,color:#fff
-    style CODING_TEMPLATE fill:#2196f3,color:#fff
-    style LEGACY_ARTIFACTS fill:#e0e0e0
+    subgraph "ONESHOT CORE SYSTEM"
+        ORCHESTRATOR_ROLE --> AR[AgentRunner]
+        DESIGNER_ROLE --> AR
+        DEVELOPER_ROLE --> AR
+        
+        AR --> CONFIG_MGR[AgentConfigManager]
+        AR --> TOOL_MGR[AgentToolManager]
+        AR --> EXECUTOR[AgentExecutor]
+        AR --> RUN_PERSIST[RunPersistence]
+        
+        CONFIG_MGR --> TEMPLATE_PROC[TemplateProcessor<br/>Jinja2]
+        
+        subgraph "EXTENDED TOOL SERVICES"
+            ENHANCED_TSV[ToolServices<br/>+ Vault Awareness]
+            SESSION_DETECTOR[SessionTypeDetector<br/>NEW - analyzes content type]
+            VAULT_MGR[VaultManager<br/>NEW - handles file organization]
+        end
+        
+        EXECUTOR --> ENHANCED_TSV
+        ENHANCED_TSV --> SESSION_DETECTOR
+        ENHANCED_TSV --> VAULT_MGR
+    end
+    
+    subgraph "SESSION ORGANIZATION LAYER"
+        SESSION_DETECTOR --> CODING_PATTERN[Coding Pattern<br/>SOP compliance, tests, git]
+        SESSION_DETECTOR --> TROUBLESHOOT_PATTERN[Troubleshooting Pattern<br/>Investigation, diagnosis]
+        SESSION_DETECTOR --> RESEARCH_PATTERN[Research Pattern<br/>Academic structure]
+        SESSION_DETECTOR --> GENERAL_PATTERN[General Pattern<br/>Flexible structure]
+        
+        CODING_PATTERN --> TEMPLATE_MGR[Template Manager<br/>Selects organization structure]
+        TROUBLESHOOT_PATTERN --> TEMPLATE_MGR
+        RESEARCH_PATTERN --> TEMPLATE_MGR
+        GENERAL_PATTERN --> TEMPLATE_MGR
+    end
+    
+    subgraph "VAULT STORAGE SYSTEM"
+        TEMPLATE_MGR --> VAULT_ROOT["vault/"]
+        VAULT_ROOT --> SESSIONS_DIR["sessions/{topic}_{YYYY_MM_DD}_{HHMMSS}/"]
+        VAULT_ROOT --> PROJECTS_DIR["projects/{project_name}/"]
+        VAULT_ROOT --> TEMPLATES_DIR["templates/"]
+        
+        SESSIONS_DIR --> SESSION_FILES[Session-specific files<br/>organized by template]
+        PROJECTS_DIR --> PROJECT_FILES[Long-term project files<br/>cross-session artifacts]
+        TEMPLATES_DIR --> OBSIDIAN_TEMPLATES[Obsidian template files<br/>.md templates]
+    end
+    
+    subgraph "LEGACY COMPATIBILITY"
+        ENHANCED_TSV -.-> ARTIFACTS["/artifacts/{run_id}/<br/>PRESERVED"]
+        RUN_PERSIST --> RUNS["/runs/{run_id}/<br/>UNCHANGED"]
+    end
+    
+    style ORCHESTRATOR_ROLE fill:#e8f5e8
+    style DESIGNER_ROLE fill:#e1f5fe
+    style DEVELOPER_ROLE fill:#fff3e0
+    style SESSION_DETECTOR fill:#ff9800,color:#fff
+    style TEMPLATE_MGR fill:#9c27b0,color:#fff
+    style VAULT_ROOT fill:#4caf50,color:#fff
 ```
+
+### Terminology Clarification - Three Distinct Layers
+
+```mermaid
+flowchart TD
+    subgraph "LAYER 1: AI ASSISTANT ROLES"
+        direction TB
+        A1["🎯 ORCHESTRATOR<br/>AI delegates to specialist agents"]
+        A2["🎨 DESIGNER<br/>AI creates new agents/tools"]
+        A3["🔧 DEVELOPER<br/>AI modifies core system"]
+        
+        A1_DESC["Triggered by: General tasks<br/>Behavior: Calls other agents<br/>Decision Point: Fresh chat analysis"]
+        A2_DESC["Triggered by: 'Create agent/tool'<br/>Behavior: Reads guides, builds<br/>Decision Point: User intent"]
+        A3_DESC["Triggered by: 'Fix system'<br/>Behavior: Reads onboarding<br/>Decision Point: System issues"]
+        
+        A1 --> A1_DESC
+        A2 --> A2_DESC
+        A3 --> A3_DESC
+    end
+    
+    subgraph "LAYER 2: SESSION CONTENT TYPES"
+        direction TB
+        B1["📝 CODING SESSION<br/>Development work"]
+        B2["🔍 TROUBLESHOOTING SESSION<br/>Problem solving"]
+        B3["📚 RESEARCH SESSION<br/>Information gathering"]
+        B4["💼 GENERAL SESSION<br/>Other activities"]
+        
+        B1_DESC["Detected from: Code, git, SOPs<br/>Structure: Task folders, tests<br/>Decision Point: Content analysis"]
+        B2_DESC["Detected from: Error logs, issues<br/>Structure: Investigation phases<br/>Decision Point: Problem keywords"]
+        B3_DESC["Detected from: Questions, analysis<br/>Structure: Academic format<br/>Decision Point: Research patterns"]
+        B4_DESC["Detected from: Everything else<br/>Structure: Flexible<br/>Decision Point: Fallback"]
+        
+        B1 --> B1_DESC
+        B2 --> B2_DESC
+        B3 --> B3_DESC
+        B4 --> B4_DESC
+    end
+    
+    subgraph "LAYER 3: ORGANIZATION TEMPLATES"
+        direction TB
+        C1["📁 CODING TEMPLATE<br/>File structure for dev work"]
+        C2["📁 TROUBLESHOOT TEMPLATE<br/>File structure for debugging"]
+        C3["📁 RESEARCH TEMPLATE<br/>File structure for analysis"]
+        C4["📁 FLEXIBLE TEMPLATE<br/>Adaptive structure"]
+        
+        C1_DESC["Creates: /tasks/, /tests/, /docs/<br/>Enforces: SOP compliance<br/>Used when: Coding detected"]
+        C2_DESC["Creates: /investigation/, /logs/<br/>Enforces: Systematic approach<br/>Used when: Issues detected"]
+        C3_DESC["Creates: /sources/, /analysis/<br/>Enforces: Academic rigor<br/>Used when: Research detected"]
+        C4_DESC["Creates: User-defined structure<br/>Enforces: Basic organization<br/>Used when: No pattern match"]
+        
+        C1 --> C1_DESC
+        C2 --> C2_DESC
+        C3 --> C3_DESC
+        C4 --> C4_DESC
+    end
+    
+    A1_DESC -.-> B1
+    A2_DESC -.-> B1
+    A3_DESC -.-> B2
+    
+    B1_DESC --> C1
+    B2_DESC --> C2
+    B3_DESC --> C3
+    B4_DESC --> C4
+    
+    style A1 fill:#e8f5e8
+    style A2 fill:#e1f5fe
+    style A3 fill:#fff3e0
+    style B1 fill:#e3f2fd
+    style B2 fill:#fff8e1
+    style B3 fill:#f3e5f5
+    style B4 fill:#f5f5f5
+    style C1 fill:#c8e6c9
+    style C2 fill:#ffe0b2
+    style C3 fill:#e1bee7
+    style C4 fill:#eceff1
+```
+
+## Detailed Flow Explanation
+
+### How Session Type Detection Actually Works
+
+The confusion in the original UML stemmed from mixing **agent behavior** with **content organization**. Here's how they actually interact:
+
+#### 1. Agent Role Determination (Fresh Chat Only)
+- **When**: Only when starting a fresh conversation (no context)
+- **Who**: Cursor AI assistant analyzing user intent
+- **Output**: Determines which role to take (Orchestrator/Designer/Developer)
+- **Implementation**: Rules in `.cursor/rules/main_rule.mdc`
+
+#### 2. AgentRunner Flow (All Sessions)
+- **When**: Every time an agent is called (including specialist agents)
+- **Who**: The oneshot system's AgentRunner
+- **Current State**: Unchanged core behavior
+- **What "Unchanged" Means**:
+  - Same 4-module structure (runner, config, tools, executor)
+  - Same agent loading and execution flow
+  - Same MCP server integration
+  - Same run persistence
+
+#### 3. Session Type Detection (NEW - Extension Point)
+- **When**: During file save operations via `tool_services.save()`
+- **Who**: New `SessionTypeDetector` class
+- **Input**: File content, description, context
+- **Output**: Session type classification (coding/troubleshooting/research/general)
+- **Integration Point**: Extends existing `ToolHelper` in `tool_services.py`
+
+#### 4. Template Manager Selection (NEW)
+- **When**: After session type is detected
+- **Who**: New `TemplateManager` class
+- **Input**: Session type + user preferences
+- **Output**: Organizational structure decision
+- **Connection to Vault**: Direct integration with `VaultManager`
+
+### Where Session Type Detection Plugs In
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CursorAI as Cursor AI
+    participant AR as AgentRunner
+    participant TS as ToolServices
+    participant STD as SessionTypeDetector
+    participant TM as TemplateManager
+    participant VM as VaultManager
+    
+    User->>CursorAI: Request (fresh chat)
+    CursorAI->>CursorAI: Determine Role (Orchestrator/Designer/Developer)
+    
+    alt Orchestrator Role
+        CursorAI->>AR: Call specialist agent
+    else Designer/Developer Role  
+        CursorAI->>AR: Direct interaction
+    end
+    
+    AR->>AR: Execute agent (UNCHANGED flow)
+    AR->>TS: tool_services.save(content, description)
+    
+    Note over TS,STD: NEW EXTENSION POINT
+    TS->>STD: detect_session_type(content, context)
+    STD->>STD: Analyze patterns (code, errors, research)
+    STD-->>TS: Session type (coding/troubleshooting/research)
+    
+    TS->>TM: select_template(session_type)
+    TM->>TM: Choose organization structure
+    TM->>VM: create_vault_structure(template)
+    
+    VM->>VM: Create session directory
+    VM->>VM: Apply template structure
+    VM-->>User: Organized files in vault/
+```
+
+### Key Architectural Decisions
+
+#### Why Agent Roles ≠ Session Templates
+- **Agent Roles**: Control **AI behavior** (how the assistant acts)
+- **Session Templates**: Control **file organization** (how content gets structured)
+- **Independence**: An Orchestrator can create coding sessions, troubleshooting sessions, or any type
+- **Flexibility**: Same agent role can produce different session types based on content
+
+#### Why Session Type Detection is in ToolServices
+- **Integration Point**: Already handles all file operations
+- **Minimal Changes**: Extends existing `save()` method without breaking anything
+- **Context Awareness**: Has access to content, filename, and user context
+- **Backward Compatibility**: Falls back to original behavior if vault mode disabled
+
+#### Why Template Manager is Separate from AgentRunner
+- **Single Responsibility**: AgentRunner handles agent execution, TemplateManager handles organization
+- **Extensibility**: Easy to add new templates without touching core agent logic
+- **Testing**: Can test organization logic independently of agent execution
+- **Configuration**: Users can customize templates without affecting agent behavior
 
 ## Class Diagram - Hybrid System Components
 
