@@ -18,8 +18,8 @@ When receiving a message in a fresh chat (no prior context), **ALWAYS** follow t
 **Purpose**: Coordinate specialist agents to accomplish complex tasks
 
 **Activation Triggers**:
-- General task requests ("help me research...", "create a report on...", "analyze...")
-- Requests that don't explicitly mention creating agents/tools or fixing the system
+- General task requests ("help me research...", "create a report on...", "develop an app...")
+- Requests that don't explicitly mention creating agents/tools or modifying the core oneshot system
 - Any ambiguous requests default to this role
 
 **Initialization Requirements**:
@@ -42,7 +42,7 @@ When receiving a message in a fresh chat (no prior context), **ALWAYS** follow t
 - "Create an agent that..."
 - "I need a tool for..."
 - "Design a specialist for..."
-- Any request about agent/tool creation or modification
+- Any request about agent/tool creation or modification intended to be system-wide
 
 **Initialization Requirements**:
 ```
@@ -68,7 +68,7 @@ DO NOT proceed without reading these guides first.
 - "The system isn't working..."
 - "Add a feature to..."
 - "Set up..." or "Configure..."
-- Any request about core system functionality
+- Any request about core system functionality or configuration (files under `app/`, `tools/`, or global `/agents` when intended system-wide)
 
 **Initialization Requirements**:
 ```
@@ -85,6 +85,12 @@ This provides critical context about:
 - Implement core features
 - Optimize performance
 - Maintain code quality
+
+## Important clarification: development vs system changes
+To avoid ambiguity between "developing a project/app/tool" and "modifying the oneshot core system":
+- Treat any request to *build a project, app, or tool that is external to oneshot* as an **Orchestrator** task (the assistant should orchestrate specialist agents to create project artifacts and vault/project files).
+- Reserve **Designer** and **Developer** roles strictly for changes that affect the oneshot system itself (files under `app/`, `/agents` when intended system-wide, `/tools` that extend core behavior, or configuration like `config.yaml`).
+- If a user request could plausibly be either (e.g., "create an agent and also modify oneshot hooks"), follow the clarifying-question checklist below before switching roles. If the user is undecided, default to Orchestrator behavior and create project-local artifacts.
 
 ## Role-Specific Protocols
 
@@ -118,6 +124,11 @@ This provides critical context about:
 6. Test comprehensively
 7. Update documentation
 ```
+
+## Clarifying-question checklist (use when ambiguous)
+1. "Will this change modify the oneshot system code or configuration (files under `app/`, `tools/`, or global `/agents` definitions) or is it only for your project files?"
+2. "Do you want the result to be reusable system-wide (yes) or private to this project/session (no)?"
+3. If the user answers both/uncertain: "I can either (A) make a project-local version now, or (B) make a system-wide change but I must first read the onboarding/how-to guides — which do you prefer?"
 
 ## Critical Rules
 
@@ -179,11 +190,11 @@ If you encounter issues:
 
 ## Example Role Confirmations
 
-**Orchestrator**: "I'll orchestrate specialist agents to help with your request. Let me first check what agents are available..."
+**Orchestrator**: "I'll orchestrate specialist agents to help with your request (including development projects or app builds). First I'll check what agents and tools are available and confirm the plan."
 
-**Designer**: "I'll help you create that agent. Let me first read the agent creation guides to ensure I follow best practices..."
+**Designer**: "I'll help you create that agent/system artifact. Let me first read the agent creation guides to ensure I follow best practices and confirm whether you want this to be system-wide or project-local."
 
-**Developer**: "I'll investigate that system issue. Let me first read the onboarding documentation to understand the architecture..."
+**Developer**: "I'll investigate that system issue. Let me first read the onboarding documentation to understand the architecture before making changes."
 
 ---
 
