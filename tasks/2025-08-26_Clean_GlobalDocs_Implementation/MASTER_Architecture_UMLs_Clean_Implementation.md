@@ -31,10 +31,17 @@ tags: ["architecture", "hybrid-system", "templates", "ai-intelligence", "obsidia
 - **Backward compatibility**: Fallback to original run_id format
 - **Year-based timestamps**: Better chronological organization
 
-### **🔄 In Development**
+### **🔄 In Development** 
 - **LLM-enhanced topic extraction**: Using `tool_services.llm()` for better accuracy
 - **Session type detection**: Improved classification for better organization
 - **Cross-reference automation**: Obsidian-compatible linking system
+
+### **🆕 Latest Developments - Intelligent Workspace Organization**
+- **Dynamic Checkpoint System**: AI-driven validation with programmatic SOPs
+- **Jinja2 Integration**: Enhanced snippet system for checkpoint templates
+- **Reusable Checkpoint Library**: Multi-level template reusability (global, user, project)
+- **Context-Aware Validation**: AI intelligence for nuanced validation decisions
+- **Modular Architecture**: Clear separation in `/snippets/checkpoints/` and `/snippets/validation/`
 
 ## Current vs Proposed Architecture
 
@@ -671,12 +678,158 @@ flowchart TD
 3. **Monitoring**: Track usage patterns to optimize template matching
 4. **Feedback Loop**: Capture user corrections to improve AI decisions
 
+## Enhanced Architecture - Intelligent Workspace Organization & Checkpoint System
+
+### **Dynamic Checkpoint Creation Flow**
+
+```mermaid
+graph TD
+    USER_REQUEST["User Request: Create workspace"] --> AI_PLANNER["AI Checkpoint Planner<br/>🧠 Analyzes request"]
+    
+    AI_PLANNER --> CHECK_LIBRARY["Check Existing Library<br/>📚 available_checkpoints.md"]
+    
+    CHECK_LIBRARY --> DECISION{"Checkpoint Types<br/>Exist?"}
+    
+    DECISION -->|"All Exist"| USE_EXISTING["Use Existing Types<br/>✅ Load from library"]
+    
+    DECISION -->|"Some Missing"| CREATE_NEW["Create New Checkpoint Types<br/>🆕 AI generates definitions"]
+    
+    CREATE_NEW --> SAVE_TO_LIBRARY["Save to Library<br/>💾 Update available_checkpoints.md<br/>💾 Create instruction files"]
+    
+    USE_EXISTING --> BUILD_SEQUENCE["Build Custom Sequence"]
+    SAVE_TO_LIBRARY --> BUILD_SEQUENCE
+    
+    BUILD_SEQUENCE --> EXECUTE["Execute Checkpoints<br/>🔄 Validate each step<br/>🔄 AI + programmatic validation"]
+    
+    EXECUTE --> REUSABLE["Save as Template<br/>📚 Global/User/Project library"]
+    
+    style AI_PLANNER fill:#e3f2fd
+    style CREATE_NEW fill:#e8f5e8
+    style BUILD_SEQUENCE fill:#fff3e0
+    style EXECUTE fill:#f3e5f5
+```
+
+### **OneShot 2.0 Integration Architecture**
+
+```mermaid
+graph TD
+    subgraph "OneShot System Architecture"
+        subgraph "Core System (/app)"
+            APP_CORE["Agent Runner<br/>Agent Executor<br/>Tool Services<br/>MCP Server"]
+        end
+        
+        subgraph "Agent Definitions (/agents)"
+            AGENTS["Specialist Agents<br/>research_agent.md<br/>vision_agent.md<br/>web_agent.md"]
+        end
+        
+        subgraph "Enhanced Template System (/snippets)"
+            CONTENT["content/<br/>📄 Agent templates<br/>📄 Content snippets"]
+            CHECKPOINTS["checkpoints/<br/>📋 Validation templates<br/>📋 Sequence definitions<br/>📋 Library catalog"]
+            VALIDATION["validation/<br/>⚡ Rules & patterns<br/>⚡ Quality standards"]
+        end
+        
+        subgraph "Tool Ecosystem (/tools)"
+            EXISTING_TOOLS["Existing Tools<br/>web_search.py<br/>file_creator.py"]
+            NEW_TOOLS["🆕 Checkpoint Tools<br/>checkpoint_manager.py<br/>sop_generator.py"]
+        end
+    end
+    
+    APP_CORE --> CHECKPOINTS
+    AGENTS --> CONTENT
+    NEW_TOOLS --> CHECKPOINTS
+    NEW_TOOLS --> VALIDATION
+    CHECKPOINTS --> VALIDATION
+    
+    style CHECKPOINTS fill:#e8f5e8
+    style VALIDATION fill:#fff3e0
+    style NEW_TOOLS fill:#e3f2fd
+```
+
+### **Workspace Evolution System**
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant MainAgent as "Main Agent"
+    participant ContextManager as "Context Manager"
+    participant DesignerAgent as "Designer Agent"
+    participant CheckpointSystem as "Checkpoint System"
+    
+    User->>MainAgent: "Update checkpoint sequence to do X better"
+    
+    MainAgent->>ContextManager: save_current_state(task_context, checkpoint_position)
+    ContextManager-->>MainAgent: context_id: "task_123_checkpoint_3"
+    
+    MainAgent->>DesignerAgent: improve_checkpoint_system(request, context_id)
+    Note over DesignerAgent: Designer mode activated<br/>Focus: System improvement
+    
+    DesignerAgent->>CheckpointSystem: analyze_current_sequence()
+    DesignerAgent->>CheckpointSystem: update_checkpoint_definition()
+    DesignerAgent->>CheckpointSystem: validate_improvements()
+    
+    DesignerAgent-->>MainAgent: improvements_complete(updated_sequence)
+    
+    MainAgent->>ContextManager: restore_context("task_123_checkpoint_3")
+    ContextManager-->>MainAgent: task_context, checkpoint_position
+    
+    MainAgent->>User: "Checkpoint improved! Resuming from where we left off..."
+    MainAgent->>MainAgent: continue_with_updated_sequence()
+```
+
+### **Multi-Level Reusability Framework**
+
+```mermaid
+graph TD
+    subgraph "Reusability Levels"
+        GLOBAL["Global Library<br/>🌍 System-wide templates<br/>📚 Available to all users"]
+        
+        USER["User Library<br/>👤 Personal templates<br/>🔄 Across user's projects"]
+        
+        PROJECT["Project Library<br/>📁 Project-specific<br/>🎯 Optimized for domain"]
+        
+        SESSION["Session Cache<br/>⚡ Current session<br/>🗑️ Temporary"]
+    end
+    
+    subgraph "Reuse Mechanisms"
+        SAVE_AS["Save Sequence As Template"]
+        LOAD_FROM["Load Sequence From Template"]
+        CUSTOMIZE["Customize Existing Template"]
+        SHARE["Share Template with Others"]
+    end
+    
+    GLOBAL --> LOAD_FROM
+    USER --> LOAD_FROM
+    PROJECT --> LOAD_FROM
+    SESSION --> SAVE_AS
+    
+    SAVE_AS --> USER
+    SAVE_AS --> PROJECT
+    CUSTOMIZE --> SESSION
+    SHARE --> GLOBAL
+    
+    style GLOBAL fill:#e8f5e8
+    style USER fill:#e3f2fd
+    style PROJECT fill:#fff3e0
+    style SESSION fill:#fff9c4
+```
+
+### **Key Integration Benefits**
+
+1. **Seamless Enhancement**: Checkpoint system integrates with existing OneShot architecture
+2. **AI-Driven Intelligence**: Dynamic checkpoint creation based on user needs
+3. **Reusable Templates**: Multi-level library system for efficient reuse
+4. **Context Preservation**: System improvements don't lose task progress
+5. **Flexible Validation**: Mix of programmatic checks and AI intelligence
+6. **Continuous Learning**: System gets smarter with each use
+
 ## Conclusion
 
-The hybrid template+AI embedded vault system provides **the optimal balance** of:
+The enhanced hybrid template+AI embedded vault system with intelligent workspace organization provides **the optimal balance** of:
 - **Proven workflows** for established patterns (templates)
 - **Creative intelligence** for novel content (AI)
+- **Dynamic validation** through programmatic checkpoints
+- **Intelligent organization** that evolves with user needs
 - **Minimal implementation risk** (extends existing system)
-- **Maximum user value** (Obsidian knowledge management)
+- **Maximum user value** (Obsidian knowledge management + smart workflows)
 
-**Next Steps**: Review critical questions above, then proceed with implementation starting with the extension approach in `subtasks/Extending_Existing_Oneshot_Architecture.md`.
+**Next Steps**: Complete workspace reorganization and consistency updates, then proceed with implementation of checkpoint system starting with enhanced snippets structure.

@@ -285,12 +285,13 @@ tags: ["index", "navigation"]
                 header += `### ${emoji} [${subdir}](./${subdir}/) - ${subdirFiles.length} files${nestedInfo}\n`;
                 header += `*${purpose}*\n\n`;
                 
-                // List files in this subdirectory (compact format)
+                // List files in this subdirectory (compact format with purpose)
                 if (subdirFiles.length > 0) {
                     for (const file of subdirFiles) {
                         const fileEmoji = this.getEmojiForType(file.type);
                         const fileName = path.basename(file.relativePath);
-                        header += `- ${fileEmoji} [${file.title}](./${subdir}/${fileName})\n`;
+                        header += `- ${fileEmoji} [${file.title}](./${subdir}/${fileName})  \n`;
+                        header += `  *${file.purpose}*\n`;
                     }
                     header += `\n`;
                 }

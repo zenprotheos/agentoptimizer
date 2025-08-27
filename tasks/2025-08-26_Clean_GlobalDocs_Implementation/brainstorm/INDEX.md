@@ -1,9 +1,9 @@
 ---
 title: "Index - brainstorm"
 type: "index"
-purpose: "Auto-generated index for brainstorm directory with 2 files"
+purpose: "Auto-generated index for brainstorm directory with 3 files"
 status: "Active"
-created: "2025-08-27T03:04:10.652Z"
+created: "2025-08-27T04:41:44.721Z"
 auto_generated: true
 tags: ["index", "navigation"]
 ---
@@ -11,15 +11,20 @@ tags: ["index", "navigation"]
 # Index: brainstorm
 
 **Path**: brainstorm  
-**Files**: 2  
-**Generated**: 2025-08-27T03:04:10.652Z  
+**Files**: 3  
+**Generated**: 2025-08-27T04:41:44.721Z  
 
 ---
 ## 📄 Files
 
+### 🏗️ [Consolidated Insights & Key Decisions - GlobalDocs Implementation](./CONSOLIDATED_INSIGHTS_AND_DECISIONS.md)
+**Type**: architecture | **Status**: Active
+**Purpose**: Consolidated key insights, user feedback, and decisions from comprehensive system analysis
+**Updated**: 8/27/2025
+
 ### 📇 [Index - brainstorm](./INDEX.md)
 **Type**: index | **Status**: Active
-**Purpose**: Auto-generated index for brainstorm directory with 2 files
+**Purpose**: Auto-generated index for brainstorm directory with 3 files
 **Updated**: 8/27/2025
 
 ### 📋 [Intelligent Workspace Organization Strategy](./intelligent_workspace_organization.md)
@@ -29,9 +34,9 @@ tags: ["index", "navigation"]
 
 ## 📊 Statistics
 
-- **Total Files**: 2
-- **By Type**: index(1), planning(1)
-- **By Status**: Active(2)
+- **Total Files**: 3
+- **By Type**: architecture(1), index(1), planning(1)
+- **By Status**: Active(3)
 
 ---
 

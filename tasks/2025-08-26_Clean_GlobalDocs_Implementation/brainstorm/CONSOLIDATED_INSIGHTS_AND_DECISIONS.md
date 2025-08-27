@@ -126,7 +126,7 @@ Based on parallel exploration, the system now includes:
 
 ### **6. AI Validation & Failsafe System** ✅ **DETAILED SPECIFICATIONS MIGRATED**
 **Defense-in-Depth Reliability Framework**:
-- **Full Implementation**: See `AI_Validation_and_Failsafe_System.md` (721 lines)
+- **Full Implementation**: See [AI_Validation_and_Failsafe_System.md](../modules/AI_Validation_and_Failsafe_System.md) (721 lines)
 - **Complete Architecture**: Multi-layered validation, retry management, fallback systems
 - **Error Recovery**: Automatic retry with refined prompts + safe defaults on failure
 - **Execution Validation**: Post-execution verification of AI decisions
@@ -134,7 +134,7 @@ Based on parallel exploration, the system now includes:
 
 ### **7. Modular Checkpoint System** ✅ **DETAILED SPECIFICATIONS MIGRATED**
 **Programmatic SOP Validation Framework**:
-- **Full Implementation**: See `Modular_Checkpoint_System.md` (700+ lines)
+- **Full Implementation**: See [Modular_Checkpoint_System.md](../modules/Modular_Checkpoint_System.md) (700+ lines)
 - **Complete Architecture**: `BaseCheckpoint` abstract class with extensible validation
 - **Configuration-Driven**: YAML-based checkpoint configuration and ordering
 - **Built-in Checkpoints**: Documentation quality, git workflow, testing validation
@@ -142,7 +142,7 @@ Based on parallel exploration, the system now includes:
 
 ### **8. Detailed File Organization Logic** ✅ **DETAILED SPECIFICATIONS MIGRATED**
 **Complete Implementation Specifications**:
-- **Full Implementation**: See `Detailed_File_Organization_Logic.md` (572 lines)
+- **Full Implementation**: See [Detailed_File_Organization_Logic.md](../modules/Detailed_File_Organization_Logic.md) (572 lines)
 - **Session Organization**: Human-readable naming with topic extraction
 - **Cross-Linking Strategy**: Automatic Obsidian-compatible linking system
 - **Front-matter Intelligence**: Smart metadata generation and validation

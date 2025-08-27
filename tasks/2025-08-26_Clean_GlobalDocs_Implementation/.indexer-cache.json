@@ -1,10 +1,6 @@
 {
   "fileHashes": [
     [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\CONTEXT_MANAGEMENT_AND_PERSONA_ARCHITECTURE.md",
-      "5bdd0431411199d6b353a39958bdd5f8"
-    ],
-    [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\MASTER_Architecture_and_Implementation_Plan.md",
       "2dbbd4564f4aff3446dd77e393416209"
     ],
@@ -13,32 +9,12 @@
       "a6cf78d193ad10482e4911355fc0d64b"
     ],
     [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\SYSTEM_ARCHITECTURE_CLARIFICATION.md",
-      "2f8171f1ea5b347aaf97d19d9f3a1aab"
-    ],
-    [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\INDEX.md",
-      "2885a209d142105b435f24a9eb7b4b02"
-    ],
-    [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\CONSOLIDATED_INSIGHTS_AND_DECISIONS.md",
-      "e8c8b471c12864df5bb0243815fa9a08"
-    ],
-    [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\AI_Validation_and_Failsafe_System.md",
-      "06a0c70333b15ff433d615979888582f"
-    ],
-    [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\Detailed_File_Organization_Logic.md",
-      "c213ff96099198989f7b8162912b241a"
+      "4182e13406c8a5276128c0ead127f2cb"
     ],
     [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\Implementation_Roadmap.md",
       "b06b641ac5f65d45bdbe6bc8f19f887b"
-    ],
-    [
-      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\Modular_Checkpoint_System.md",
-      "d381a4985e330b55da6fba3da473f0bc"
     ],
     [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\example_tools\\global-rule-example.md",
@@ -46,7 +22,7 @@
     ],
     [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\example_tools\\INDEX.md",
-      "e80987918a7b0eace5c69417266013dd"
+      "d5f6caf713e59565b468ceb5ece9e5f3"
     ],
     [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\brainstorm\\intelligent_workspace_organization.md",
@@ -54,8 +30,44 @@
     ],
     [
       "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\brainstorm\\INDEX.md",
-      "ba24b3170ac99253c9751e121e018510"
+      "f5532c95db41d9fe35b67b2e990333ea"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\brainstorm\\CONSOLIDATED_INSIGHTS_AND_DECISIONS.md",
+      "e8c8b471c12864df5bb0243815fa9a08"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\AI_Validation_and_Failsafe_System.md",
+      "06a0c70333b15ff433d615979888582f"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\CONTEXT_MANAGEMENT_AND_PERSONA_ARCHITECTURE.md",
+      "5bdd0431411199d6b353a39958bdd5f8"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\Detailed_File_Organization_Logic.md",
+      "c213ff96099198989f7b8162912b241a"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\INDEX.md",
+      "6da828d22b4fdba34595850a3008c22f"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\Modular_Checkpoint_System.md",
+      "d381a4985e330b55da6fba3da473f0bc"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\modules\\SYSTEM_ARCHITECTURE_CLARIFICATION.md",
+      "2f8171f1ea5b347aaf97d19d9f3a1aab"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\subtasks\\2025-08-27_workspace_reorganization_and_consistency_update.md",
+      "48e20d355085a6848eb582c76ee2f76f"
+    ],
+    [
+      "C:\\Users\\CSJin\\Jininja Projects\\AI Projects\\main_oneshot\\oneshot\\tasks\\2025-08-26_Clean_GlobalDocs_Implementation\\subtasks\\INDEX.md",
+      "c09fa7dc67e53f82a2ae220d509234ab"
     ]
   ],
-  "lastUpdated": "2025-08-27T03:04:10.686Z"
+  "lastUpdated": "2025-08-27T04:41:44.755Z"
 }
